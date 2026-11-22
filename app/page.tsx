@@ -761,3 +761,40 @@ export default function HomePage() {
               {step > 1 ? (
                 <button
                   type="button"
+                  onClick={() => setStep((s) => (s === 3 ? 2 : 1))}
+                  className="rounded-xl border border-white/15 px-4 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
+                >
+                  {t.backBtn}
+                </button>
+              ) : (
+                <div />
+              )}
+
+              {step < 3 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (step === 2 && !newTitle.trim()) {
+                      setNewTitle(lang === "lv" ? "Jauns auto" : "New vehicle");
+                    }
+                    setStep((s) => (s === 1 ? 2 : 3));
+                  }}
+                  className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                >
+                  {t.nextBtn}
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                >
+                  {t.publishBtn}
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
