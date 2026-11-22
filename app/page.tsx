@@ -30,17 +30,30 @@ const CITIES = ["All", "Rīga", "Daugavpils", "Liepāja", "Jelgava", "Ventspils"
 
 const MODELS_BY_BRAND: Record<Category, Record<string, string[]>> = {
   car: {
-    BMW: ["320d", "330i", "520d", "530i", "X3", "X5"],
-    Volkswagen: ["Golf VII", "Golf VIII", "Passat B8", "Tiguan", "Polo"],
-    Toyota: ["Corolla", "Corolla Hybrid", "RAV4", "Yaris", "C-HR"],
-    Audi: ["A4", "A6", "Q5", "A3", "Q7"],
-    "Mercedes-Benz": ["C 220d", "E 220d", "GLC", "A 180"],
+    Volkswagen: ["Golf", "Passat", "Tiguan", "Polo", "Touran", "Sharan", "Arteon", "T-Roc"],
+    BMW: ["1 Series", "3 Series", "5 Series", "7 Series", "X1", "X3", "X5", "X6"],
+    Audi: ["A3", "A4", "A5", "A6", "A8", "Q2", "Q3", "Q5", "Q7"],
+    Toyota: ["Corolla", "Auris", "RAV4", "Yaris", "Avensis", "C-HR", "Camry", "Land Cruiser"],
+    "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "S-Class", "CLA", "GLA", "GLC", "GLE", "Vito"],
+    Volvo: ["S60", "S90", "V40", "V60", "V70", "V90", "XC40", "XC60", "XC90"],
+    "Škoda": ["Fabia", "Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq", "Rapid"],
+    Opel: ["Astra", "Corsa", "Insignia", "Mokka", "Zafira", "Grandland"],
+    Nissan: ["Qashqai", "Juke", "X-Trail", "Micra", "Leaf", "Navara"],
+    Mazda: ["Mazda3", "Mazda6", "CX-3", "CX-5", "CX-30"],
+    Ford: ["Fiesta", "Focus", "Mondeo", "Kuga", "Puma", "Transit"],
+    Peugeot: ["208", "308", "508", "2008", "3008", "5008"],
+    Honda: ["Civic", "Accord", "CR-V", "HR-V", "Jazz"],
+    Lexus: ["IS", "ES", "GS", "NX", "RX", "UX"],
   },
   moto: {
-    Keeway: ["RKF 125", "V302C", "X-Light 125"],
-    Yamaha: ["MT-07", "MT-09", "Tracer 7", "NMAX 125"],
-    Honda: ["CB500F", "Hornet 750", "PCX 125", "Africa Twin"],
-    Kawasaki: ["Z650", "Ninja 650", "Z900"],
+    Keeway: ["RKF 125", "V302C", "X-Light 125", "K-Light 125", "TX 125"],
+    Yamaha: ["MT-03", "MT-07", "MT-09", "Tracer 7", "Tracer 9", "XSR700", "Tenere 700", "NMAX 125", "XMAX 300"],
+    Honda: ["CB125F", "CB500F", "CBR500R", "Hornet 750", "Transalp 750", "Africa Twin", "PCX 125", "Forza 350"],
+    Kawasaki: ["Z125", "Z400", "Z650", "Z900", "Ninja 400", "Ninja 650", "Versys 650"],
+    Suzuki: ["SV650", "GSX-S750", "V-Strom 650", "V-Strom 800", "Address 110"],
+    Ducati: ["Scrambler", "Monster", "Multistrada V2", "Hypermotard"],
+    "BMW Motorrad": ["G 310 R", "G 310 GS", "F 750 GS", "F 850 GS", "R 1250 GS", "S 1000 RR"],
+    Aprilia: ["RS 125", "SX 125", "Tuono 660", "RS 660"],
   },
 };
 
@@ -68,7 +81,7 @@ const INITIAL_LISTINGS: Listing[] = [
     id: 1,
     category: "car",
     brand: "Volkswagen",
-    model: "Golf VII 1.6 TDI",
+    model: "Golf",
     city: "Rīga",
     priceEur: 8450,
     year: 2017,
@@ -86,7 +99,7 @@ const INITIAL_LISTINGS: Listing[] = [
     id: 2,
     category: "car",
     brand: "Toyota",
-    model: "Corolla Hybrid 1.8",
+    model: "Corolla",
     city: "Liepāja",
     priceEur: 14900,
     year: 2020,
@@ -104,7 +117,7 @@ const INITIAL_LISTINGS: Listing[] = [
     id: 3,
     category: "car",
     brand: "BMW",
-    model: "320d xDrive",
+    model: "3 Series",
     city: "Jelgava",
     priceEur: 11600,
     year: 2016,
@@ -114,15 +127,15 @@ const INITIAL_LISTINGS: Listing[] = [
     images: [PHOTO_PRESETS[2].url, PHOTO_PRESETS[0].url, PHOTO_PRESETS[1].url],
     sellerName: "Andris V.",
     description: {
-      lv: "Pilnpiedziņa Latvijas ziemai, ietilpīgs universālis ar labu aprīkojumu.",
-      en: "All-wheel drive for Latvian winter, spacious wagon with solid trim.",
+      lv: "Pilnpiedziņa Latvijas ziemai, ietilpīgs universālis.",
+      en: "All-wheel drive for Latvian winter, spacious wagon.",
     },
   },
   {
     id: 4,
     category: "moto",
     brand: "Keeway",
-    model: "RKF 125 ABS",
+    model: "RKF 125",
     city: "Daugavpils",
     priceEur: 2350,
     year: 2024,
@@ -140,7 +153,7 @@ const INITIAL_LISTINGS: Listing[] = [
     id: 5,
     category: "car",
     brand: "Audi",
-    model: "A4 Avant",
+    model: "A4",
     city: "Ventspils",
     priceEur: 10200,
     year: 2018,
@@ -150,8 +163,8 @@ const INITIAL_LISTINGS: Listing[] = [
     images: [PHOTO_PRESETS[2].url, PHOTO_PRESETS[1].url],
     sellerName: "Dace R.",
     description: {
-      lv: "Komfortabls Audi universālis ar kruīzkontroli un LED optiku.",
-      en: "Comfortable Audi wagon with cruise control and LED lights.",
+      lv: "Komfortabls Audi ar kruīzkontroli un LED optiku.",
+      en: "Comfortable Audi with cruise control and LED lights.",
     },
   },
   {
@@ -178,14 +191,16 @@ const UI_TEXT = {
   lv: {
     brand: "AutoLatvija",
     heroTitle: "Auto & Moto sludinājumi Latvijā",
-    heroSubtitle: "Kompakti sludinājumi, vairāki foto uz kursora un ātra publicēšana.",
+    heroSubtitle: "Filtrē pēc markas, modeļa, pilsētas un kategorijas visā Latvijā.",
     postBtn: "+ Ielikt sludinājumu",
     loginBtn: "Izveidot kontu / Ieiet",
     logoutBtn: "Iziet",
     allCategories: "Visi",
     carsCategory: "Vieglie auto",
     motosCategory: "Motocikli",
-    searchPlaceholder: "Meklēt marku, modeli vai pilsētu...",
+    searchPlaceholder: "Meklēt (piem. Golf, 3 Series, Rīga)...",
+    allBrands: "Visas markas",
+    allModels: "Visi modeļi",
     allCities: "Visas pilsētas",
     sortPriceAsc: "Cena: no zemākās",
     sortPriceDesc: "Cena: no augstākās",
@@ -207,8 +222,8 @@ const UI_TEXT = {
     step2Title: "2. Izvēlies marku",
     step3Title: "3. Modelis & Dati",
     step4Title: "4. Bildes & Apraksts",
-    chooseModel: "Modelis",
-    customModelPlaceholder: "Vai ieraksti modeli (piem. 320d Touring)",
+    chooseModel: "Izvēlies modeli",
+    customModelPlaceholder: "Vai ieraksti citu modeli",
     priceLabel: "Cena (EUR)",
     yearInputLabel: "Gads",
     kmInputLabel: "Nobraukums (km)",
@@ -223,14 +238,16 @@ const UI_TEXT = {
   en: {
     brand: "AutoLatvija",
     heroTitle: "Car & Moto listings in Latvia",
-    heroSubtitle: "Compact cards, multi-photo hover preview, and step-by-step posting.",
+    heroSubtitle: "Filter by brand, model, city, and category across Latvia.",
     postBtn: "+ Post listing",
     loginBtn: "Create account / Sign in",
     logoutBtn: "Sign out",
     allCategories: "All",
     carsCategory: "Cars",
     motosCategory: "Motorcycles",
-    searchPlaceholder: "Search brand, model, or city...",
+    searchPlaceholder: "Search (e.g. Golf, 3 Series, Riga)...",
+    allBrands: "All brands",
+    allModels: "All models",
     allCities: "All cities",
     sortPriceAsc: "Price: low to high",
     sortPriceDesc: "Price: high to low",
@@ -252,8 +269,8 @@ const UI_TEXT = {
     step2Title: "2. Choose brand",
     step3Title: "3. Model & Specs",
     step4Title: "4. Photos & Details",
-    chooseModel: "Model",
-    customModelPlaceholder: "Or type model (e.g. 320d Touring)",
+    chooseModel: "Choose model",
+    customModelPlaceholder: "Or type another model",
     priceLabel: "Price (EUR)",
     yearInputLabel: "Year",
     kmInputLabel: "Mileage (km)",
@@ -272,7 +289,10 @@ export default function HomePage() {
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
   const [user, setUser] = useState<UserAccount | null>(null);
 
+  // Catalog filters (Sahibinden style Brand -> Model -> City -> Category)
   const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
+  const [filterBrand, setFilterBrand] = useState("All");
+  const [filterModel, setFilterModel] = useState("All");
   const [selectedCity, setSelectedCity] = useState("All");
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc">("yearDesc");
@@ -291,7 +311,7 @@ export default function HomePage() {
   const [newCategory, setNewCategory] = useState<Category>("car");
   const [newCity, setNewCity] = useState("Rīga");
   const [newBrand, setNewBrand] = useState("BMW");
-  const [newModel, setNewModel] = useState("320d");
+  const [newModel, setNewModel] = useState("3 Series");
   const [newPrice, setNewPrice] = useState("9500");
   const [newYear, setNewYear] = useState("2019");
   const [newKm, setNewKm] = useState("135000");
@@ -337,6 +357,25 @@ export default function HomePage() {
     [listings, selectedId]
   );
 
+  // Filter brands & models options
+  const filterBrandOptions = useMemo(() => {
+    if (categoryFilter === "car") return Object.keys(MODELS_BY_BRAND.car);
+    if (categoryFilter === "moto") return Object.keys(MODELS_BY_BRAND.moto);
+    const all = new Set<string>([
+      ...Object.keys(MODELS_BY_BRAND.car),
+      ...Object.keys(MODELS_BY_BRAND.moto),
+    ]);
+    return Array.from(all);
+  }, [categoryFilter]);
+
+  const filterModelOptions = useMemo(() => {
+    if (filterBrand === "All") return [];
+    const fromCar = MODELS_BY_BRAND.car[filterBrand] ?? [];
+    const fromMoto = MODELS_BY_BRAND.moto[filterBrand] ?? [];
+    return Array.from(new Set([...fromCar, ...fromMoto]));
+  }, [filterBrand]);
+
+  // Wizard brands & models options
   const availableBrands = useMemo(
     () => Object.keys(MODELS_BY_BRAND[newCategory]),
     [newCategory]
@@ -358,13 +397,21 @@ export default function HomePage() {
     const base = listings.filter((item) => {
       const matchesCategory =
         categoryFilter === "all" || item.category === categoryFilter;
+      const matchesBrand = filterBrand === "All" || item.brand === filterBrand;
+      const matchesModel = filterModel === "All" || item.model === filterModel;
       const matchesCity = selectedCity === "All" || item.city === selectedCity;
       const fullName = `${item.brand} ${item.model}`.toLowerCase();
       const matchesQuery =
         query.trim() === "" ||
         fullName.includes(query.trim().toLowerCase()) ||
         item.city.toLowerCase().includes(query.trim().toLowerCase());
-      return matchesCategory && matchesCity && matchesQuery;
+      return (
+        matchesCategory &&
+        matchesBrand &&
+        matchesModel &&
+        matchesCity &&
+        matchesQuery
+      );
     });
 
     return [...base].sort((a, b) => {
@@ -372,7 +419,7 @@ export default function HomePage() {
       if (sortBy === "priceDesc") return b.priceEur - a.priceEur;
       return b.year - a.year;
     });
-  }, [listings, categoryFilter, selectedCity, query, sortBy]);
+  }, [listings, categoryFilter, filterBrand, filterModel, selectedCity, query, sortBy]);
 
   function startWizard() {
     const defaultBrand = Object.keys(MODELS_BY_BRAND[newCategory])[0];
@@ -674,7 +721,11 @@ export default function HomePage() {
                     <button
                       key={cat.key}
                       type="button"
-                      onClick={() => setCategoryFilter(cat.key)}
+                      onClick={() => {
+                        setCategoryFilter(cat.key);
+                        setFilterBrand("All");
+                        setFilterModel("All");
+                      }}
                       className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
                         categoryFilter === cat.key
                           ? "bg-amber-400 text-slate-950"
@@ -687,14 +738,38 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2.5 rounded-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-4">
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t.searchPlaceholder}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none sm:col-span-2"
-                />
+              {/* Sahibinden-like Brand & Model Filter Grid */}
+              <div className="mt-4 grid gap-2.5 rounded-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
+                <select
+                  value={filterBrand}
+                  onChange={(e) => {
+                    setFilterBrand(e.target.value);
+                    setFilterModel("All");
+                  }}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+                >
+                  <option value="All">{t.allBrands}</option>
+                  {filterBrandOptions.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterModel}
+                  disabled={filterBrand === "All"}
+                  onChange={(e) => setFilterModel(e.target.value)}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none disabled:opacity-50"
+                >
+                  <option value="All">{t.allModels}</option>
+                  {filterModelOptions.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
@@ -706,6 +781,15 @@ export default function HomePage() {
                     </option>
                   ))}
                 </select>
+
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t.searchPlaceholder}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                />
+
                 <select
                   value={sortBy}
                   onChange={(e) =>
@@ -713,7 +797,7 @@ export default function HomePage() {
                       e.target.value as "priceAsc" | "priceDesc" | "yearDesc"
                     )
                   }
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none lg:col-span-2"
                 >
                   <option value="yearDesc">{t.sortYearDesc}</option>
                   <option value="priceAsc">{t.sortPriceAsc}</option>
@@ -965,8 +1049,8 @@ export default function HomePage() {
             )}
 
             {step === 2 && (
-              <div className="mt-5">
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              <div className="mt-5 max-h-64 overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {availableBrands.map((brand) => (
                     <button
                       key={brand}
@@ -975,7 +1059,7 @@ export default function HomePage() {
                         setNewBrand(brand);
                         setNewModel(MODELS_BY_BRAND[newCategory][brand]?.[0] ?? "");
                       }}
-                      className={`rounded-xl border px-3.5 py-3 text-left text-sm font-bold transition cursor-pointer ${
+                      className={`rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition cursor-pointer ${
                         newBrand === brand
                           ? "border-amber-400 bg-amber-400/15 text-amber-300"
                           : "border-white/10 bg-[#0b0f17] text-slate-200 hover:border-white/25"
