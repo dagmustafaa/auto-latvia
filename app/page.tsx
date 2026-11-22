@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 
@@ -214,7 +214,6 @@ const UI_TEXT = {
     kmInputLabel: "Nobraukums (km)",
     fuelInputLabel: "Degviela",
     addPhotosLabel: "Pievienot bildes (vairākas no datora vai paraugi)",
-    removePhoto: "Noņemt",
     descLabel: "Apraksts",
     descPlaceholder: "Apraksti stāvokli, TA, riepas...",
     backBtn: "Atpakaļ",
@@ -260,7 +259,6 @@ const UI_TEXT = {
     kmInputLabel: "Mileage (km)",
     fuelInputLabel: "Fuel type",
     addPhotosLabel: "Add photos (multiple from device or presets)",
-    removePhoto: "Remove",
     descLabel: "Description",
     descPlaceholder: "Describe condition, inspection (TA), tires...",
     backBtn: "Back",
@@ -279,20 +277,15 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc">("yearDesc");
 
-  // Detail view state (synced with URL hash for direct navigation)
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
-
-  // Hover index per listing card
   const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<number, number>>({});
 
-  // Auth modal state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [pendingWizardAfterAuth, setPendingWizardAfterAuth] = useState(false);
 
-  // 4-step wizard state: 1=Category/City, 2=Brand, 3=Model/Specs, 4=Photos/Desc
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
@@ -308,7 +301,6 @@ export default function HomePage() {
 
   const t = UI_TEXT[lang];
 
-  // Read #listing-<id> from URL on load or hashchange
   useEffect(() => {
     function syncFromHash() {
       const h = window.location.hash;
@@ -492,7 +484,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100">
-      {/* Header */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f17]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button
@@ -565,7 +556,6 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Detail Page View when a listing is clicked */}
       {activeListing ? (
         <main className="mx-auto max-w-5xl px-4 py-6">
           <button
@@ -661,7 +651,6 @@ export default function HomePage() {
         </main>
       ) : (
         <>
-          {/* Compact Top Filter Bar */}
           <section className="border-b border-white/10 bg-[#0e1420]">
             <div className="mx-auto max-w-7xl px-4 py-5">
               <div className="flex flex-wrap items-end justify-between gap-4">
@@ -734,7 +723,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Compact Multi-Photo Grid */}
           <main className="mx-auto max-w-7xl px-4 py-6">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -753,7 +741,6 @@ export default function HomePage() {
                     onClick={() => openListingDetail(item.id)}
                     className="group cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                   >
-                    {/* Hover Photo Switcher Area */}
                     <div
                       onMouseMove={(e) =>
                         handleCardMouseMove(e, item.id, item.images.length)
@@ -787,7 +774,6 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    {/* Compact Info Body */}
                     <div className="p-3.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -817,7 +803,6 @@ export default function HomePage() {
         </>
       )}
 
-      {/* Account / Sign-in Modal (Required before posting) */}
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
@@ -882,7 +867,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 4-Step Listing Wizard (Category/City -> Brand -> Model/Specs -> Photos/Desc) */}
       {isWizardOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
@@ -910,7 +894,6 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* 4-Step Progress Bar */}
             <div className="mt-3.5 grid grid-cols-4 gap-1.5">
               {[1, 2, 3, 4].map((s) => (
                 <div
@@ -922,7 +905,6 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Step 1: Category & City */}
             {step === 1 && (
               <div className="mt-5 space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -982,7 +964,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Step 2: Brand Selection (e.g. BMW, Volkswagen, Toyota...) */}
             {step === 2 && (
               <div className="mt-5">
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -1007,7 +988,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Step 3: Model Selection + Price/Year/Km/Fuel */}
             {step === 3 && (
               <div className="mt-5 space-y-4">
                 <div>
@@ -1095,7 +1075,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Step 4: Multiple Photos + Description */}
             {step === 4 && (
               <div className="mt-5 space-y-4">
                 <div>
@@ -1164,7 +1143,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Wizard Navigation */}
             <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
               {step > 1 ? (
                 <button
