@@ -1780,9 +1780,6 @@ const t = UI_TEXT[lang];
                 <div>
                   <a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 cursor-pointer">{t.contactBtn}</a>
                 </div>
-                <div>
-                  <a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 cursor-pointer">{t.contactBtn}</a>
-                </div>
                 </div>
               </div>
             </div>

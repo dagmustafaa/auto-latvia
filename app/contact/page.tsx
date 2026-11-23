@@ -1,10 +1,9 @@
 ﻿"use client";
 
 import React, { useState } from "react";
+import { supabase } from "../../lib/supabase";
 
 type Lang = "lv" | "ru" | "en";
-
-const CONTACT_EMAIL = "autolatvia.lv@gmail.com";
 
 const TEXT: Record<
   Lang,
@@ -12,9 +11,6 @@ const TEXT: Record<
     back: string;
     title: string;
     subtitle: string;
-    emailLabel: string;
-    copyBtn: string;
-    copiedBtn: string;
     topicLabel: string;
     topics: string[];
     nameLabel: string;
@@ -24,16 +20,15 @@ const TEXT: Record<
     msgLabel: string;
     msgPh: string;
     sendBtn: string;
-    sentHint: string;
+    sendingBtn: string;
+    successMsg: string;
+    errorMsg: string;
   }
 > = {
   lv: {
     back: "← Atpakaļ uz AutoLatvija",
     title: "Sazināties ar AutoLatvija",
-    subtitle: "Jautājumi par sludinājumiem, kontu, datu dzēšanu (GDPR) vai sadarbību.",
-    emailLabel: "E-pasts saziņai",
-    copyBtn: "Kopēt",
-    copiedBtn: "Nokopēts ✓",
+    subtitle: "Aizpildiet formu — jūsu ziņojums tiks droši nosūtīts platformas administrācijai.",
     topicLabel: "Temats",
     topics: [
       "Sludinājumu atbalsts",
@@ -43,20 +38,19 @@ const TEXT: Record<
     ],
     nameLabel: "Jūsu vārds",
     namePh: "Ievadiet vārdu",
-    senderEmailLabel: "Jūsu e-pasts",
+    senderEmailLabel: "Jūsu e-pasts atbildei",
     senderEmailPh: "name@example.lv",
     msgLabel: "Ziņojums",
     msgPh: "Uzrakstiet savu jautājumu vai pieprasījumu...",
-    sendBtn: "Atvērt e-pasta ziņojumu",
-    sentHint: "Nospiežot pogu, atvērsies jūsu e-pasta programma ar sagatavotu ziņojumu.",
+    sendBtn: "Nosūtīt ziņojumu",
+    sendingBtn: "Nosūta...",
+    successMsg: "Paldies! Jūsu ziņojums ir saņemts. Atbildēsim uz norādīto e-pastu.",
+    errorMsg: "Neizdevās nosūtīt ziņojumu. Lūdzu, mēģiniet vēlreiz.",
   },
   ru: {
     back: "← Назад на AutoLatvija",
     title: "Связаться с AutoLatvija",
-    subtitle: "Вопросы по объявлениям, аккаунту, удалению данных (GDPR) или сотрудничеству.",
-    emailLabel: "Контактный e-mail",
-    copyBtn: "Копировать",
-    copiedBtn: "Скопировано ✓",
+    subtitle: "Заполните форму — ваше обращение будет напрямую передано администрации платформы.",
     topicLabel: "Тема",
     topics: [
       "Поддержка по объявлениям",
@@ -66,20 +60,19 @@ const TEXT: Record<
     ],
     nameLabel: "Ваше имя",
     namePh: "Введите имя",
-    senderEmailLabel: "Ваш e-mail",
+    senderEmailLabel: "Ваш e-mail для ответа",
     senderEmailPh: "name@example.com",
     msgLabel: "Сообщение",
     msgPh: "Опишите ваш вопрос или запрос...",
-    sendBtn: "Открыть письмо в почте",
-    sentHint: "Откроется ваш почтовый клиент с готовым текстом обращения.",
+    sendBtn: "Отправить сообщение",
+    sendingBtn: "Отправка...",
+    successMsg: "Спасибо! Ваше сообщение отправлено. Мы ответим на указанный e-mail.",
+    errorMsg: "Не удалось отправить сообщение. Попробуйте еще раз.",
   },
   en: {
     back: "← Back to AutoLatvija",
     title: "Contact AutoLatvija",
-    subtitle: "Questions about listings, accounts, GDPR data deletion, or collaboration.",
-    emailLabel: "Contact email",
-    copyBtn: "Copy",
-    copiedBtn: "Copied ✓",
+    subtitle: "Fill out the form below — your message will be delivered directly to the platform team.",
     topicLabel: "Topic",
     topics: [
       "Listing support",
@@ -89,12 +82,14 @@ const TEXT: Record<
     ],
     nameLabel: "Your name",
     namePh: "Enter your name",
-    senderEmailLabel: "Your email",
+    senderEmailLabel: "Your email for reply",
     senderEmailPh: "name@example.com",
     msgLabel: "Message",
     msgPh: "Write your question or request...",
-    sendBtn: "Compose email",
-    sentHint: "Clicking opens your mail client pre-filled with your message.",
+    sendBtn: "Send message",
+    sendingBtn: "Sending...",
+    successMsg: "Thank you! Your message has been received. We will reply to your email.",
+    errorMsg: "Failed to send message. Please try again.",
   },
 };
 
@@ -106,26 +101,41 @@ export default function ContactPage() {
   const [name, setName] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   function switchLang(next: Lang) {
     setLang(next);
     setTopic(TEXT[next].topics[0]);
   }
 
-  function handleCopyEmail() {
-    navigator.clipboard?.writeText(CONTACT_EMAIL).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  }
-
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const subject = encodeURIComponent(`[AutoLatvija] ${topic}`);
-    const body = encodeURIComponent(
-      `Name: ${name || "-"}\nEmail: ${senderEmail || "-"}\nTopic: ${topic}\n\n${message}`
-    );
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    setSending(true);
+    setStatus("idle");
+
+    try {
+      const { error } = await supabase.from("contact_messages").insert({
+        topic,
+        sender_name: name.trim(),
+        sender_email: senderEmail.trim(),
+        message: message.trim(),
+      });
+
+      if (error) {
+        setStatus("error");
+        return;
+      }
+
+      setStatus("success");
+      setName("");
+      setSenderEmail("");
+      setMessage("");
+    } catch {
+      setStatus("error");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -161,19 +171,17 @@ export default function ContactPage() {
           <h1 className="text-2xl font-extrabold text-white">{t.title}</h1>
           <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.subtitle}</p>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-xs">
-            <div>
-              <span className="text-slate-400">{t.emailLabel}: </span>
-              <strong className="font-mono text-amber-400">{CONTACT_EMAIL}</strong>
+          {status === "success" && (
+            <div className="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-300">
+              {t.successMsg}
             </div>
-            <button
-              type="button"
-              onClick={handleCopyEmail}
-              className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
-            >
-              {copied ? t.copiedBtn : t.copyBtn}
-            </button>
-          </div>
+          )}
+
+          {status === "error" && (
+            <div className="mt-5 rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-xs font-semibold text-rose-300">
+              {t.errorMsg}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
@@ -228,13 +236,13 @@ export default function ContactPage() {
               />
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-              <span className="text-[11px] text-slate-400">{t.sentHint}</span>
+            <div className="flex justify-end pt-2">
               <button
                 type="submit"
-                className="rounded-xl bg-amber-400 px-5 py-2.5 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                disabled={sending}
+                className="rounded-xl bg-amber-400 px-6 py-2.5 text-xs font-extrabold text-slate-950 hover:bg-amber-300 disabled:opacity-60 cursor-pointer"
               >
-                {t.sendBtn}
+                {sending ? t.sendingBtn : t.sendBtn}
               </button>
             </div>
           </form>
