@@ -534,6 +534,14 @@ export default function HomePage() {
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
+    function getAdHref(item: Listing) {
+    const slug = `--`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    return `/?ad=--`;
+  }
+
   const t = UI_TEXT[lang];
 
   async function loadListings() {
@@ -1172,10 +1180,12 @@ export default function HomePage() {
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {similarListings.map((sim) => (
-                  <article
+                  <a
                     key={sim.id}
-                    onClick={(e) => { e.preventDefault(); window.open(buildAdUrl(sim), "_blank", "noopener,noreferrer"); }}
-                    className="cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
+                    href={getAdHref(sim)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                   >
                     <img
                       src={sim.images[0]}
@@ -1400,16 +1410,18 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((item) => {
+                              {filtered.map((item) => {
                   const activeIdx = hoverPhotoIndex[item.id] ?? 0;
                   const currentSrc = item.images[activeIdx] ?? item.images[0];
                   const isSaved = savedIds.includes(item.id);
 
                   return (
-                    <article
+                    <a
                       key={item.id}
-                      onClick={(e) => { e.preventDefault(); window.open(buildAdUrl(item), "_blank", "noopener,noreferrer"); }}
-                      className="group cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
+                      href={getAdHref(item)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                     >
                       <div
                         onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
@@ -1429,7 +1441,11 @@ export default function HomePage() {
 
                         <button
                           type="button"
-                          onClick={(e) => { e.preventDefault(); toggleSave(e, item.id); }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleSave(e, item.id);
+                          }}
                           aria-label="Save listing"
                           className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
                             isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
