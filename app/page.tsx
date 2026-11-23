@@ -544,7 +544,7 @@ export default function HomePage() {
 
     try {
       if (authMode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const signUpReq = supabase.auth.signUp({
           email: authEmail.trim(),
           password: authPassword,
           options: {
@@ -552,6 +552,10 @@ export default function HomePage() {
             data: { name: authName.trim() || authEmail.split("@")[0] },
           },
         });
+        const timeoutReq = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("SMTP zaman aşımı (10sn). Supabase SMTP ayarlarını kontrol edin.")), 10000)
+        );
+        const { error } = await Promise.race([signUpReq, timeoutReq]);
         if (error) {
           setAuthError(error.message);
           return;
