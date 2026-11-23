@@ -666,6 +666,8 @@ export default function HomePage() {
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
+    const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(null);
+
   const t = UI_TEXT[lang];
 
   async function loadListings() {
