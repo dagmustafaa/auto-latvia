@@ -534,15 +534,33 @@ export default function HomePage() {
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-    function getAdHref(item: Listing) {
+      function getAdHref(item: Listing) {
     const slug = `--`
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
-    return `/?ad=--`;
+    return `#ad=--`;
   }
 
   const t = UI_TEXT[lang];
+
+  useEffect(() => {
+    function readAdFromHash() {
+      const h = window.location.hash || "";
+      if (h.startsWith("#ad=")) {
+        const val = h.slice(4);
+        const idPart = val.includes("--") ? val.split("--").pop() || val : val;
+        setSelectedId(decodeURIComponent(idPart));
+        setDetailPhotoIndex(0);
+      } else if (h.startsWith("#listing-")) {
+        setSelectedId(decodeURIComponent(h.replace("#listing-", "")));
+        setDetailPhotoIndex(0);
+      }
+    }
+    readAdFromHash();
+    window.addEventListener("hashchange", readAdFromHash);
+    return () => window.removeEventListener("hashchange", readAdFromHash);
+  }, []);
 
   async function loadListings() {
     const { data, error } = await supabase
