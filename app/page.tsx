@@ -83,7 +83,7 @@ const PHOTO_PRESETS = [
 
 const DEMO_LISTINGS: Listing[] = [
   {
-    id: "demo-1",
+    id: "lv-1",
     seller_name: "Māris B.",
     seller_phone: "+37120001122",
     category: "car",
@@ -106,7 +106,7 @@ const DEMO_LISTINGS: Listing[] = [
     description_en: "Well-kept car from Riga, full service history, fresh winter tires.",
   },
   {
-    id: "demo-2",
+    id: "lv-2",
     seller_name: "Elīna K.",
     seller_phone: "+37120003344",
     category: "car",
@@ -129,7 +129,7 @@ const DEMO_LISTINGS: Listing[] = [
     description_en: "Economical hybrid for daily commuting and trips across Latvia.",
   },
   {
-    id: "demo-3",
+    id: "lv-3",
     seller_name: "Andris V.",
     seller_phone: "+37120005566",
     category: "car",
@@ -152,7 +152,7 @@ const DEMO_LISTINGS: Listing[] = [
     description_en: "All-wheel drive for Latvian winter, spacious wagon.",
   },
   {
-    id: "demo-4",
+    id: "lv-4",
     seller_name: "Artūrs L.",
     seller_phone: "+37120007788",
     category: "moto",
@@ -584,19 +584,29 @@ export default function HomePage() {
     };
   }, []);
 
+  function buildAdUrl(item: Listing) {
+    const slug = `${item.brand}-${item.model}-${item.year}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    return `${window.location.pathname}?ad=${slug}--${encodeURIComponent(item.id)}`;
+  }
+
   useEffect(() => {
-    function syncFromHash() {
-      const h = window.location.hash;
-      if (h.startsWith("#listing-")) {
-        setSelectedId(h.replace("#listing-", ""));
+    function syncFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const adParam = params.get("ad");
+      if (adParam) {
+        const extractedId = adParam.includes("--") ? adParam.split("--").pop() || adParam : adParam;
+        setSelectedId(decodeURIComponent(extractedId));
         setDetailPhotoIndex(0);
         return;
       }
       setSelectedId(null);
     }
-    syncFromHash();
-    window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
   }, []);
 
   function toggleSave(e: React.MouseEvent, id: string) {
@@ -726,15 +736,10 @@ export default function HomePage() {
     sortBy,
   ]);
 
-  function openListingDetail(id: string) {
-    const url = `${window.location.origin}${window.location.pathname}#listing-${id}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
   function closeListingDetail() {
     setSelectedId(null);
-    if (window.location.hash.startsWith("#listing-")) {
-      history.pushState("", document.title, window.location.pathname + window.location.search);
+    if (window.location.search.includes("ad=")) {
+      window.history.pushState({}, "", window.location.pathname);
     }
   }
 
@@ -1169,7 +1174,7 @@ export default function HomePage() {
                 {similarListings.map((sim) => (
                   <article
                     key={sim.id}
-                    onClick={() => openListingDetail(sim.id)}
+                    onClick={(e) => { e.preventDefault(); window.open(buildAdUrl(sim), "_blank", "noopener,noreferrer"); }}
                     className="cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                   >
                     <img
@@ -1403,7 +1408,7 @@ export default function HomePage() {
                   return (
                     <article
                       key={item.id}
-                      onClick={() => openListingDetail(item.id)}
+                      onClick={(e) => { e.preventDefault(); window.open(buildAdUrl(item), "_blank", "noopener,noreferrer"); }}
                       className="group cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                     >
                       <div
