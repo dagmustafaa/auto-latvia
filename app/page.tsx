@@ -335,7 +335,6 @@ export default function HomePage() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
-  // Filters
   const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
   const [filterBrand, setFilterBrand] = useState("All");
   const [filterModel, setFilterModel] = useState("All");
@@ -343,12 +342,10 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc">("yearDesc");
 
-  // Detail & Hover states
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
   const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
 
-  // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authName, setAuthName] = useState("");
@@ -358,10 +355,8 @@ export default function HomePage() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
-  // My listings modal
   const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
 
-  // 4-step Wizard
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
@@ -384,7 +379,6 @@ export default function HomePage() {
 
   const t = UI_TEXT[lang];
 
-  // Fetch listings from Supabase
   async function loadListings() {
     const { data, error } = await supabase
       .from("listings")
@@ -589,7 +583,6 @@ export default function HomePage() {
     try {
       const uploadedUrls: string[] = [];
 
-      // Upload local files to Supabase Storage
       for (const file of newFiles) {
         const ext = file.name.split(".").pop() || "jpg";
         const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -603,7 +596,6 @@ export default function HomePage() {
         }
       }
 
-      // Keep preset URLs if selected
       const presetUrls = newPreviewUrls.filter((u) => u.startsWith("https://"));
       const finalImages =
         uploadedUrls.length > 0 || presetUrls.length > 0
@@ -669,7 +661,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100">
-      {/* Header */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f17]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button
@@ -749,7 +740,6 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Detail Page */}
       {activeListing ? (
         <main className="mx-auto max-w-5xl px-4 py-6">
           <button
@@ -804,7 +794,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Latvia Market Specs Grid */}
               <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-[#0b0f17] p-4 text-xs sm:grid-cols-3 lg:grid-cols-6">
                 <div>
                   <span className="block text-slate-400">{t.yearLabel}</span>
@@ -846,7 +835,6 @@ export default function HomePage() {
                 {lang === "lv" ? activeListing.description_lv : activeListing.description_en}
               </p>
 
-              {/* Direct Seller Contact Bar */}
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
                 <div className="text-xs">
                   <span className="text-slate-400">{t.sellerLabel}: </span>
@@ -876,7 +864,6 @@ export default function HomePage() {
         </main>
       ) : (
         <>
-          {/* Filter Bar */}
           <section className="border-b border-white/10 bg-[#0e1420]">
             <div className="mx-auto max-w-7xl px-4 py-5">
               <div className="flex flex-wrap items-end justify-between gap-4">
@@ -981,7 +968,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Compact Cards Grid */}
           <main className="mx-auto max-w-7xl px-4 py-6">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -1062,7 +1048,6 @@ export default function HomePage() {
         </>
       )}
 
-      {/* Email Verification Auth Modal */}
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
@@ -1166,7 +1151,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* My Listings Management Modal */}
       {isMyListingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <div className="w-full max-w-2xl rounded-2xl border border-white/15 bg-[#121826] p-6">
@@ -1233,7 +1217,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 4-Step Listing Wizard */}
       {isWizardOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
@@ -1495,7 +1478,7 @@ export default function HomePage() {
                     accept="image/*"
                     multiple
                     onChange={handleFileSelect}
-                    className="mt-1.5 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:font-semibold file:text-white"
+                    className="mt-1.5 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 py-1.5 file:font-semibold file:text-white"
                   />
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
