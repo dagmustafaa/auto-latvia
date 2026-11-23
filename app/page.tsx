@@ -305,6 +305,7 @@ const UI_TEXT = {
       "3. Aizliegts saturs: Aizliegts publicēt viltus sludinājumus, krāpnieciskus piedāvājumus, trešo personu autortiesību pārkāpumus vai Latvijas un ES tiesību aktiem neatbilstošu saturu.",
       "4. Moderācija: Platformai ir tiesības dzēst noteikumiem neatbilstošus sludinājumus vai ierobežot piekļuvi ļaunprātīgas izmantošanas gadījumā."
     ],
+    contactBtn: "Sazināties",
     cityLabel: "Pilsēta",
     topBtn: "Augšup",
     copyrightText: "© 2026 AutoLatvija — visas tiesības aizsargātas",
@@ -425,6 +426,7 @@ const UI_TEXT = {
       "3. Запрещенный контент: запрещены ложные объявления, мошенничество, нарушение авторских прав и публикация материалов, нарушающих законы Латвии и ЕС.",
       "4. Модерация: администрация вправе удалять объявления, нарушающие правила, и ограничивать доступ при злоупотреблениях."
     ],
+    contactBtn: "Связаться",
     cityLabel: "Город",
     topBtn: "Наверх",
     copyrightText: "© 2026 AutoLatvija — все права защищены",
@@ -545,6 +547,7 @@ const UI_TEXT = {
       "3. Prohibited Content: fraudulent listings, misleading information, copyright infringement, or content violating Latvian or EU law is prohibited.",
       "4. Moderation: listings violating these terms may be removed and abusive accounts may be restricted."
     ],
+    contactBtn: "Contact",
     cityLabel: "City",
     topBtn: "Top",
     copyrightText: "© 2026 AutoLatvija — all rights reserved",
