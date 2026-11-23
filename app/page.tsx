@@ -727,10 +727,8 @@ export default function HomePage() {
   ]);
 
   function openListingDetail(id: string) {
-    setSelectedId(id);
-    setDetailPhotoIndex(0);
-    window.location.hash = `listing-${id}`;
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const url = `${window.location.origin}${window.location.pathname}#listing-${id}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   function closeListingDetail() {
