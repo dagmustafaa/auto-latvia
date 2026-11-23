@@ -665,10 +665,7 @@ export default function HomePage() {
   const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([PHOTO_PRESETS[0].url]);
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
-
-    const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(null);
-
-  const t = UI_TEXT[lang];
+const t = UI_TEXT[lang];
 
   async function loadListings() {
     const { data, error } = await supabase
@@ -1773,22 +1770,10 @@ export default function HomePage() {
               </div>
               <div className="pt-1.5 border-t border-white/10 space-y-1">
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => setLegalModal("privacy")}
-                    className="hover:text-amber-400 cursor-pointer"
-                  >
-                    {t.privacyBtn}
-                  </button>
+                  <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 cursor-pointer">{t.privacyBtn}</a>
                 </div>
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => setLegalModal("terms")}
-                    className="hover:text-amber-400 cursor-pointer"
-                  >
-                    {t.termsBtn}
-                  </button>
+                  <a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 cursor-pointer">{t.termsBtn}</a>
                 </div>
               </div>
             </div>
@@ -1806,40 +1791,6 @@ export default function HomePage() {
         </button>
       </footer>
 
-      {legalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-xl rounded-2xl border border-white/15 bg-[#121826] p-6">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-base font-extrabold text-white">
-                {legalModal === "privacy" ? t.privacyTitle : t.termsTitle}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setLegalModal(null)}
-                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1 text-xs leading-relaxed text-slate-300">
-              {(legalModal === "privacy" ? t.privacyBody : t.termsBody).map((para, idx) => (
-                <p key={idx}>{para}</p>
-              ))}
-            </div>
-
-            <div className="mt-5 flex justify-end border-t border-white/10 pt-4">
-              <button
-                type="button"
-                onClick={() => setLegalModal(null)}
-                className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
-              >
-                {t.legalCloseBtn}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
