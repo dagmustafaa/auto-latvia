@@ -469,6 +469,28 @@ function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+function getAdHref(item: Listing) {
+  const slug = (item.brand + "-" + item.model + "-" + item.year)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return "#ad=" + slug + "--" + encodeURIComponent(item.id);
+}
+
+function parseAdHash(rawHash: string): string | null {
+  const h = rawHash || "";
+  if (h.startsWith("#ad=")) {
+    const parts = h.slice(4).split("--");
+    const last = decodeURIComponent(parts[parts.length - 1] || "").trim();
+    return last || null;
+  }
+  if (h.startsWith("#listing-")) {
+    const val = decodeURIComponent(h.replace("#listing-", "")).trim();
+    return val || null;
+  }
+  return null;
+}
+
 export default function HomePage() {
   const [lang, setLang] = useState<Lang>("lv");
   const [dbListings, setDbListings] = useState<Listing[]>([]);
@@ -476,11 +498,9 @@ export default function HomePage() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
-  // Favorites state
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [onlySaved, setOnlySaved] = useState(false);
 
-  // Filters
   const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
   const [filterBrand, setFilterBrand] = useState("All");
   const [filterModel, setFilterModel] = useState("All");
@@ -499,7 +519,6 @@ export default function HomePage() {
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
   const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
 
-  // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authName, setAuthName] = useState("");
@@ -511,7 +530,6 @@ export default function HomePage() {
 
   const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
 
-  // Wizard
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
@@ -534,14 +552,7 @@ export default function HomePage() {
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-        function getAdHref(item: Listing) {
-    const slug = (item.brand + "-" + item.model + "-" + item.year).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    return "#ad=" + slug + "--" + encodeURIComponent(item.id);
-  }
-
   const t = UI_TEXT[lang];
-
-  
 
   async function loadListings() {
     const { data, error } = await supabase
@@ -561,7 +572,7 @@ export default function HomePage() {
       const rawSaved = localStorage.getItem("autolatvija_saved_ids");
       if (rawSaved) setSavedIds(JSON.parse(rawSaved));
     } catch {
-      // ignore storage error
+      // ignore
     }
 
     supabase.auth.getSession().then(({ data }) => {
@@ -591,17 +602,26 @@ export default function HomePage() {
     };
   }, []);
 
-  function buildAdUrl(item: Listing) {
-    const slug = `${item.brand}-${item.model}-${item.year}`
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-    return `${window.location.pathname}?ad=${slug}--${encodeURIComponent(item.id)}`;
+  useEffect(() => {
+    function syncFromHash() {
+      const parsedId = parseAdHash(window.location.hash);
+      setSelectedId(parsedId);
+      setDetailPhotoIndex(0);
+    }
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
+  function closeListingDetail() {
+    setSelectedId(null);
+    if (window.location.hash) {
+      window.history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
   }
 
-  
-
   function toggleSave(e: React.MouseEvent, id: string) {
+    e.preventDefault();
     e.stopPropagation();
     setSavedIds((prev) => {
       const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
@@ -637,10 +657,10 @@ export default function HomePage() {
     return dbListings.filter((item) => item.user_id === userId);
   }, [dbListings, userId]);
 
-  const activeListing = useMemo(
-    () => allListings.find((item) => item.id === selectedId) ?? null,
-    [allListings, selectedId]
-  );
+  const activeListing = useMemo(() => {
+    if (!selectedId) return null;
+    return allListings.find((item) => item.id === selectedId) ?? null;
+  }, [allListings, selectedId]);
 
   const similarListings = useMemo(() => {
     if (!activeListing) return [];
@@ -727,13 +747,6 @@ export default function HomePage() {
     query,
     sortBy,
   ]);
-
-    function closeListingDetail() {
-    setSelectedId(null);
-    if (window.location.hash) {
-      window.history.pushState("", document.title, window.location.pathname + window.location.search);
-    }
-  }
 
   function handlePostClick() {
     if (!userId) {
@@ -1234,7 +1247,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Row 1: Brand, Model, City, Fuel, Gearbox, Search */}
               <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
                 <select
                   value={filterBrand}
@@ -1313,7 +1325,6 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Row 2: Price Min/Max, Year Min/Max, Max KM, Sort & Reset */}
               <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-7">
                 <input
                   type="number"
@@ -1394,7 +1405,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                              {filtered.map((item) => {
+                {filtered.map((item) => {
                   const activeIdx = hoverPhotoIndex[item.id] ?? 0;
                   const currentSrc = item.images[activeIdx] ?? item.images[0];
                   const isSaved = savedIds.includes(item.id);
@@ -1425,11 +1436,7 @@ export default function HomePage() {
 
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleSave(e, item.id);
-                          }}
+                          onClick={(e) => toggleSave(e, item.id)}
                           aria-label="Save listing"
                           className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
                             isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
