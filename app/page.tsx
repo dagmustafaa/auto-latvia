@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type Lang = "lv" | "en";
+type Lang = "lv" | "ru" | "en";
 type Category = "car" | "moto";
 
 interface Listing {
@@ -23,6 +23,8 @@ interface Listing {
   body_type: string;
   engine_volume: string;
   ta_valid_until: string;
+  plate_number?: string;
+  vin?: string;
   badge: string;
   images: string[];
   description_lv: string;
@@ -62,19 +64,19 @@ const MODELS_BY_BRAND: Record<Category, Record<string, string[]>> = {
 
 const PHOTO_PRESETS = [
   {
-    label: { lv: "Sedans / Hečbeks", en: "Sedan / Hatchback" },
+    label: { lv: "Sedans / Hečbeks", ru: "Седан / Хэтчбек", en: "Sedan / Hatchback" },
     url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=900&q=80",
   },
   {
-    label: { lv: "Hibrīds / Pilsētas", en: "Hybrid / City" },
+    label: { lv: "Hibrīds / Pilsētas", ru: "Гибрид / Город", en: "Hybrid / City" },
     url: "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=900&q=80",
   },
   {
-    label: { lv: "Universālis / 4x4", en: "Wagon / AWD" },
+    label: { lv: "Universālis / 4x4", ru: "Универсал / 4x4", en: "Wagon / AWD" },
     url: "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=900&q=80",
   },
   {
-    label: { lv: "Motocikls", en: "Motorcycle" },
+    label: { lv: "Motocikls", ru: "Мотоцикл", en: "Motorcycle" },
     url: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=900&q=80",
   },
 ];
@@ -96,6 +98,8 @@ const DEMO_LISTINGS: Listing[] = [
     body_type: "Hatchback",
     engine_volume: "1.6 TDI",
     ta_valid_until: "09.2027",
+    plate_number: "LV-4821",
+    vin: "WVWZZZAUZHP123456",
     badge: "TA 09.2027",
     images: [PHOTO_PRESETS[0].url, PHOTO_PRESETS[1].url, PHOTO_PRESETS[2].url],
     description_lv: "Kopts auto no Rīgas, pilna servisa vēsture, jaunas ziemas riepas.",
@@ -117,6 +121,8 @@ const DEMO_LISTINGS: Listing[] = [
     body_type: "Sedan",
     engine_volume: "1.8 Hybrid",
     ta_valid_until: "11.2027",
+    plate_number: "MN-9032",
+    vin: "SB1K93BE50E098765",
     badge: "TA 11.2027",
     images: [PHOTO_PRESETS[1].url, PHOTO_PRESETS[0].url],
     description_lv: "Ekonomisks hibrīds ikdienai un garākiem braucieniem pa Latviju.",
@@ -138,6 +144,8 @@ const DEMO_LISTINGS: Listing[] = [
     body_type: "Wagon",
     engine_volume: "2.0d xDrive",
     ta_valid_until: "06.2027",
+    plate_number: "KJ-7714",
+    vin: "WBA8H910X0K543210",
     badge: "4x4 • TA 06.2027",
     images: [PHOTO_PRESETS[2].url, PHOTO_PRESETS[0].url, PHOTO_PRESETS[1].url],
     description_lv: "Pilnpiedziņa Latvijas ziemai, ietilpīgs universālis.",
@@ -159,6 +167,8 @@ const DEMO_LISTINGS: Listing[] = [
     body_type: "Naked",
     engine_volume: "125cc ABS",
     ta_valid_until: "05.2028",
+    plate_number: "TH-125",
+    vin: "TSYTA01A5R0004321",
     badge: "ABS • Šķidruma dzese",
     images: [PHOTO_PRESETS[3].url, PHOTO_PRESETS[0].url],
     description_lv: "Veikls 125cc motocikls ar ABS un šķidruma dzesēšanu pilsētai.",
@@ -168,35 +178,36 @@ const DEMO_LISTINGS: Listing[] = [
 
 const LABELS = {
   fuel: {
-    Diesel: { lv: "Dīzelis", en: "Diesel" },
-    Petrol: { lv: "Benzīns", en: "Petrol" },
-    Hybrid: { lv: "Hibrīds", en: "Hybrid" },
-    Electric: { lv: "Elektro", en: "Electric" },
-  } as Record<string, { lv: string; en: string }>,
+    Diesel: { lv: "Dīzelis", ru: "Дизель", en: "Diesel" },
+    Petrol: { lv: "Benzīns", ru: "Бензин", en: "Petrol" },
+    Hybrid: { lv: "Hibrīds", ru: "Гибрид", en: "Hybrid" },
+    Electric: { lv: "Elektro", ru: "Электро", en: "Electric" },
+  } as Record<string, { lv: string; ru: string; en: string }>,
   transmission: {
-    Automatic: { lv: "Automāts", en: "Automatic" },
-    Manual: { lv: "Manuālā", en: "Manual" },
-  } as Record<string, { lv: string; en: string }>,
+    Automatic: { lv: "Automāts", ru: "Автомат", en: "Automatic" },
+    Manual: { lv: "Manuālā", ru: "Механика", en: "Manual" },
+  } as Record<string, { lv: string; ru: string; en: string }>,
   body: {
-    Sedan: { lv: "Sedans", en: "Sedan" },
-    Hatchback: { lv: "Hečbeks", en: "Hatchback" },
-    Wagon: { lv: "Universālis", en: "Wagon" },
-    SUV: { lv: "Apvidus (SUV)", en: "SUV / 4x4" },
-    Coupe: { lv: "Kupeja", en: "Coupe" },
-    Naked: { lv: "Naked / Street", en: "Naked / Street" },
-    Sport: { lv: "Sporta", en: "Sport" },
-    Touring: { lv: "Tūrisma / Enduro", en: "Touring / Enduro" },
-    Scooter: { lv: "Motorolleris", en: "Scooter" },
-  } as Record<string, { lv: string; en: string }>,
+    Sedan: { lv: "Sedans", ru: "Седан", en: "Sedan" },
+    Hatchback: { lv: "Hečbeks", ru: "Хэтчбек", en: "Hatchback" },
+    Wagon: { lv: "Universālis", ru: "Универсал", en: "Wagon" },
+    SUV: { lv: "Apvidus (SUV)", ru: "Внедорожник (SUV)", en: "SUV / 4x4" },
+    Coupe: { lv: "Kupeja", ru: "Купе", en: "Coupe" },
+    Naked: { lv: "Naked / Street", ru: "Naked / Стрит", en: "Naked / Street" },
+    Sport: { lv: "Sporta", ru: "Спорт", en: "Sport" },
+    Touring: { lv: "Tūrisma / Enduro", ru: "Туризм / Эндуро", en: "Touring / Enduro" },
+    Scooter: { lv: "Motorolleris", ru: "Скутер", en: "Scooter" },
+  } as Record<string, { lv: string; ru: string; en: string }>,
 };
 
 const UI_TEXT = {
   lv: {
     brand: "AutoLatvija",
     heroTitle: "Auto & Moto tirgus Latvijā",
-    heroSubtitle: "Filtrē pēc markas, modeļa, TA apskates, kārbas un pilsētas.",
+    heroSubtitle: "Filtrē pēc markas, modeļa, cenas, gada, nobraukuma, TA un pilsētas.",
     postBtn: "+ Ielikt sludinājumu",
     myListingsBtn: "Mani sludinājumi",
+    savedBtn: "Saglabātie",
     loginBtn: "Ieiet / Reģistrēties",
     logoutBtn: "Iziet",
     allCategories: "Visi",
@@ -206,9 +217,18 @@ const UI_TEXT = {
     allBrands: "Visas markas",
     allModels: "Visi modeļi",
     allCities: "Visas pilsētas",
+    allFuels: "Visa degviela",
+    allTrans: "Visa kārba",
+    minPricePh: "Cena no €",
+    maxPricePh: "Cena līdz €",
+    minYearPh: "Gads no",
+    maxYearPh: "Gads līdz",
+    maxKmPh: "Nobraukums līdz (km)",
+    resetFilters: "Notīrīt filtrus",
     sortPriceAsc: "Cena: no zemākās",
     sortPriceDesc: "Cena: no augstākās",
     sortYearDesc: "Gads: jaunākie",
+    sortKmAsc: "Nobraukums: mazākais",
     resultsCount: (n: number) => `${n} sludinājumi`,
     backToList: "← Atpakaļ uz sludinājumiem",
     sellerLabel: "Pārdevējs",
@@ -218,6 +238,12 @@ const UI_TEXT = {
     transLabel: "Ātrumkārba",
     bodyLabel: "Virsbūves tips",
     taLabel: "Tehniskā apskate (TA)",
+    plateLabel: "Valsts numurs",
+    vinLabel: "VIN kods",
+    csddCheckBtn: "Pārbaudīt e.CSDD ↗",
+    similarTitle: "Līdzīgi sludinājumi",
+    saveAction: "Saglabāt",
+    savedAction: "Saglabāts",
     callSeller: "Zvanīt pārdevējam",
     whatsappSeller: "Rakstīt WhatsApp",
     authSignInTab: "Ieiet kontā",
@@ -233,7 +259,7 @@ const UI_TEXT = {
     wizardTitle: "Jauns sludinājums",
     step1Title: "1. Kategorija & Pilsēta",
     step2Title: "2. Izvēlies marku",
-    step3Title: "3. Modelis & Tehniskie dati (TA)",
+    step3Title: "3. Modelis & Tehniskie dati (TA / CSDD)",
     step4Title: "4. Bildes, Kontakti & Apraksts",
     chooseModel: "Izvēlies modeli",
     customModelPlaceholder: "Vai ieraksti citu modeli",
@@ -242,6 +268,8 @@ const UI_TEXT = {
     kmInputLabel: "Nobraukums (km)",
     engineLabel: "Motors (piem. 2.0 TDI / 125cc)",
     taInputLabel: "TA derīga līdz (piem. 10.2027)",
+    plateInputLabel: "Valsts numurs (neobligāti)",
+    vinInputLabel: "VIN numurs (neobligāti)",
     phoneLabel: "Tālrunis (WhatsApp)",
     addPhotosLabel: "Sludinājuma bildes",
     uploadBoxTitle: "Spied šeit, lai izvēlētos bildes no datora vai telefona",
@@ -254,16 +282,104 @@ const UI_TEXT = {
     publishingBtn: "Publicē...",
     myPanelTitle: "Mani aktīvie sludinājumi",
     noMyListings: "Tev vēl nav publicētu sludinājumu.",
+    noSavedListings: "Nav saglabātu sludinājumu. Spied ♥ uz kartītes, lai saglabātu.",
     deleteBtn: "Dzēst",
     updatePriceBtn: "Mainīt cenu",
     cityLabel: "Pilsēta",
   },
+  ru: {
+    brand: "AutoLatvija",
+    heroTitle: "Авто и мото рынок Латвии",
+    heroSubtitle: "Фильтр по марке, модели, цене, году, пробегу, ТО и городу.",
+    postBtn: "+ Подать объявление",
+    myListingsBtn: "Мои объявления",
+    savedBtn: "Избранное",
+    loginBtn: "Войти / Регистрация",
+    logoutBtn: "Выйти",
+    allCategories: "Все",
+    carsCategory: "Легковые авто",
+    motosCategory: "Мотоциклы",
+    searchPlaceholder: "Поиск (напр. Golf, 2.0 TDI, Rīga)...",
+    allBrands: "Все марки",
+    allModels: "Все модели",
+    allCities: "Все города",
+    allFuels: "Любое топливо",
+    allTrans: "Любая КПП",
+    minPricePh: "Цена от €",
+    maxPricePh: "Цена до €",
+    minYearPh: "Год от",
+    maxYearPh: "Год до",
+    maxKmPh: "Пробег до (км)",
+    resetFilters: "Сбросить фильтры",
+    sortPriceAsc: "Цена: по возрастанию",
+    sortPriceDesc: "Цена: по убыванию",
+    sortYearDesc: "Год: сначала новые",
+    sortKmAsc: "Пробег: наименьший",
+    resultsCount: (n: number) => `${n} объявлений`,
+    backToList: "← Назад к объявлениям",
+    sellerLabel: "Продавец",
+    yearLabel: "Год выпуска",
+    kmLabel: "Пробег",
+    fuelLabel: "Двигатель / Топливо",
+    transLabel: "Коробка передач",
+    bodyLabel: "Тип кузова",
+    taLabel: "Техосмотр (ТО)",
+    plateLabel: "Госномер",
+    vinLabel: "VIN код",
+    csddCheckBtn: "Проверить в e.CSDD ↗",
+    similarTitle: "Похожие объявления",
+    saveAction: "В избранное",
+    savedAction: "Сохранено",
+    callSeller: "Позвонить",
+    whatsappSeller: "Написать в WhatsApp",
+    authSignInTab: "Вход",
+    authSignUpTab: "Регистрация",
+    authTitle: "Аккаунт для управления объявлениями",
+    authDesc: "Зарегистрируйтесь по e-mail и подтвердите ссылку AutoLatvija в почте.",
+    nameLabel: "Имя",
+    emailLabel: "E-mail",
+    passwordLabel: "Пароль (мин. 6 символов)",
+    signInSubmit: "Войти",
+    signUpSubmit: "Создать аккаунт",
+    verifyNotice: "Письмо AutoLatvija отправлено! Перейдите по ссылке в почте, затем нажмите 'Вход'.",
+    wizardTitle: "Новое объявление",
+    step1Title: "1. Категория и город",
+    step2Title: "2. Выберите марку",
+    step3Title: "3. Модель и характеристики (ТО / CSDD)",
+    step4Title: "4. Фото, контакты и описание",
+    chooseModel: "Выберите модель",
+    customModelPlaceholder: "Или введите другую модель",
+    priceLabel: "Цена (EUR)",
+    yearInputLabel: "Год",
+    kmInputLabel: "Пробег (км)",
+    engineLabel: "Двигатель (напр. 2.0 TDI / 125cc)",
+    taInputLabel: "ТО годен до (напр. 10.2027)",
+    plateInputLabel: "Госномер (необязательно)",
+    vinInputLabel: "VIN номер (необязательно)",
+    phoneLabel: "Телефон (WhatsApp)",
+    addPhotosLabel: "Фотографии",
+    uploadBoxTitle: "Нажмите сюда, чтобы выбрать фото с компьютера или телефона",
+    uploadBoxSub: "Можно выбрать несколько фото сразу (JPG, PNG, WEBP)",
+    descLabel: "Описание",
+    descPlaceholder: "Опишите состояние, обслуживание, резину...",
+    backBtn: "Назад",
+    nextBtn: "Далее",
+    publishBtn: "Опубликовать",
+    publishingBtn: "Публикация...",
+    myPanelTitle: "Мои активные объявления",
+    noMyListings: "У вас пока нет опубликованных объявлений.",
+    noSavedListings: "Нет сохраненных объявлений. Нажмите ♥ на карточке.",
+    deleteBtn: "Удалить",
+    updatePriceBtn: "Изменить цену",
+    cityLabel: "Город",
+  },
   en: {
     brand: "AutoLatvija",
     heroTitle: "Car & Moto marketplace in Latvia",
-    heroSubtitle: "Filter by brand, model, TA inspection, gearbox, and city.",
+    heroSubtitle: "Filter by brand, model, price, year, mileage, TA inspection, and city.",
     postBtn: "+ Post listing",
     myListingsBtn: "My listings",
+    savedBtn: "Saved",
     loginBtn: "Sign in / Register",
     logoutBtn: "Sign out",
     allCategories: "All",
@@ -273,9 +389,18 @@ const UI_TEXT = {
     allBrands: "All brands",
     allModels: "All models",
     allCities: "All cities",
+    allFuels: "All fuels",
+    allTrans: "All gearboxes",
+    minPricePh: "Min price €",
+    maxPricePh: "Max price €",
+    minYearPh: "Min year",
+    maxYearPh: "Max year",
+    maxKmPh: "Max mileage (km)",
+    resetFilters: "Reset filters",
     sortPriceAsc: "Price: low to high",
     sortPriceDesc: "Price: high to low",
     sortYearDesc: "Year: newest first",
+    sortKmAsc: "Mileage: lowest first",
     resultsCount: (n: number) => `${n} listings`,
     backToList: "← Back to listings",
     sellerLabel: "Seller",
@@ -285,6 +410,12 @@ const UI_TEXT = {
     transLabel: "Transmission",
     bodyLabel: "Body type",
     taLabel: "Inspection (TA)",
+    plateLabel: "License plate",
+    vinLabel: "VIN code",
+    csddCheckBtn: "Check on e.CSDD ↗",
+    similarTitle: "Similar listings",
+    saveAction: "Save",
+    savedAction: "Saved",
     callSeller: "Call seller",
     whatsappSeller: "Message on WhatsApp",
     authSignInTab: "Sign in",
@@ -300,7 +431,7 @@ const UI_TEXT = {
     wizardTitle: "New listing",
     step1Title: "1. Category & City",
     step2Title: "2. Choose brand",
-    step3Title: "3. Model & Technical specs (TA)",
+    step3Title: "3. Model & Technical specs (TA / CSDD)",
     step4Title: "4. Photos, Contact & Description",
     chooseModel: "Choose model",
     customModelPlaceholder: "Or type another model",
@@ -309,6 +440,8 @@ const UI_TEXT = {
     kmInputLabel: "Mileage (km)",
     engineLabel: "Engine (e.g. 2.0 TDI / 125cc)",
     taInputLabel: "TA valid until (e.g. 10.2027)",
+    plateInputLabel: "License plate (optional)",
+    vinInputLabel: "VIN number (optional)",
     phoneLabel: "Phone (WhatsApp)",
     addPhotosLabel: "Listing photos",
     uploadBoxTitle: "Click here to select photos from your computer or phone",
@@ -321,6 +454,7 @@ const UI_TEXT = {
     publishingBtn: "Publishing...",
     myPanelTitle: "My active listings",
     noMyListings: "You have not published any listings yet.",
+    noSavedListings: "No saved listings yet. Click ♥ on any card to save it.",
     deleteBtn: "Delete",
     updatePriceBtn: "Edit price",
     cityLabel: "City",
@@ -329,12 +463,7 @@ const UI_TEXT = {
 
 function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="currentColor"
-      aria-hidden="true"
-      className={className}
-    >
+    <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" className={className}>
       <path d="M16.004 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.256.59 4.46 1.71 6.404L3.09 28.8l6.566-1.722a12.74 12.74 0 0 0 6.348 1.694h.006c7.058 0 12.798-5.74 12.798-12.8 0-3.42-1.332-6.636-3.75-9.052A12.716 12.716 0 0 0 16.004 3.2zm0 23.41h-.004a10.6 10.6 0 0 1-5.404-1.48l-.388-.23-3.896 1.022 1.04-3.798-.252-.402a10.575 10.575 0 0 1-1.622-5.642c0-5.854 4.764-10.618 10.624-10.618 2.836 0 5.502 1.106 7.506 3.112a10.548 10.548 0 0 1 3.11 7.51c0 5.856-4.764 10.626-10.614 10.626zm5.826-7.954c-.32-.16-1.89-.932-2.182-1.038-.292-.106-.506-.16-.718.16-.214.318-.826 1.038-1.012 1.252-.186.212-.372.24-.692.08-.32-.16-1.35-.498-2.572-1.588-.95-.848-1.592-1.896-1.778-2.214-.186-.32-.02-.492.14-.652.144-.142.32-.372.48-.558.16-.186.212-.32.32-.532.106-.214.052-.4-.028-.558-.08-.16-.718-1.732-.984-2.37-.26-.622-.524-.538-.718-.548l-.612-.01c-.214 0-.56.08-.852.4-.292.318-1.118 1.092-1.118 2.662s1.144 3.088 1.304 3.3c.16.214 2.252 3.438 5.456 4.822.762.33 1.358.526 1.822.674.766.244 1.462.21 2.012.128.614-.092 1.89-.772 2.156-1.518.266-.746.266-1.384.186-1.518-.08-.132-.292-.212-.612-.372z" />
     </svg>
   );
@@ -347,17 +476,30 @@ export default function HomePage() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
+  // Favorites state
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [onlySaved, setOnlySaved] = useState(false);
+
+  // Filters
   const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
   const [filterBrand, setFilterBrand] = useState("All");
   const [filterModel, setFilterModel] = useState("All");
   const [selectedCity, setSelectedCity] = useState("All");
+  const [filterFuel, setFilterFuel] = useState("All");
+  const [filterTrans, setFilterTrans] = useState("All");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minYear, setMinYear] = useState("");
+  const [maxYear, setMaxYear] = useState("");
+  const [maxKm, setMaxKm] = useState("");
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc">("yearDesc");
+  const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc" | "kmAsc">("yearDesc");
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
   const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
 
+  // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authName, setAuthName] = useState("");
@@ -369,6 +511,7 @@ export default function HomePage() {
 
   const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
 
+  // Wizard
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
@@ -383,6 +526,8 @@ export default function HomePage() {
   const [newBody, setNewBody] = useState("Wagon");
   const [newEngine, setNewEngine] = useState("2.0 TDI");
   const [newTa, setNewTa] = useState("10.2027");
+  const [newPlate, setNewPlate] = useState("");
+  const [newVin, setNewVin] = useState("");
   const [newPhone, setNewPhone] = useState("+3712");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([PHOTO_PRESETS[0].url]);
@@ -404,6 +549,13 @@ export default function HomePage() {
 
   useEffect(() => {
     loadListings();
+
+    try {
+      const rawSaved = localStorage.getItem("autolatvija_saved_ids");
+      if (rawSaved) setSavedIds(JSON.parse(rawSaved));
+    } catch {
+      // ignore storage error
+    }
 
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user;
@@ -447,6 +599,35 @@ export default function HomePage() {
     return () => window.removeEventListener("hashchange", syncFromHash);
   }, []);
 
+  function toggleSave(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
+    setSavedIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem("autolatvija_saved_ids", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }
+
+  function resetAllFilters() {
+    setCategoryFilter("all");
+    setFilterBrand("All");
+    setFilterModel("All");
+    setSelectedCity("All");
+    setFilterFuel("All");
+    setFilterTrans("All");
+    setMinPrice("");
+    setMaxPrice("");
+    setMinYear("");
+    setMaxYear("");
+    setMaxKm("");
+    setQuery("");
+    setOnlySaved(false);
+  }
+
   const allListings = useMemo(() => [...dbListings, ...DEMO_LISTINGS], [dbListings]);
 
   const myListings = useMemo(() => {
@@ -458,6 +639,13 @@ export default function HomePage() {
     () => allListings.find((item) => item.id === selectedId) ?? null,
     [allListings, selectedId]
   );
+
+  const similarListings = useMemo(() => {
+    if (!activeListing) return [];
+    return allListings
+      .filter((item) => item.id !== activeListing.id && item.category === activeListing.category)
+      .slice(0, 4);
+  }, [allListings, activeListing]);
 
   const filterBrandOptions = useMemo(() => {
     if (categoryFilter === "car") return Object.keys(MODELS_BY_BRAND.car);
@@ -488,28 +676,61 @@ export default function HomePage() {
   );
 
   const filtered = useMemo(() => {
+    const minP = minPrice ? Number(minPrice) : null;
+    const maxP = maxPrice ? Number(maxPrice) : null;
+    const minY = minYear ? Number(minYear) : null;
+    const maxY = maxYear ? Number(maxYear) : null;
+    const maxK = maxKm ? Number(maxKm) : null;
+
     const base = allListings.filter((item) => {
-      const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
-      const matchesBrand = filterBrand === "All" || item.brand === filterBrand;
-      const matchesModel = filterModel === "All" || item.model === filterModel;
-      const matchesCity = selectedCity === "All" || item.city === selectedCity;
-      const searchBlob = `${item.brand} ${item.model} ${item.engine_volume} ${item.city}`.toLowerCase();
-      const matchesQuery =
-        query.trim() === "" || searchBlob.includes(query.trim().toLowerCase());
-      return matchesCategory && matchesBrand && matchesModel && matchesCity && matchesQuery;
+      if (onlySaved && !savedIds.includes(item.id)) return false;
+      if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
+      if (filterBrand !== "All" && item.brand !== filterBrand) return false;
+      if (filterModel !== "All" && item.model !== filterModel) return false;
+      if (selectedCity !== "All" && item.city !== selectedCity) return false;
+      if (filterFuel !== "All" && item.fuel !== filterFuel) return false;
+      if (filterTrans !== "All" && item.transmission !== filterTrans) return false;
+      if (minP !== null && !Number.isNaN(minP) && item.price_eur < minP) return false;
+      if (maxP !== null && !Number.isNaN(maxP) && item.price_eur > maxP) return false;
+      if (minY !== null && !Number.isNaN(minY) && item.year < minY) return false;
+      if (maxY !== null && !Number.isNaN(maxY) && item.year > maxY) return false;
+      if (maxK !== null && !Number.isNaN(maxK) && item.mileage_km > maxK) return false;
+
+      const searchBlob = `${item.brand} ${item.model} ${item.engine_volume} ${item.city} ${item.plate_number ?? ""}`.toLowerCase();
+      if (query.trim() !== "" && !searchBlob.includes(query.trim().toLowerCase())) return false;
+      return true;
     });
 
     return [...base].sort((a, b) => {
       if (sortBy === "priceAsc") return a.price_eur - b.price_eur;
       if (sortBy === "priceDesc") return b.price_eur - a.price_eur;
+      if (sortBy === "kmAsc") return a.mileage_km - b.mileage_km;
       return b.year - a.year;
     });
-  }, [allListings, categoryFilter, filterBrand, filterModel, selectedCity, query, sortBy]);
+  }, [
+    allListings,
+    onlySaved,
+    savedIds,
+    categoryFilter,
+    filterBrand,
+    filterModel,
+    selectedCity,
+    filterFuel,
+    filterTrans,
+    minPrice,
+    maxPrice,
+    minYear,
+    maxYear,
+    maxKm,
+    query,
+    sortBy,
+  ]);
 
   function openListingDetail(id: string) {
     setSelectedId(id);
     setDetailPhotoIndex(0);
     window.location.hash = `listing-${id}`;
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function closeListingDetail() {
@@ -532,6 +753,8 @@ export default function HomePage() {
     setNewModel(MODELS_BY_BRAND[newCategory][defaultBrand]?.[0] ?? "");
     setNewFiles([]);
     setNewPreviewUrls([newCategory === "moto" ? PHOTO_PRESETS[3].url : PHOTO_PRESETS[0].url]);
+    setNewPlate("");
+    setNewVin("");
     setNewDesc("");
     setIsWizardOpen(true);
   }
@@ -553,7 +776,7 @@ export default function HomePage() {
           },
         });
         const timeoutReq = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("SMTP zaman aşımı (10sn). Supabase SMTP ayarlarını kontrol edin.")), 10000)
+          setTimeout(() => reject(new Error("SMTP timeout (10s). Check Supabase SMTP settings.")), 10000)
         );
         const { error } = await Promise.race([signUpReq, timeoutReq]);
         if (error) {
@@ -574,7 +797,7 @@ export default function HomePage() {
         setIsAuthOpen(false);
       }
     } catch (err: unknown) {
-      setAuthError(err instanceof Error ? err.message : "Connection error. Check Supabase URL/SMTP.");
+      setAuthError(err instanceof Error ? err.message : "Connection error.");
     } finally {
       setAuthLoading(false);
     }
@@ -636,6 +859,8 @@ export default function HomePage() {
         body_type: newBody,
         engine_volume: newEngine.trim() || "2.0",
         ta_valid_until: newTa.trim() || "TA derīga",
+        plate_number: newPlate.trim().toUpperCase(),
+        vin: newVin.trim().toUpperCase(),
         badge: newTa.trim() ? `TA ${newTa.trim()}` : "TA derīga",
         images: finalImages,
         description_lv: newDesc.trim() || "Papildu informācija pa tālruni vai WhatsApp.",
@@ -683,7 +908,10 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button
             type="button"
-            onClick={closeListingDetail}
+            onClick={() => {
+              closeListingDetail();
+              setOnlySaved(false);
+            }}
             className="flex items-center gap-2.5 text-left cursor-pointer"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400 text-sm font-black text-slate-950">
@@ -695,6 +923,21 @@ export default function HomePage() {
           </button>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                closeListingDetail();
+                setOnlySaved((prev) => !prev);
+              }}
+              className={`rounded-xl border px-3 py-2 text-xs font-bold cursor-pointer ${
+                onlySaved
+                  ? "border-rose-400 bg-rose-500/20 text-rose-200"
+                  : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              ♥ {t.savedBtn} ({savedIds.length})
+            </button>
+
             {userId ? (
               <>
                 <button
@@ -735,24 +978,18 @@ export default function HomePage() {
             </button>
 
             <div className="flex rounded-xl border border-white/15 bg-white/5 p-0.5 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setLang("lv")}
-                className={`rounded-lg px-2 py-1 cursor-pointer ${
-                  lang === "lv" ? "bg-white text-slate-950" : "text-slate-300"
-                }`}
-              >
-                LV
-              </button>
-              <button
-                type="button"
-                onClick={() => setLang("en")}
-                className={`rounded-lg px-2 py-1 cursor-pointer ${
-                  lang === "en" ? "bg-white text-slate-950" : "text-slate-300"
-                }`}
-              >
-                EN
-              </button>
+              {(["lv", "ru", "en"] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLang(code)}
+                  className={`rounded-lg px-2 py-1 uppercase cursor-pointer ${
+                    lang === code ? "bg-white text-slate-950" : "text-slate-300"
+                  }`}
+                >
+                  {code}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -760,13 +997,27 @@ export default function HomePage() {
 
       {activeListing ? (
         <main className="mx-auto max-w-5xl px-4 py-6">
-          <button
-            type="button"
-            onClick={closeListingDetail}
-            className="mb-4 rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
-          >
-            {t.backToList}
-          </button>
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={closeListingDetail}
+              className="rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
+            >
+              {t.backToList}
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => toggleSave(e, activeListing.id)}
+              className={`rounded-xl border px-3.5 py-2 text-xs font-bold cursor-pointer ${
+                savedIds.includes(activeListing.id)
+                  ? "border-rose-400 bg-rose-500/20 text-rose-200"
+                  : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
+              }`}
+            >
+              {savedIds.includes(activeListing.id) ? `♥ ${t.savedAction}` : `♡ ${t.saveAction}`}
+            </button>
+          </div>
 
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121826]">
             <div className="relative h-72 w-full bg-slate-950 sm:h-96">
@@ -775,7 +1026,7 @@ export default function HomePage() {
                 alt={`${activeListing.brand} ${activeListing.model}`}
                 className="h-full w-full object-cover"
               />
-              <span className="absolute left-4 top-4 rounded-lg bg-slate-950/85 px-3 py-1 text-xs font-semibold text-amber-300">
+              <span className="absolute left-4 top-4 rounded-lg bg-slate-950/85 px-3 py-1 text-xs font-semibold text-emerald-300">
                 {activeListing.badge}
               </span>
             </div>
@@ -849,8 +1100,37 @@ export default function HomePage() {
                 </div>
               </div>
 
+              {(activeListing.plate_number || activeListing.vin) && (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-xs">
+                  <div className="flex flex-wrap gap-5">
+                    {activeListing.plate_number && (
+                      <div>
+                        <span className="text-slate-400">{t.plateLabel}: </span>
+                        <strong className="rounded bg-white/10 px-2 py-0.5 font-mono text-white">
+                          {activeListing.plate_number}
+                        </strong>
+                      </div>
+                    )}
+                    {activeListing.vin && (
+                      <div>
+                        <span className="text-slate-400">{t.vinLabel}: </span>
+                        <strong className="font-mono text-slate-200">{activeListing.vin}</strong>
+                      </div>
+                    )}
+                  </div>
+                  <a
+                    href="https://e.csdd.lv/tlizmainas/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-amber-400 hover:underline"
+                  >
+                    {t.csddCheckBtn}
+                  </a>
+                </div>
+              )}
+
               <p className="mt-5 text-sm leading-relaxed text-slate-300">
-                {lang === "lv" ? activeListing.description_lv : activeListing.description_en}
+                {lang === "en" ? activeListing.description_en : activeListing.description_lv}
               </p>
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
@@ -881,6 +1161,41 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {similarListings.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-3 text-sm font-extrabold uppercase tracking-wider text-slate-300">
+                {t.similarTitle}
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {similarListings.map((sim) => (
+                  <article
+                    key={sim.id}
+                    onClick={() => openListingDetail(sim.id)}
+                    className="cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
+                  >
+                    <img
+                      src={sim.images[0]}
+                      alt={`${sim.brand} ${sim.model}`}
+                      className="h-32 w-full object-cover"
+                    />
+                    <div className="p-3">
+                      <div className="text-[11px] font-bold text-amber-400">
+                        {sim.brand} • {sim.year}
+                      </div>
+                      <div className="truncate text-sm font-bold text-white">{sim.model}</div>
+                      <div className="mt-1 flex items-center justify-between text-xs">
+                        <span className="text-slate-400">{sim.mileage_km.toLocaleString("en-US")} km</span>
+                        <span className="font-black text-amber-400">
+                          €{sim.price_eur.toLocaleString("en-US")}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
         </main>
       ) : (
         <>
@@ -922,7 +1237,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2.5 rounded-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
+              {/* Row 1: Brand, Model, City, Fuel, Gearbox, Search */}
+              <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
                 <select
                   value={filterBrand}
                   onChange={(e) => {
@@ -965,6 +1281,32 @@ export default function HomePage() {
                   ))}
                 </select>
 
+                <select
+                  value={filterFuel}
+                  onChange={(e) => setFilterFuel(e.target.value)}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                >
+                  <option value="All">{t.allFuels}</option>
+                  {Object.keys(LABELS.fuel).map((f) => (
+                    <option key={f} value={f}>
+                      {LABELS.fuel[f][lang]}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterTrans}
+                  onChange={(e) => setFilterTrans(e.target.value)}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                >
+                  <option value="All">{t.allTrans}</option>
+                  {Object.keys(LABELS.transmission).map((tr) => (
+                    <option key={tr} value={tr}>
+                      {LABELS.transmission[tr][lang]}
+                    </option>
+                  ))}
+                </select>
+
                 <input
                   type="text"
                   value={query}
@@ -972,18 +1314,72 @@ export default function HomePage() {
                   placeholder={t.searchPlaceholder}
                   className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
                 />
+              </div>
 
+              {/* Row 2: Price Min/Max, Year Min/Max, Max KM, Sort & Reset */}
+              <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-7">
+                <input
+                  type="number"
+                  min={0}
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  placeholder={t.minPricePh}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder={t.maxPricePh}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                />
+                <input
+                  type="number"
+                  min={1970}
+                  max={2027}
+                  value={minYear}
+                  onChange={(e) => setMinYear(e.target.value)}
+                  placeholder={t.minYearPh}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                />
+                <input
+                  type="number"
+                  min={1970}
+                  max={2027}
+                  value={maxYear}
+                  onChange={(e) => setMaxYear(e.target.value)}
+                  placeholder={t.maxYearPh}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step={5000}
+                  value={maxKm}
+                  onChange={(e) => setMaxKm(e.target.value)}
+                  placeholder={t.maxKmPh}
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                />
                 <select
                   value={sortBy}
                   onChange={(e) =>
-                    setSortBy(e.target.value as "priceAsc" | "priceDesc" | "yearDesc")
+                    setSortBy(e.target.value as "priceAsc" | "priceDesc" | "yearDesc" | "kmAsc")
                   }
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white lg:col-span-2"
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
                 >
                   <option value="yearDesc">{t.sortYearDesc}</option>
                   <option value="priceAsc">{t.sortPriceAsc}</option>
                   <option value="priceDesc">{t.sortPriceDesc}</option>
+                  <option value="kmAsc">{t.sortKmAsc}</option>
                 </select>
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
+                >
+                  {t.resetFilters}
+                </button>
               </div>
             </div>
           </section>
@@ -995,75 +1391,90 @@ export default function HomePage() {
               </span>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((item) => {
-                const activeIdx = hoverPhotoIndex[item.id] ?? 0;
-                const currentSrc = item.images[activeIdx] ?? item.images[0];
+            {filtered.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-[#121826] py-12 text-center text-xs text-slate-400">
+                {onlySaved ? t.noSavedListings : "0"}
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filtered.map((item) => {
+                  const activeIdx = hoverPhotoIndex[item.id] ?? 0;
+                  const currentSrc = item.images[activeIdx] ?? item.images[0];
+                  const isSaved = savedIds.includes(item.id);
 
-                return (
-                  <article
-                    key={item.id}
-                    onClick={() => openListingDetail(item.id)}
-                    className="group cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
-                  >
-                    <div
-                      onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
-                      onMouseLeave={() =>
-                        setHoverPhotoIndex((prev) => ({ ...prev, [item.id]: 0 }))
-                      }
-                      className="relative h-36 w-full overflow-hidden bg-slate-950"
+                  return (
+                    <article
+                      key={item.id}
+                      onClick={() => openListingDetail(item.id)}
+                      className="group cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                     >
-                      <img
-                        src={currentSrc}
-                        alt={`${item.brand} ${item.model}`}
-                        className="h-full w-full object-cover"
-                      />
-                      <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
-                        {item.badge}
-                      </span>
-                      <span className="absolute right-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] text-slate-200">
-                        {item.city}
-                      </span>
-
-                      {item.images.length > 1 && (
-                        <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/60 px-2 py-0.5">
-                          {item.images.map((_, i) => (
-                            <span
-                              key={i}
-                              className={`h-1 w-3 rounded-full ${
-                                activeIdx === i ? "bg-amber-400" : "bg-white/35"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-3.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-bold text-amber-400/90">
-                            {item.brand} • {item.engine_volume}
-                          </div>
-                          <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300">
-                            {item.model}
-                          </h2>
-                        </div>
-                        <span className="shrink-0 text-base font-black text-amber-400">
-                          €{item.price_eur.toLocaleString("en-US")}
+                      <div
+                        onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
+                        onMouseLeave={() =>
+                          setHoverPhotoIndex((prev) => ({ ...prev, [item.id]: 0 }))
+                        }
+                        className="relative h-36 w-full overflow-hidden bg-slate-950"
+                      >
+                        <img
+                          src={currentSrc}
+                          alt={`${item.brand} ${item.model}`}
+                          className="h-full w-full object-cover"
+                        />
+                        <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                          {item.badge}
                         </span>
+
+                        <button
+                          type="button"
+                          onClick={(e) => toggleSave(e, item.id)}
+                          aria-label="Save listing"
+                          className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
+                            isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
+                          }`}
+                        >
+                          {isSaved ? "♥" : "♡"}
+                        </button>
+
+                        {item.images.length > 1 && (
+                          <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/60 px-2 py-0.5">
+                            {item.images.map((_, i) => (
+                              <span
+                                key={i}
+                                className={`h-1 w-3 rounded-full ${
+                                  activeIdx === i ? "bg-amber-400" : "bg-white/35"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-slate-400">
-                        <span>{item.year}</span>
-                        <span>{item.mileage_km.toLocaleString("en-US")} km</span>
-                        <span>{LABELS.transmission[item.transmission]?.[lang] ?? item.transmission}</span>
+                      <div className="p-3.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-bold text-amber-400/90">
+                              {item.brand} • {item.engine_volume}
+                            </div>
+                            <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300">
+                              {item.model}
+                            </h2>
+                          </div>
+                          <span className="shrink-0 text-base font-black text-amber-400">
+                            €{item.price_eur.toLocaleString("en-US")}
+                          </span>
+                        </div>
+
+                        <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-slate-400">
+                          <span>{item.year}</span>
+                          <span>{item.mileage_km.toLocaleString("en-US")} km</span>
+                          <span>{item.city}</span>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </main>
         </>
       )}
@@ -1485,6 +1896,26 @@ export default function HomePage() {
                       className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.plateInputLabel}</label>
+                    <input
+                      type="text"
+                      value={newPlate}
+                      onChange={(e) => setNewPlate(e.target.value)}
+                      placeholder="AB-1234"
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs uppercase text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.vinInputLabel}</label>
+                    <input
+                      type="text"
+                      value={newVin}
+                      onChange={(e) => setNewVin(e.target.value)}
+                      placeholder="WVWZZZ..."
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs uppercase text-white"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -1493,8 +1924,7 @@ export default function HomePage() {
               <div className="mt-4 space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1.5">{t.addPhotosLabel}</label>
-                  
-                  {/* Prominent Clickable Upload Button / Dropzone */}
+
                   <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-400/60 bg-amber-400/5 px-4 py-4 text-center transition hover:border-amber-400 hover:bg-amber-400/10 cursor-pointer">
                     <div className="flex items-center gap-2 text-xs font-extrabold text-amber-300">
                       <span className="text-base">📷</span>
