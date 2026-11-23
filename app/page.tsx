@@ -283,8 +283,26 @@ const UI_TEXT = {
     noMyListings: "Tev vēl nav publicētu sludinājumu.",
     noSavedListings: "Nav saglabātu sludinājumu. Spied ♥ uz kartītes, lai saglabātu.",
     deleteBtn: "Dzēst",
-    updatePriceBtn: "Mainīt cenu",
+    editBtn: "Rediģēt",
+    editModalTitle: "Rediģēt sludinājumu",
+    saveChangesBtn: "Saglabāt izmaiņas",
+    savingChangesBtn: "Saglabā...",
+    cancelBtn: "Atcelt",
     cityLabel: "Pilsēta",
+    topBtn: "Augšup",
+    copyrightText: "© 2026 AutoLatvija — visas tiesības aizsargātas",
+    col1Title: "Sludinājumi",
+    col1Link1: "Vieglie auto",
+    col1Link2: "Motocikli",
+    col1Link3: "Saglabātie",
+    col2Title: "Informācija",
+    col2Link1: "Ielikt sludinājumu",
+    col2Link2: "Mani sludinājumi",
+    col2Link3: "Konts",
+    col3Title: "Reģioni",
+    col3Link1: "Rīga",
+    col3Link2: "Liepāja & Jelgava",
+    col3Link3: "Daugavpils & Ventspils",
   },
   ru: {
     brand: "AutoLatvija",
@@ -368,8 +386,26 @@ const UI_TEXT = {
     noMyListings: "У вас пока нет опубликованных объявлений.",
     noSavedListings: "Нет сохраненных объявлений. Нажмите ♥ на карточке.",
     deleteBtn: "Удалить",
-    updatePriceBtn: "Изменить цену",
+    editBtn: "Редактировать",
+    editModalTitle: "Редактировать объявление",
+    saveChangesBtn: "Сохранить",
+    savingChangesBtn: "Сохранение...",
+    cancelBtn: "Отмена",
     cityLabel: "Город",
+    topBtn: "Наверх",
+    copyrightText: "© 2026 AutoLatvija — все права защищены",
+    col1Title: "Объявления",
+    col1Link1: "Легковые авто",
+    col1Link2: "Мотоциклы",
+    col1Link3: "Избранное",
+    col2Title: "Разделы",
+    col2Link1: "Подать объявление",
+    col2Link2: "Мои объявления",
+    col2Link3: "Аккаунт",
+    col3Title: "Города",
+    col3Link1: "Rīga",
+    col3Link2: "Liepāja & Jelgava",
+    col3Link3: "Daugavpils & Ventspils",
   },
   en: {
     brand: "AutoLatvija",
@@ -453,8 +489,26 @@ const UI_TEXT = {
     noMyListings: "You have not published any listings yet.",
     noSavedListings: "No saved listings yet. Click ♥ on any card to save it.",
     deleteBtn: "Delete",
-    updatePriceBtn: "Edit price",
+    editBtn: "Edit",
+    editModalTitle: "Edit listing",
+    saveChangesBtn: "Save changes",
+    savingChangesBtn: "Saving...",
+    cancelBtn: "Cancel",
     cityLabel: "City",
+    topBtn: "Top",
+    copyrightText: "© 2026 AutoLatvija — all rights reserved",
+    col1Title: "Listings",
+    col1Link1: "Cars",
+    col1Link2: "Motorcycles",
+    col1Link3: "Saved",
+    col2Title: "Actions",
+    col2Link1: "Post listing",
+    col2Link2: "My listings",
+    col2Link3: "Account",
+    col3Title: "Cities",
+    col3Link1: "Rīga",
+    col3Link2: "Liepāja & Jelgava",
+    col3Link3: "Daugavpils & Ventspils",
   },
 };
 
@@ -516,6 +570,17 @@ export default function HomePage() {
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
   const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
 
+  // Full edit state
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editYear, setEditYear] = useState("");
+  const [editKm, setEditKm] = useState("");
+  const [editCity, setEditCity] = useState("Rīga");
+  const [editTa, setEditTa] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authName, setAuthName] = useState("");
@@ -527,6 +592,7 @@ export default function HomePage() {
 
   const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
 
+  // Wizard
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
@@ -658,6 +724,15 @@ export default function HomePage() {
     if (!selectedId) return null;
     return allListings.find((item) => item.id === selectedId) ?? null;
   }, [allListings, selectedId]);
+
+  // Dynamic browser tab title
+  useEffect(() => {
+    if (activeListing) {
+      document.title = `${activeListing.brand} ${activeListing.model} (${activeListing.year}) — AutoLatvija`;
+    } else {
+      document.title = "AutoLatvija — Auto & Moto tirgus Latvijā";
+    }
+  }, [activeListing]);
 
   const similarListings = useMemo(() => {
     if (!activeListing) return [];
@@ -887,13 +962,47 @@ export default function HomePage() {
     await loadListings();
   }
 
-  async function handleQuickPriceUpdate(id: string, currentPrice: number) {
-    const nextStr = window.prompt("Jaunā cena (EUR) / New price (EUR):", String(currentPrice));
-    if (!nextStr) return;
-    const parsed = Number(nextStr);
-    if (Number.isNaN(parsed) || parsed <= 0) return;
-    await supabase.from("listings").update({ price_eur: parsed }).eq("id", id);
-    await loadListings();
+  function openEditModal(item: Listing) {
+    setEditingListing(item);
+    setEditPrice(String(item.price_eur));
+    setEditYear(String(item.year));
+    setEditKm(String(item.mileage_km));
+    setEditCity(item.city);
+    setEditTa(item.ta_valid_until);
+    setEditDesc(item.description_lv || item.description_en || "");
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingListing) return;
+    setIsSavingEdit(true);
+
+    try {
+      const nextPrice = Number(editPrice) || editingListing.price_eur;
+      const nextYear = Number(editYear) || editingListing.year;
+      const nextKm = Number(editKm) || editingListing.mileage_km;
+      const nextTa = editTa.trim() || editingListing.ta_valid_until;
+      const nextDesc = editDesc.trim();
+
+      await supabase
+        .from("listings")
+        .update({
+          price_eur: nextPrice,
+          year: nextYear,
+          mileage_km: nextKm,
+          city: editCity,
+          ta_valid_until: nextTa,
+          badge: nextTa ? `TA ${nextTa}` : editingListing.badge,
+          description_lv: nextDesc,
+          description_en: nextDesc,
+        })
+        .eq("id", editingListing.id);
+
+      await loadListings();
+      setEditingListing(null);
+    } finally {
+      setIsSavingEdit(false);
+    }
   }
 
   function handleCardMouseMove(
@@ -908,7 +1017,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0f17] text-slate-100">
+    <div className="flex min-h-screen flex-col bg-[#0b0f17] text-slate-100">
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f17]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button
@@ -1000,114 +1109,114 @@ export default function HomePage() {
         </div>
       </header>
 
-      {activeListing ? (
-        <main className="mx-auto max-w-5xl px-4 py-6">
-          <div className="mb-4 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={closeListingDetail}
-              className="rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
-            >
-              {t.backToList}
-            </button>
+      <div className="flex-1">
+        {activeListing ? (
+          <main className="mx-auto max-w-5xl px-4 py-6">
+            <div className="mb-4 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={closeListingDetail}
+                className="rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
+              >
+                {t.backToList}
+              </button>
 
-            <button
-              type="button"
-              onClick={(e) => toggleSave(e, activeListing.id)}
-              className={`rounded-xl border px-3.5 py-2 text-xs font-bold cursor-pointer ${
-                savedIds.includes(activeListing.id)
-                  ? "border-rose-400 bg-rose-500/20 text-rose-200"
-                  : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
-              }`}
-            >
-              {savedIds.includes(activeListing.id) ? `♥ ${t.savedAction}` : `♡ ${t.saveAction}`}
-            </button>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121826]">
-            <div className="relative h-72 w-full bg-slate-950 sm:h-96">
-              <img
-                src={activeListing.images[detailPhotoIndex] ?? activeListing.images[0]}
-                alt={`${activeListing.brand} ${activeListing.model}`}
-                className="h-full w-full object-cover"
-              />
-              <span className="absolute left-4 top-4 rounded-lg bg-slate-950/85 px-3 py-1 text-xs font-semibold text-emerald-300">
-                {activeListing.badge}
-              </span>
+              <button
+                type="button"
+                onClick={(e) => toggleSave(e, activeListing.id)}
+                className={`rounded-xl border px-3.5 py-2 text-xs font-bold cursor-pointer ${
+                  savedIds.includes(activeListing.id)
+                    ? "border-rose-400 bg-rose-500/20 text-rose-200"
+                    : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                {savedIds.includes(activeListing.id) ? `♥ ${t.savedAction}` : `♡ ${t.saveAction}`}
+              </button>
             </div>
 
-            {activeListing.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto border-b border-white/10 bg-[#0b0f17] p-3">
-                {activeListing.images.map((imgUrl, idx) => (
-                  <button
-                    key={`${imgUrl}-${idx}`}
-                    type="button"
-                    onClick={() => setDetailPhotoIndex(idx)}
-                    className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border cursor-pointer ${
-                      detailPhotoIndex === idx ? "border-amber-400" : "border-white/10 opacity-65"
-                    }`}
-                  >
-                    <img src={imgUrl} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="p-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                    {activeListing.brand} • {activeListing.city}
-                  </span>
-                  <h1 className="mt-1 text-2xl font-extrabold text-white">
-                    {activeListing.brand} {activeListing.model} ({activeListing.engine_volume})
-                  </h1>
-                </div>
-                <div className="text-2xl font-black text-amber-400">
-                  €{activeListing.price_eur.toLocaleString("en-US")}
-                </div>
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121826]">
+              <div className="relative h-72 w-full bg-slate-950 sm:h-96">
+                <img
+                  src={activeListing.images[detailPhotoIndex] ?? activeListing.images[0]}
+                  alt={`${activeListing.brand} ${activeListing.model}`}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute left-4 top-4 rounded-lg bg-slate-950/85 px-3 py-1 text-xs font-semibold text-emerald-300">
+                  {activeListing.badge}
+                </span>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-[#0b0f17] p-4 text-xs sm:grid-cols-3 lg:grid-cols-6">
-                <div>
-                  <span className="block text-slate-400">{t.yearLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-white">{activeListing.year}</strong>
+              {activeListing.images.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto border-b border-white/10 bg-[#0b0f17] p-3">
+                  {activeListing.images.map((imgUrl, idx) => (
+                    <button
+                      key={`${imgUrl}-${idx}`}
+                      type="button"
+                      onClick={() => setDetailPhotoIndex(idx)}
+                      className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border cursor-pointer ${
+                        detailPhotoIndex === idx ? "border-amber-400" : "border-white/10 opacity-65"
+                      }`}
+                    >
+                      <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <span className="block text-slate-400">{t.kmLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-white">
-                    {activeListing.mileage_km.toLocaleString("en-US")} km
-                  </strong>
-                </div>
-                <div>
-                  <span className="block text-slate-400">{t.fuelLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-white">
-                    {activeListing.engine_volume} ({LABELS.fuel[activeListing.fuel]?.[lang] ?? activeListing.fuel})
-                  </strong>
-                </div>
-                <div>
-                  <span className="block text-slate-400">{t.transLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-white">
-                    {LABELS.transmission[activeListing.transmission]?.[lang] ?? activeListing.transmission}
-                  </strong>
-                </div>
-                <div>
-                  <span className="block text-slate-400">{t.bodyLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-white">
-                    {LABELS.body[activeListing.body_type]?.[lang] ?? activeListing.body_type}
-                  </strong>
-                </div>
-                <div>
-                  <span className="block text-slate-400">{t.taLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-emerald-400">
-                    {activeListing.ta_valid_until}
-                  </strong>
-                </div>
-              </div>
+              )}
 
-              {(activeListing.plate_number || activeListing.vin) && (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-xs">
-                  <div className="flex flex-wrap gap-5">
+              <div className="p-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                      {activeListing.brand} • {activeListing.city}
+                    </span>
+                    <h1 className="mt-1 text-2xl font-extrabold text-white">
+                      {activeListing.brand} {activeListing.model} ({activeListing.engine_volume})
+                    </h1>
+                  </div>
+                  <div className="text-2xl font-black text-amber-400">
+                    €{activeListing.price_eur.toLocaleString("en-US")}
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-[#0b0f17] p-4 text-xs sm:grid-cols-3 lg:grid-cols-6">
+                  <div>
+                    <span className="block text-slate-400">{t.yearLabel}</span>
+                    <strong className="mt-0.5 block text-sm text-white">{activeListing.year}</strong>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">{t.kmLabel}</span>
+                    <strong className="mt-0.5 block text-sm text-white">
+                      {activeListing.mileage_km.toLocaleString("en-US")} km
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">{t.fuelLabel}</span>
+                    <strong className="mt-0.5 block text-sm text-white">
+                      {activeListing.engine_volume} ({LABELS.fuel[activeListing.fuel]?.[lang] ?? activeListing.fuel})
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">{t.transLabel}</span>
+                    <strong className="mt-0.5 block text-sm text-white">
+                      {LABELS.transmission[activeListing.transmission]?.[lang] ?? activeListing.transmission}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">{t.bodyLabel}</span>
+                    <strong className="mt-0.5 block text-sm text-white">
+                      {LABELS.body[activeListing.body_type]?.[lang] ?? activeListing.body_type}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">{t.taLabel}</span>
+                    <strong className="mt-0.5 block text-sm text-emerald-400">
+                      {activeListing.ta_valid_until}
+                    </strong>
+                  </div>
+                </div>
+
+                {(activeListing.plate_number || activeListing.vin) && (
+                  <div className="mt-3 flex flex-wrap gap-5 rounded-xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-xs">
                     {activeListing.plate_number && (
                       <div>
                         <span className="text-slate-400">{t.plateLabel}: </span>
@@ -1123,361 +1232,506 @@ export default function HomePage() {
                       </div>
                     )}
                   </div>
-                  <a
-                </div>
-              )}
+                )}
 
-              <p className="mt-5 text-sm leading-relaxed text-slate-300">
-                {lang === "en" ? activeListing.description_en : activeListing.description_lv}
-              </p>
+                <p className="mt-5 text-sm leading-relaxed text-slate-300">
+                  {lang === "en" ? activeListing.description_en : activeListing.description_lv}
+                </p>
 
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
-                <div className="text-xs">
-                  <span className="text-slate-400">{t.sellerLabel}: </span>
-                  <strong className="text-sm text-white">{activeListing.seller_name}</strong>
-                  <span className="ml-2 text-slate-400">({activeListing.seller_phone})</span>
-                </div>
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
+                  <div className="text-xs">
+                    <span className="text-slate-400">{t.sellerLabel}: </span>
+                    <strong className="text-sm text-white">{activeListing.seller_name}</strong>
+                    <span className="ml-2 text-slate-400">({activeListing.seller_phone})</span>
+                  </div>
 
-                <div className="flex flex-wrap gap-2.5">
-                  <a
-                    href={`tel:${activeListing.seller_phone}`}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition cursor-pointer"
-                  >
-                    <span>📞</span>
-                    <span>{t.callSeller}</span>
-                  </a>
-                  <a
-                    href={`https://wa.me/${activeListing.seller_phone.replace(/[^0-9]/g, "")}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-md shadow-[#25D366]/20 hover:bg-[#20bd5a] transition cursor-pointer"
-                  >
-                    <WhatsAppIcon className="h-4 w-4 text-slate-950" />
-                    <span>{t.whatsappSeller}</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {similarListings.length > 0 && (
-            <section className="mt-8">
-              <h2 className="mb-3 text-sm font-extrabold uppercase tracking-wider text-slate-300">
-                {t.similarTitle}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {similarListings.map((sim) => (
-                  <a
-                    key={sim.id}
-                    href={getAdHref(sim)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
-                  >
-                    <img
-                      src={sim.images[0]}
-                      alt={`${sim.brand} ${sim.model}`}
-                      className="h-32 w-full object-cover"
-                    />
-                    <div className="p-3">
-                      <div className="text-[11px] font-bold text-amber-400">
-                        {sim.brand} • {sim.year}
-                      </div>
-                      <div className="truncate text-sm font-bold text-white">{sim.model}</div>
-                      <div className="mt-1 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">{sim.mileage_km.toLocaleString("en-US")} km</span>
-                        <span className="font-black text-amber-400">
-                          €{sim.price_eur.toLocaleString("en-US")}
-                        </span>
-                      </div>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
-        </main>
-      ) : (
-        <>
-          <section className="border-b border-white/10 bg-[#0e1420]">
-            <div className="mx-auto max-w-7xl px-4 py-5">
-              <div className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
-                    {t.heroTitle}
-                  </h1>
-                  <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {(
-                    [
-                      { key: "all", label: t.allCategories },
-                      { key: "car", label: t.carsCategory },
-                      { key: "moto", label: t.motosCategory },
-                    ] as const
-                  ).map((cat) => (
-                    <button
-                      key={cat.key}
-                      type="button"
-                      onClick={() => {
-                        setCategoryFilter(cat.key);
-                        setFilterBrand("All");
-                        setFilterModel("All");
-                      }}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer ${
-                        categoryFilter === cat.key
-                          ? "bg-amber-400 text-slate-950"
-                          : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
-                <select
-                  value={filterBrand}
-                  onChange={(e) => {
-                    setFilterBrand(e.target.value);
-                    setFilterModel("All");
-                  }}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                >
-                  <option value="All">{t.allBrands}</option>
-                  {filterBrandOptions.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={filterModel}
-                  disabled={filterBrand === "All"}
-                  onChange={(e) => setFilterModel(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white disabled:opacity-50"
-                >
-                  <option value="All">{t.allModels}</option>
-                  {filterModelOptions.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                >
-                  {CITIES.map((city) => (
-                    <option key={city} value={city}>
-                      {city === "All" ? t.allCities : city}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={filterFuel}
-                  onChange={(e) => setFilterFuel(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                >
-                  <option value="All">{t.allFuels}</option>
-                  {Object.keys(LABELS.fuel).map((f) => (
-                    <option key={f} value={f}>
-                      {LABELS.fuel[f][lang]}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={filterTrans}
-                  onChange={(e) => setFilterTrans(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                >
-                  <option value="All">{t.allTrans}</option>
-                  {Object.keys(LABELS.transmission).map((tr) => (
-                    <option key={tr} value={tr}>
-                      {LABELS.transmission[tr][lang]}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t.searchPlaceholder}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                />
-              </div>
-
-              <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-7">
-                <input
-                  type="number"
-                  min={0}
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  placeholder={t.minPricePh}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  placeholder={t.maxPricePh}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                />
-                <input
-                  type="number"
-                  min={1970}
-                  max={2027}
-                  value={minYear}
-                  onChange={(e) => setMinYear(e.target.value)}
-                  placeholder={t.minYearPh}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                />
-                <input
-                  type="number"
-                  min={1970}
-                  max={2027}
-                  value={maxYear}
-                  onChange={(e) => setMaxYear(e.target.value)}
-                  placeholder={t.maxYearPh}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  step={5000}
-                  value={maxKm}
-                  onChange={(e) => setMaxKm(e.target.value)}
-                  placeholder={t.maxKmPh}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                />
-                <select
-                  value={sortBy}
-                  onChange={(e) =>
-                    setSortBy(e.target.value as "priceAsc" | "priceDesc" | "yearDesc" | "kmAsc")
-                  }
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                >
-                  <option value="yearDesc">{t.sortYearDesc}</option>
-                  <option value="priceAsc">{t.sortPriceAsc}</option>
-                  <option value="priceDesc">{t.sortPriceDesc}</option>
-                  <option value="kmAsc">{t.sortKmAsc}</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={resetAllFilters}
-                  className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
-                >
-                  {t.resetFilters}
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <main className="mx-auto max-w-7xl px-4 py-6">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                {t.resultsCount(filtered.length)}
-              </span>
-            </div>
-
-            {filtered.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-[#121826] py-12 text-center text-xs text-slate-400">
-                {onlySaved ? t.noSavedListings : "0"}
-              </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((item) => {
-                  const activeIdx = hoverPhotoIndex[item.id] ?? 0;
-                  const currentSrc = item.images[activeIdx] ?? item.images[0];
-                  const isSaved = savedIds.includes(item.id);
-
-                  return (
+                  <div className="flex flex-wrap gap-2.5">
                     <a
-                      key={item.id}
-                      href={getAdHref(item)}
+                      href={`tel:${activeListing.seller_phone}`}
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition cursor-pointer"
+                    >
+                      <span>📞</span>
+                      <span>{t.callSeller}</span>
+                    </a>
+                    <a
+                      href={`https://wa.me/${activeListing.seller_phone.replace(/[^0-9]/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-md shadow-[#25D366]/20 hover:bg-[#20bd5a] transition cursor-pointer"
+                    >
+                      <WhatsAppIcon className="h-4 w-4 text-slate-950" />
+                      <span>{t.whatsappSeller}</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {similarListings.length > 0 && (
+              <section className="mt-8">
+                <h2 className="mb-3 text-sm font-extrabold uppercase tracking-wider text-slate-300">
+                  {t.similarTitle}
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {similarListings.map((sim) => (
+                    <a
+                      key={sim.id}
+                      href={getAdHref(sim)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
+                      className="block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                     >
-                      <div
-                        onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
-                        onMouseLeave={() =>
-                          setHoverPhotoIndex((prev) => ({ ...prev, [item.id]: 0 }))
-                        }
-                        className="relative h-36 w-full overflow-hidden bg-slate-950"
-                      >
-                        <img
-                          src={currentSrc}
-                          alt={`${item.brand} ${item.model}`}
-                          className="h-full w-full object-cover"
-                        />
-                        <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
-                          {item.badge}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={(e) => toggleSave(e, item.id)}
-                          aria-label="Save listing"
-                          className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
-                            isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
-                          }`}
-                        >
-                          {isSaved ? "♥" : "♡"}
-                        </button>
-
-                        {item.images.length > 1 && (
-                          <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/60 px-2 py-0.5">
-                            {item.images.map((_, i) => (
-                              <span
-                                key={i}
-                                className={`h-1 w-3 rounded-full ${
-                                  activeIdx === i ? "bg-amber-400" : "bg-white/35"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="p-3.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-bold text-amber-400/90">
-                              {item.brand} • {item.engine_volume}
-                            </div>
-                            <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300">
-                              {item.model}
-                            </h2>
-                          </div>
-                          <span className="shrink-0 text-base font-black text-amber-400">
-                            €{item.price_eur.toLocaleString("en-US")}
-                          </span>
+                      <img
+                        src={sim.images[0]}
+                        alt={`${sim.brand} ${sim.model}`}
+                        className="h-32 w-full object-cover"
+                      />
+                      <div className="p-3">
+                        <div className="text-[11px] font-bold text-amber-400">
+                          {sim.brand} • {sim.year}
                         </div>
-
-                        <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-slate-400">
-                          <span>{item.year}</span>
-                          <span>{item.mileage_km.toLocaleString("en-US")} km</span>
-                          <span>{item.city}</span>
+                        <div className="truncate text-sm font-bold text-white">{sim.model}</div>
+                        <div className="mt-1 flex items-center justify-between text-xs">
+                          <span className="text-slate-400">{sim.mileage_km.toLocaleString("en-US")} km</span>
+                          <span className="font-black text-amber-400">
+                            €{sim.price_eur.toLocaleString("en-US")}
+                          </span>
                         </div>
                       </div>
                     </a>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              </section>
             )}
           </main>
-        </>
-      )}
+        ) : (
+          <>
+            <section className="border-b border-white/10 bg-[#0e1420]">
+              <div className="mx-auto max-w-7xl px-4 py-5">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                      {t.heroTitle}
+                    </h1>
+                    <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        { key: "all", label: t.allCategories },
+                        { key: "car", label: t.carsCategory },
+                        { key: "moto", label: t.motosCategory },
+                      ] as const
+                    ).map((cat) => (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => {
+                          setCategoryFilter(cat.key);
+                          setFilterBrand("All");
+                          setFilterModel("All");
+                        }}
+                        className={`rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer ${
+                          categoryFilter === cat.key
+                            ? "bg-amber-400 text-slate-950"
+                            : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
+                  <select
+                    value={filterBrand}
+                    onChange={(e) => {
+                      setFilterBrand(e.target.value);
+                      setFilterModel("All");
+                    }}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                  >
+                    <option value="All">{t.allBrands}</option>
+                    {filterBrandOptions.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={filterModel}
+                    disabled={filterBrand === "All"}
+                    onChange={(e) => setFilterModel(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white disabled:opacity-50"
+                  >
+                    <option value="All">{t.allModels}</option>
+                    {filterModelOptions.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                  >
+                    {CITIES.map((city) => (
+                      <option key={city} value={city}>
+                        {city === "All" ? t.allCities : city}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={filterFuel}
+                    onChange={(e) => setFilterFuel(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                  >
+                    <option value="All">{t.allFuels}</option>
+                    {Object.keys(LABELS.fuel).map((f) => (
+                      <option key={f} value={f}>
+                        {LABELS.fuel[f][lang]}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={filterTrans}
+                    onChange={(e) => setFilterTrans(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                  >
+                    <option value="All">{t.allTrans}</option>
+                    {Object.keys(LABELS.transmission).map((tr) => (
+                      <option key={tr} value={tr}>
+                        {LABELS.transmission[tr][lang]}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t.searchPlaceholder}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                  />
+                </div>
+
+                <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-7">
+                  <input
+                    type="number"
+                    min={0}
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    placeholder={t.minPricePh}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    placeholder={t.maxPricePh}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                  />
+                  <input
+                    type="number"
+                    min={1970}
+                    max={2027}
+                    value={minYear}
+                    onChange={(e) => setMinYear(e.target.value)}
+                    placeholder={t.minYearPh}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                  />
+                  <input
+                    type="number"
+                    min={1970}
+                    max={2027}
+                    value={maxYear}
+                    onChange={(e) => setMaxYear(e.target.value)}
+                    placeholder={t.maxYearPh}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    step={5000}
+                    value={maxKm}
+                    onChange={(e) => setMaxKm(e.target.value)}
+                    placeholder={t.maxKmPh}
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                  />
+                  <select
+                    value={sortBy}
+                    onChange={(e) =>
+                      setSortBy(e.target.value as "priceAsc" | "priceDesc" | "yearDesc" | "kmAsc")
+                    }
+                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                  >
+                    <option value="yearDesc">{t.sortYearDesc}</option>
+                    <option value="priceAsc">{t.sortPriceAsc}</option>
+                    <option value="priceDesc">{t.sortPriceDesc}</option>
+                    <option value="kmAsc">{t.sortKmAsc}</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
+                  >
+                    {t.resetFilters}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <main className="mx-auto max-w-7xl px-4 py-6">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  {t.resultsCount(filtered.length)}
+                </span>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-[#121826] py-12 text-center text-xs text-slate-400">
+                  {onlySaved ? t.noSavedListings : "0"}
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filtered.map((item) => {
+                    const activeIdx = hoverPhotoIndex[item.id] ?? 0;
+                    const currentSrc = item.images[activeIdx] ?? item.images[0];
+                    const isSaved = savedIds.includes(item.id);
+
+                    return (
+                      <a
+                        key={item.id}
+                        href={getAdHref(item)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
+                      >
+                        <div
+                          onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
+                          onMouseLeave={() =>
+                            setHoverPhotoIndex((prev) => ({ ...prev, [item.id]: 0 }))
+                          }
+                          className="relative h-36 w-full overflow-hidden bg-slate-950"
+                        >
+                          <img
+                            src={currentSrc}
+                            alt={`${item.brand} ${item.model}`}
+                            className="h-full w-full object-cover"
+                          />
+                          <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                            {item.badge}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => toggleSave(e, item.id)}
+                            aria-label="Save listing"
+                            className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
+                              isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
+                            }`}
+                          >
+                            {isSaved ? "♥" : "♡"}
+                          </button>
+
+                          {item.images.length > 1 && (
+                            <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/60 px-2 py-0.5">
+                              {item.images.map((_, i) => (
+                                <span
+                                  key={i}
+                                  className={`h-1 w-3 rounded-full ${
+                                    activeIdx === i ? "bg-amber-400" : "bg-white/35"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-3.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-[11px] font-bold text-amber-400/90">
+                                {item.brand} • {item.engine_volume}
+                              </div>
+                              <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300">
+                                {item.model}
+                              </h2>
+                            </div>
+                            <span className="shrink-0 text-base font-black text-amber-400">
+                              €{item.price_eur.toLocaleString("en-US")}
+                            </span>
+                          </div>
+
+                          <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-slate-400">
+                            <span>{item.year}</span>
+                            <span>{item.mileage_km.toLocaleString("en-US")} km</span>
+                            <span>{item.city}</span>
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </main>
+          </>
+        )}
+      </div>
+
+      {/* Footer + Scroll-to-Top button */}
+      <footer className="relative mt-10 border-t border-white/10 bg-[#090d14] text-xs text-slate-400">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-8 sm:flex-row">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-amber-400 text-[11px] font-black text-slate-950">
+                LV
+              </span>
+              <span className="font-extrabold">{t.brand}</span>
+            </div>
+            <p className="text-[11px] text-slate-500">{t.copyrightText}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <div className="font-bold text-slate-200">{t.col1Title}</div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeListingDetail();
+                    setOnlySaved(false);
+                    setCategoryFilter("car");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col1Link1}
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeListingDetail();
+                    setOnlySaved(false);
+                    setCategoryFilter("moto");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col1Link2}
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeListingDetail();
+                    setOnlySaved(true);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col1Link3}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="font-bold text-slate-200">{t.col2Title}</div>
+              <div>
+                <button
+                  type="button"
+                  onClick={handlePostClick}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col2Link1}
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => (userId ? setIsMyListingsOpen(true) : setIsAuthOpen(true))}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col2Link2}
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsAuthOpen(true)}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col2Link3}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="font-bold text-slate-200">{t.col3Title}</div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeListingDetail();
+                    setSelectedCity("Rīga");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col3Link1}
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeListingDetail();
+                    setSelectedCity("Liepāja");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col3Link2}
+                </button>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeListingDetail();
+                    setSelectedCity("Daugavpils");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-amber-400 cursor-pointer"
+                >
+                  {t.col3Link3}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Scroll to top"
+          className="fixed bottom-5 right-5 z-30 flex flex-col items-center justify-center rounded-xl border border-white/15 bg-[#121826]/95 px-3 py-2 text-[11px] font-bold text-white shadow-lg hover:border-amber-400 hover:text-amber-300 cursor-pointer"
+        >
+          <span>↑</span>
+          <span>{t.topBtn}</span>
+        </button>
+      </footer>
 
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
@@ -1619,7 +1873,7 @@ export default function HomePage() {
                           {item.brand} {item.model} ({item.year})
                         </div>
                         <div className="text-xs text-amber-400">
-                          €{item.price_eur.toLocaleString("en-US")} • {item.city}
+                          €{item.price_eur.toLocaleString("en-US")} • {item.mileage_km.toLocaleString("en-US")} km • {item.city}
                         </div>
                       </div>
                     </div>
@@ -1627,10 +1881,10 @@ export default function HomePage() {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => handleQuickPriceUpdate(item.id, item.price_eur)}
+                        onClick={() => openEditModal(item)}
                         className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
                       >
-                        {t.updatePriceBtn}
+                        {t.editBtn}
                       </button>
                       <button
                         type="button"
@@ -1645,6 +1899,118 @@ export default function HomePage() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {editingListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
+          <form
+            onSubmit={handleSaveEdit}
+            className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#121826] p-6"
+          >
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 className="text-base font-extrabold text-white">{t.editModalTitle}</h3>
+                <p className="text-xs text-amber-400">
+                  {editingListing.brand} {editingListing.model}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingListing(null)}
+                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-bold text-slate-300">{t.priceLabel}</label>
+                <input
+                  type="number"
+                  required
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300">{t.cityLabel}</label>
+                <select
+                  value={editCity}
+                  onChange={(e) => setEditCity(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                >
+                  {CITIES.filter((c) => c !== "All").map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300">{t.yearInputLabel}</label>
+                <input
+                  type="number"
+                  required
+                  value={editYear}
+                  onChange={(e) => setEditYear(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300">{t.kmInputLabel}</label>
+                <input
+                  type="number"
+                  required
+                  value={editKm}
+                  onChange={(e) => setEditKm(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-300">{t.taInputLabel}</label>
+                <input
+                  type="text"
+                  value={editTa}
+                  onChange={(e) => setEditTa(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-300">{t.descLabel}</label>
+                <textarea
+                  rows={3}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2 border-t border-white/10 pt-4">
+              <button
+                type="button"
+                onClick={() => setEditingListing(null)}
+                className="rounded-xl border border-white/15 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
+              >
+                {t.cancelBtn}
+              </button>
+              <button
+                type="submit"
+                disabled={isSavingEdit}
+                className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 disabled:opacity-60 cursor-pointer"
+              >
+                {isSavingEdit ? t.savingChangesBtn : t.saveChangesBtn}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
