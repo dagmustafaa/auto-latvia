@@ -1,32 +1,36 @@
 ﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type Lang = "lv" | "en";
 type Category = "car" | "moto";
 
 interface Listing {
-  id: number;
+  id: string;
+  user_id?: string | null;
+  seller_name: string;
+  seller_phone: string;
   category: Category;
   brand: string;
   model: string;
   city: string;
-  priceEur: number;
+  price_eur: number;
   year: number;
-  mileageKm: number;
-  fuel: { lv: string; en: string };
-  badge: { lv: string; en: string };
+  mileage_km: number;
+  fuel: string;
+  transmission: string;
+  body_type: string;
+  engine_volume: string;
+  ta_valid_until: string;
+  badge: string;
   images: string[];
-  sellerName: string;
-  description: { lv: string; en: string };
+  description_lv: string;
+  description_en: string;
+  isDemo?: boolean;
 }
 
-interface UserAccount {
-  name: string;
-  email: string;
-}
-
-const CITIES = ["All", "Rīga", "Daugavpils", "Liepāja", "Jelgava", "Ventspils"];
+const CITIES = ["All", "Rīga", "Daugavpils", "Liepāja", "Jelgava", "Ventspils", "Valmiera", "Jūrmala"];
 
 const MODELS_BY_BRAND: Record<Category, Record<string, string[]>> = {
   car: {
@@ -76,129 +80,134 @@ const PHOTO_PRESETS = [
   },
 ];
 
-const INITIAL_LISTINGS: Listing[] = [
+const DEMO_LISTINGS: Listing[] = [
   {
-    id: 1,
+    id: "demo-1",
+    seller_name: "Māris B.",
+    seller_phone: "+37120001122",
     category: "car",
     brand: "Volkswagen",
     model: "Golf",
     city: "Rīga",
-    priceEur: 8450,
+    price_eur: 8450,
     year: 2017,
-    mileageKm: 168000,
-    fuel: { lv: "Dīzelis", en: "Diesel" },
-    badge: { lv: "TA derīga", en: "Valid TA" },
+    mileage_km: 168000,
+    fuel: "Diesel",
+    transmission: "Manual",
+    body_type: "Hatchback",
+    engine_volume: "1.6 TDI",
+    ta_valid_until: "09.2027",
+    badge: "TA 09.2027",
     images: [PHOTO_PRESETS[0].url, PHOTO_PRESETS[1].url, PHOTO_PRESETS[2].url],
-    sellerName: "Māris B.",
-    description: {
-      lv: "Kopts auto no Rīgas, pilna servisa vēsture, jaunas ziemas riepas.",
-      en: "Well-kept car from Riga, full service history, fresh winter tires.",
-    },
+    description_lv: "Kopts auto no Rīgas, pilna servisa vēsture, jaunas ziemas riepas.",
+    description_en: "Well-kept car from Riga, full service history, fresh winter tires.",
+    isDemo: true,
   },
   {
-    id: 2,
+    id: "demo-2",
+    seller_name: "Elīna K.",
+    seller_phone: "+37120003344",
     category: "car",
     brand: "Toyota",
     model: "Corolla",
     city: "Liepāja",
-    priceEur: 14900,
+    price_eur: 14900,
     year: 2020,
-    mileageKm: 92000,
-    fuel: { lv: "Hibrīds", en: "Hybrid" },
-    badge: { lv: "Pārbaudīts", en: "Checked" },
+    mileage_km: 92000,
+    fuel: "Hybrid",
+    transmission: "Automatic",
+    body_type: "Sedan",
+    engine_volume: "1.8 Hybrid",
+    ta_valid_until: "11.2027",
+    badge: "TA 11.2027",
     images: [PHOTO_PRESETS[1].url, PHOTO_PRESETS[0].url],
-    sellerName: "Elīna K.",
-    description: {
-      lv: "Ekonomisks hibrīds ikdienai un garākiem braucieniem pa Latviju.",
-      en: "Economical hybrid for daily commuting and trips across Latvia.",
-    },
+    description_lv: "Ekonomisks hibrīds ikdienai un garākiem braucieniem pa Latviju.",
+    description_en: "Economical hybrid for daily commuting and trips across Latvia.",
+    isDemo: true,
   },
   {
-    id: 3,
+    id: "demo-3",
+    seller_name: "Andris V.",
+    seller_phone: "+37120005566",
     category: "car",
     brand: "BMW",
     model: "3 Series",
     city: "Jelgava",
-    priceEur: 11600,
+    price_eur: 11600,
     year: 2016,
-    mileageKm: 194000,
-    fuel: { lv: "Dīzelis", en: "Diesel" },
-    badge: { lv: "4x4 / AWD", en: "4x4 / AWD" },
+    mileage_km: 194000,
+    fuel: "Diesel",
+    transmission: "Automatic",
+    body_type: "Wagon",
+    engine_volume: "2.0d xDrive",
+    ta_valid_until: "06.2027",
+    badge: "4x4 • TA 06.2027",
     images: [PHOTO_PRESETS[2].url, PHOTO_PRESETS[0].url, PHOTO_PRESETS[1].url],
-    sellerName: "Andris V.",
-    description: {
-      lv: "Pilnpiedziņa Latvijas ziemai, ietilpīgs universālis.",
-      en: "All-wheel drive for Latvian winter, spacious wagon.",
-    },
+    description_lv: "Pilnpiedziņa Latvijas ziemai, ietilpīgs universālis.",
+    description_en: "All-wheel drive for Latvian winter, spacious wagon.",
+    isDemo: true,
   },
   {
-    id: 4,
+    id: "demo-4",
+    seller_name: "Artūrs L.",
+    seller_phone: "+37120007788",
     category: "moto",
     brand: "Keeway",
     model: "RKF 125",
     city: "Daugavpils",
-    priceEur: 2350,
+    price_eur: 2350,
     year: 2024,
-    mileageKm: 4200,
-    fuel: { lv: "Benzīns", en: "Petrol" },
-    badge: { lv: "Šķidruma dzese", en: "Liquid cooled" },
+    mileage_km: 4200,
+    fuel: "Petrol",
+    transmission: "Manual",
+    body_type: "Naked",
+    engine_volume: "125cc ABS",
+    ta_valid_until: "05.2028",
+    badge: "ABS • Šķidruma dzese",
     images: [PHOTO_PRESETS[3].url, PHOTO_PRESETS[0].url],
-    sellerName: "Artūrs L.",
-    description: {
-      lv: "Veikls 125cc motocikls ar ABS un šķidruma dzesēšanu pilsētai.",
-      en: "Agile 125cc motorcycle with ABS and liquid cooling for city rides.",
-    },
-  },
-  {
-    id: 5,
-    category: "car",
-    brand: "Audi",
-    model: "A4",
-    city: "Ventspils",
-    priceEur: 10200,
-    year: 2018,
-    mileageKm: 151000,
-    fuel: { lv: "Dīzelis", en: "Diesel" },
-    badge: { lv: "Servisa grāmata", en: "Service book" },
-    images: [PHOTO_PRESETS[2].url, PHOTO_PRESETS[1].url],
-    sellerName: "Dace R.",
-    description: {
-      lv: "Komfortabls Audi ar kruīzkontroli un LED optiku.",
-      en: "Comfortable Audi with cruise control and LED lights.",
-    },
-  },
-  {
-    id: 6,
-    category: "moto",
-    brand: "Yamaha",
-    model: "MT-07",
-    city: "Rīga",
-    priceEur: 6400,
-    year: 2021,
-    mileageKm: 12800,
-    fuel: { lv: "Benzīns", en: "Petrol" },
-    badge: { lv: "Jauna ķēde", en: "Fresh chain" },
-    images: [PHOTO_PRESETS[3].url, PHOTO_PRESETS[2].url],
-    sellerName: "Kārlis S.",
-    description: {
-      lv: "Dinamisks naked motocikls pilsētai un brīvdienu izbraucieniem.",
-      en: "Punchy naked bike for city streets and weekend rides.",
-    },
+    description_lv: "Veikls 125cc motocikls ar ABS un šķidruma dzesēšanu pilsētai.",
+    description_en: "Agile 125cc motorcycle with ABS and liquid cooling for city rides.",
+    isDemo: true,
   },
 ];
+
+const LABELS = {
+  fuel: {
+    Diesel: { lv: "Dīzelis", en: "Diesel" },
+    Petrol: { lv: "Benzīns", en: "Petrol" },
+    Hybrid: { lv: "Hibrīds", en: "Hybrid" },
+    Electric: { lv: "Elektro", en: "Electric" },
+  } as Record<string, { lv: string; en: string }>,
+  transmission: {
+    Automatic: { lv: "Automāts", en: "Automatic" },
+    Manual: { lv: "Manuālā", en: "Manual" },
+  } as Record<string, { lv: string; en: string }>,
+  body: {
+    Sedan: { lv: "Sedans", en: "Sedan" },
+    Hatchback: { lv: "Hečbeks", en: "Hatchback" },
+    Wagon: { lv: "Universālis", en: "Wagon" },
+    SUV: { lv: "Apvidus (SUV)", en: "SUV / 4x4" },
+    Coupe: { lv: "Kupeja", en: "Coupe" },
+    Naked: { lv: "Naked / Street", en: "Naked / Street" },
+    Sport: { lv: "Sporta", en: "Sport" },
+    Touring: { lv: "Tūrisma / Enduro", en: "Touring / Enduro" },
+    Scooter: { lv: "Motorolleris", en: "Scooter" },
+  } as Record<string, { lv: string; en: string }>,
+};
 
 const UI_TEXT = {
   lv: {
     brand: "AutoLatvija",
-    heroTitle: "Auto & Moto sludinājumi Latvijā",
-    heroSubtitle: "Filtrē pēc markas, modeļa, pilsētas un kategorijas visā Latvijā.",
+    heroTitle: "Auto & Moto tirgus Latvijā",
+    heroSubtitle: "Filtrē pēc markas, modeļa, TA apskates, kārbas un pilsētas.",
     postBtn: "+ Ielikt sludinājumu",
-    loginBtn: "Izveidot kontu / Ieiet",
+    myListingsBtn: "Mani sludinājumi",
+    loginBtn: "Ieiet / Reģistrēties",
     logoutBtn: "Iziet",
     allCategories: "Visi",
     carsCategory: "Vieglie auto",
     motosCategory: "Motocikli",
-    searchPlaceholder: "Meklēt (piem. Golf, 3 Series, Rīga)...",
+    searchPlaceholder: "Meklēt (piem. Golf, 2.0 TDI, Rīga)...",
     allBrands: "Visas markas",
     allModels: "Visi modeļi",
     allCities: "Visas pilsētas",
@@ -208,44 +217,62 @@ const UI_TEXT = {
     resultsCount: (n: number) => `${n} sludinājumi`,
     backToList: "← Atpakaļ uz sludinājumiem",
     sellerLabel: "Pārdevējs",
-    yearLabel: "Gads",
+    yearLabel: "Izlaiduma gads",
     kmLabel: "Nobraukums",
-    fuelLabel: "Degviela",
+    fuelLabel: "Dzinējs / Degviela",
+    transLabel: "Ātrumkārba",
+    bodyLabel: "Virsbūves tips",
+    taLabel: "Tehniskā apskate (TA)",
     cityLabel: "Pilsēta",
-    authTitle: "Nepieciešams konts sludinājuma ievietošanai",
-    authDesc: "Izveido profilu vai pieslēdzies, lai pievienotu savu auto vai moto.",
-    nameLabel: "Vārds / Lietotājvārds",
+    callSeller: "Zvanīt pārdevējam",
+    whatsappSeller: "Rakstīt WhatsApp",
+    authSignInTab: "Ieiet kontā",
+    authSignUpTab: "Reģistrēties",
+    authTitle: "Konts sludinājumu pārvaldībai",
+    authDesc: "Reģistrējies ar e-pastu un apstiprini saiti savā pastkastē.",
+    nameLabel: "Vārds",
     emailLabel: "E-pasts",
-    createAccountBtn: "Izveidot kontu un turpināt",
+    passwordLabel: "Parole (min. 6 simboli)",
+    signInSubmit: "Pieslēgties",
+    signUpSubmit: "Izveidot kontu",
+    verifyNotice: "Apstiprinājuma saite nosūtīta uz e-pastu! Pēc apstiprināšanas spied 'Ieiet kontā'.",
     wizardTitle: "Jauns sludinājums",
     step1Title: "1. Kategorija & Pilsēta",
     step2Title: "2. Izvēlies marku",
-    step3Title: "3. Modelis & Dati",
-    step4Title: "4. Bildes & Apraksts",
+    step3Title: "3. Modelis & Tehniskie dati (TA)",
+    step4Title: "4. Bildes, Kontakti & Apraksts",
     chooseModel: "Izvēlies modeli",
     customModelPlaceholder: "Vai ieraksti citu modeli",
     priceLabel: "Cena (EUR)",
     yearInputLabel: "Gads",
     kmInputLabel: "Nobraukums (km)",
-    fuelInputLabel: "Degviela",
-    addPhotosLabel: "Pievienot bildes (vairākas no datora vai paraugi)",
+    engineLabel: "Motors (piem. 2.0 TDI / 125cc)",
+    taInputLabel: "TA derīga līdz (piem. 10.2027)",
+    phoneLabel: "Tālrunis (WhatsApp)",
+    addPhotosLabel: "Augšupielādēt bildes (vairākas) vai pievienot paraugus",
     descLabel: "Apraksts",
-    descPlaceholder: "Apraksti stāvokli, TA, riepas...",
+    descPlaceholder: "Apraksti stāvokli, apkopi, riepas...",
     backBtn: "Atpakaļ",
     nextBtn: "Tālāk",
     publishBtn: "Publicēt sludinājumu",
+    publishingBtn: "Publicē...",
+    myPanelTitle: "Mani aktīvie sludinājumi",
+    noMyListings: "Tev vēl nav publicētu sludinājumu.",
+    deleteBtn: "Dzēst",
+    updatePriceBtn: "Mainīt cenu",
   },
   en: {
     brand: "AutoLatvija",
-    heroTitle: "Car & Moto listings in Latvia",
-    heroSubtitle: "Filter by brand, model, city, and category across Latvia.",
+    heroTitle: "Car & Moto marketplace in Latvia",
+    heroSubtitle: "Filter by brand, model, TA inspection, gearbox, and city.",
     postBtn: "+ Post listing",
-    loginBtn: "Create account / Sign in",
+    myListingsBtn: "My listings",
+    loginBtn: "Sign in / Register",
     logoutBtn: "Sign out",
     allCategories: "All",
     carsCategory: "Cars",
     motosCategory: "Motorcycles",
-    searchPlaceholder: "Search (e.g. Golf, 3 Series, Riga)...",
+    searchPlaceholder: "Search (e.g. Golf, 2.0 TDI, Riga)...",
     allBrands: "All brands",
     allModels: "All models",
     allCities: "All cities",
@@ -257,39 +284,58 @@ const UI_TEXT = {
     sellerLabel: "Seller",
     yearLabel: "Year",
     kmLabel: "Mileage",
-    fuelLabel: "Fuel",
+    fuelLabel: "Engine / Fuel",
+    transLabel: "Transmission",
+    bodyLabel: "Body type",
+    taLabel: "Inspection (TA)",
     cityLabel: "City",
-    authTitle: "Account required to post a listing",
-    authDesc: "Create an account or sign in before publishing your vehicle.",
-    nameLabel: "Name / Username",
+    callSeller: "Call seller",
+    whatsappSeller: "Message on WhatsApp",
+    authSignInTab: "Sign in",
+    authSignUpTab: "Register",
+    authTitle: "Account for posting & managing ads",
+    authDesc: "Register with your email and confirm the verification link sent to your inbox.",
+    nameLabel: "Name",
     emailLabel: "Email",
-    createAccountBtn: "Create account & continue",
+    passwordLabel: "Password (min. 6 chars)",
+    signInSubmit: "Sign in",
+    signUpSubmit: "Create account",
+    verifyNotice: "Verification email sent! Please click the link in your inbox, then sign in.",
     wizardTitle: "New listing",
     step1Title: "1. Category & City",
     step2Title: "2. Choose brand",
-    step3Title: "3. Model & Specs",
-    step4Title: "4. Photos & Details",
+    step3Title: "3. Model & Technical specs (TA)",
+    step4Title: "4. Photos, Contact & Description",
     chooseModel: "Choose model",
     customModelPlaceholder: "Or type another model",
     priceLabel: "Price (EUR)",
     yearInputLabel: "Year",
     kmInputLabel: "Mileage (km)",
-    fuelInputLabel: "Fuel type",
-    addPhotosLabel: "Add photos (multiple from device or presets)",
+    engineLabel: "Engine (e.g. 2.0 TDI / 125cc)",
+    taInputLabel: "TA valid until (e.g. 10.2027)",
+    phoneLabel: "Phone (WhatsApp)",
+    addPhotosLabel: "Upload photos (multiple) or add presets",
     descLabel: "Description",
-    descPlaceholder: "Describe condition, inspection (TA), tires...",
+    descPlaceholder: "Describe condition, service, tires...",
     backBtn: "Back",
     nextBtn: "Next",
     publishBtn: "Publish listing",
+    publishingBtn: "Publishing...",
+    myPanelTitle: "My active listings",
+    noMyListings: "You have not published any listings yet.",
+    deleteBtn: "Delete",
+    updatePriceBtn: "Edit price",
   },
 };
 
 export default function HomePage() {
   const [lang, setLang] = useState<Lang>("lv");
-  const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
-  const [user, setUser] = useState<UserAccount | null>(null);
+  const [dbListings, setDbListings] = useState<Listing[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
 
-  // Catalog filters (Sahibinden style Brand -> Model -> City -> Category)
+  // Filters
   const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
   const [filterBrand, setFilterBrand] = useState("All");
   const [filterModel, setFilterModel] = useState("All");
@@ -297,15 +343,25 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc">("yearDesc");
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Detail & Hover states
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
-  const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<number, number>>({});
+  const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
 
+  // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
-  const [pendingWizardAfterAuth, setPendingWizardAfterAuth] = useState(false);
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
 
+  // My listings modal
+  const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
+
+  // 4-step Wizard
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
@@ -315,22 +371,68 @@ export default function HomePage() {
   const [newPrice, setNewPrice] = useState("9500");
   const [newYear, setNewYear] = useState("2019");
   const [newKm, setNewKm] = useState("135000");
-  const [newFuelEn, setNewFuelEn] = useState("Diesel");
-  const [newPhotos, setNewPhotos] = useState<string[]>([PHOTO_PRESETS[0].url]);
+  const [newFuel, setNewFuel] = useState("Diesel");
+  const [newTrans, setNewTrans] = useState("Automatic");
+  const [newBody, setNewBody] = useState("Wagon");
+  const [newEngine, setNewEngine] = useState("2.0 TDI");
+  const [newTa, setNewTa] = useState("10.2027");
+  const [newPhone, setNewPhone] = useState("+3712");
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([PHOTO_PRESETS[0].url]);
   const [newDesc, setNewDesc] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const t = UI_TEXT[lang];
+
+  // Fetch listings from Supabase
+  async function loadListings() {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setDbListings(data as Listing[]);
+    }
+  }
+
+  useEffect(() => {
+    loadListings();
+
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      if (u) {
+        setUserId(u.id);
+        setUserEmail(u.email ?? "");
+        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "User"));
+      }
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user;
+      if (u) {
+        setUserId(u.id);
+        setUserEmail(u.email ?? "");
+        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "User"));
+      } else {
+        setUserId(null);
+        setUserEmail("");
+        setUserName("");
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     function syncFromHash() {
       const h = window.location.hash;
       if (h.startsWith("#listing-")) {
-        const parsed = Number(h.replace("#listing-", ""));
-        if (!Number.isNaN(parsed)) {
-          setSelectedId(parsed);
-          setDetailPhotoIndex(0);
-          return;
-        }
+        setSelectedId(h.replace("#listing-", ""));
+        setDetailPhotoIndex(0);
+        return;
       }
       setSelectedId(null);
     }
@@ -339,7 +441,68 @@ export default function HomePage() {
     return () => window.removeEventListener("hashchange", syncFromHash);
   }, []);
 
-  function openListingDetail(id: number) {
+  const allListings = useMemo(() => {
+    return [...dbListings, ...DEMO_LISTINGS];
+  }, [dbListings]);
+
+  const myListings = useMemo(() => {
+    if (!userId) return [];
+    return dbListings.filter((item) => item.user_id === userId);
+  }, [dbListings, userId]);
+
+  const activeListing = useMemo(
+    () => allListings.find((item) => item.id === selectedId) ?? null,
+    [allListings, selectedId]
+  );
+
+  const filterBrandOptions = useMemo(() => {
+    if (categoryFilter === "car") return Object.keys(MODELS_BY_BRAND.car);
+    if (categoryFilter === "moto") return Object.keys(MODELS_BY_BRAND.moto);
+    return Array.from(
+      new Set([...Object.keys(MODELS_BY_BRAND.car), ...Object.keys(MODELS_BY_BRAND.moto)])
+    );
+  }, [categoryFilter]);
+
+  const filterModelOptions = useMemo(() => {
+    if (filterBrand === "All") return [];
+    return Array.from(
+      new Set([
+        ...(MODELS_BY_BRAND.car[filterBrand] ?? []),
+        ...(MODELS_BY_BRAND.moto[filterBrand] ?? []),
+      ])
+    );
+  }, [filterBrand]);
+
+  const availableBrands = useMemo(
+    () => Object.keys(MODELS_BY_BRAND[newCategory]),
+    [newCategory]
+  );
+
+  const availableModels = useMemo(
+    () => MODELS_BY_BRAND[newCategory][newBrand] ?? [],
+    [newCategory, newBrand]
+  );
+
+  const filtered = useMemo(() => {
+    const base = allListings.filter((item) => {
+      const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
+      const matchesBrand = filterBrand === "All" || item.brand === filterBrand;
+      const matchesModel = filterModel === "All" || item.model === filterModel;
+      const matchesCity = selectedCity === "All" || item.city === selectedCity;
+      const searchBlob = `${item.brand} ${item.model} ${item.engine_volume} ${item.city}`.toLowerCase();
+      const matchesQuery =
+        query.trim() === "" || searchBlob.includes(query.trim().toLowerCase());
+      return matchesCategory && matchesBrand && matchesModel && matchesCity && matchesQuery;
+    });
+
+    return [...base].sort((a, b) => {
+      if (sortBy === "priceAsc") return a.price_eur - b.price_eur;
+      if (sortBy === "priceDesc") return b.price_eur - a.price_eur;
+      return b.year - a.year;
+    });
+  }, [allListings, categoryFilter, filterBrand, filterModel, selectedCity, query, sortBy]);
+
+  function openListingDetail(id: string) {
     setSelectedId(id);
     setDetailPhotoIndex(0);
     window.location.hash = `listing-${id}`;
@@ -352,185 +515,161 @@ export default function HomePage() {
     }
   }
 
-  const activeListing = useMemo(
-    () => listings.find((item) => item.id === selectedId) ?? null,
-    [listings, selectedId]
-  );
-
-  // Filter brands & models options
-  const filterBrandOptions = useMemo(() => {
-    if (categoryFilter === "car") return Object.keys(MODELS_BY_BRAND.car);
-    if (categoryFilter === "moto") return Object.keys(MODELS_BY_BRAND.moto);
-    const all = new Set<string>([
-      ...Object.keys(MODELS_BY_BRAND.car),
-      ...Object.keys(MODELS_BY_BRAND.moto),
-    ]);
-    return Array.from(all);
-  }, [categoryFilter]);
-
-  const filterModelOptions = useMemo(() => {
-    if (filterBrand === "All") return [];
-    const fromCar = MODELS_BY_BRAND.car[filterBrand] ?? [];
-    const fromMoto = MODELS_BY_BRAND.moto[filterBrand] ?? [];
-    return Array.from(new Set([...fromCar, ...fromMoto]));
-  }, [filterBrand]);
-
-  // Wizard brands & models options
-  const availableBrands = useMemo(
-    () => Object.keys(MODELS_BY_BRAND[newCategory]),
-    [newCategory]
-  );
-
-  const availableModels = useMemo(
-    () => MODELS_BY_BRAND[newCategory][newBrand] ?? [],
-    [newCategory, newBrand]
-  );
-
-  const fuelMap: Record<string, { lv: string; en: string }> = {
-    Diesel: { lv: "Dīzelis", en: "Diesel" },
-    Petrol: { lv: "Benzīns", en: "Petrol" },
-    Hybrid: { lv: "Hibrīds", en: "Hybrid" },
-    Electric: { lv: "Elektro", en: "Electric" },
-  };
-
-  const filtered = useMemo(() => {
-    const base = listings.filter((item) => {
-      const matchesCategory =
-        categoryFilter === "all" || item.category === categoryFilter;
-      const matchesBrand = filterBrand === "All" || item.brand === filterBrand;
-      const matchesModel = filterModel === "All" || item.model === filterModel;
-      const matchesCity = selectedCity === "All" || item.city === selectedCity;
-      const fullName = `${item.brand} ${item.model}`.toLowerCase();
-      const matchesQuery =
-        query.trim() === "" ||
-        fullName.includes(query.trim().toLowerCase()) ||
-        item.city.toLowerCase().includes(query.trim().toLowerCase());
-      return (
-        matchesCategory &&
-        matchesBrand &&
-        matchesModel &&
-        matchesCity &&
-        matchesQuery
-      );
-    });
-
-    return [...base].sort((a, b) => {
-      if (sortBy === "priceAsc") return a.priceEur - b.priceEur;
-      if (sortBy === "priceDesc") return b.priceEur - a.priceEur;
-      return b.year - a.year;
-    });
-  }, [listings, categoryFilter, filterBrand, filterModel, selectedCity, query, sortBy]);
-
-  function startWizard() {
-    const defaultBrand = Object.keys(MODELS_BY_BRAND[newCategory])[0];
-    const defaultModel = MODELS_BY_BRAND[newCategory][defaultBrand]?.[0] ?? "";
-    setStep(1);
-    setNewBrand(defaultBrand);
-    setNewModel(defaultModel);
-    setNewDesc("");
-    setNewPhotos([
-      newCategory === "moto" ? PHOTO_PRESETS[3].url : PHOTO_PRESETS[0].url,
-    ]);
-    setIsWizardOpen(true);
-  }
-
-  function handlePostButtonClick() {
-    if (!user) {
-      setPendingWizardAfterAuth(true);
+  function handlePostClick() {
+    if (!userId) {
+      setAuthError("");
+      setAuthMessage("");
       setIsAuthOpen(true);
       return;
     }
-    startWizard();
+    const defaultBrand = Object.keys(MODELS_BY_BRAND[newCategory])[0];
+    setStep(1);
+    setNewBrand(defaultBrand);
+    setNewModel(MODELS_BY_BRAND[newCategory][defaultBrand]?.[0] ?? "");
+    setNewFiles([]);
+    setNewPreviewUrls([newCategory === "moto" ? PHOTO_PRESETS[3].url : PHOTO_PRESETS[0].url]);
+    setNewDesc("");
+    setIsWizardOpen(true);
   }
 
-  function handleAuthSubmit(e: React.FormEvent) {
+  async function handleAuthSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const cleanName = authName.trim() || "AutoPircējs";
-    const cleanEmail = authEmail.trim() || "user@autolatvija.lv";
-    setUser({ name: cleanName, email: cleanEmail });
-    setIsAuthOpen(false);
-    if (pendingWizardAfterAuth) {
-      setPendingWizardAfterAuth(false);
-      startWizard();
+    setAuthError("");
+    setAuthMessage("");
+    setAuthLoading(true);
+
+    if (authMode === "signup") {
+      const { error } = await supabase.auth.signUp({
+        email: authEmail.trim(),
+        password: authPassword,
+        options: {
+          emailRedirectTo: "https://auto-latvia.vercel.app",
+          data: { name: authName.trim() || authEmail.split("@")[0] },
+        },
+      });
+      setAuthLoading(false);
+      if (error) {
+        setAuthError(error.message);
+        return;
+      }
+      setAuthMessage(t.verifyNotice);
+      setAuthMode("signin");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: authEmail.trim(),
+        password: authPassword,
+      });
+      setAuthLoading(false);
+      if (error) {
+        setAuthError(error.message);
+        return;
+      }
+      setIsAuthOpen(false);
     }
   }
 
-  function handleMultipleFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setIsMyListingsOpen(false);
+  }
 
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          setNewPhotos((prev) => [...prev, reader.result as string]);
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? []);
+    if (!selected.length) return;
+    setNewFiles((prev) => [...prev, ...selected]);
+    const localUrls = selected.map((f) => URL.createObjectURL(f));
+    setNewPreviewUrls((prev) => [...prev, ...localUrls]);
+  }
+
+  async function handlePublish(e: React.FormEvent) {
+    e.preventDefault();
+    if (!userId) return;
+    setIsPublishing(true);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      // Upload local files to Supabase Storage
+      for (const file of newFiles) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("listing-photos")
+          .upload(path, file);
+
+        if (!uploadErr) {
+          const { data: pub } = supabase.storage.from("listing-photos").getPublicUrl(path);
+          if (pub?.publicUrl) uploadedUrls.push(pub.publicUrl);
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      }
+
+      // Keep preset URLs if selected
+      const presetUrls = newPreviewUrls.filter((u) => u.startsWith("https://"));
+      const finalImages =
+        uploadedUrls.length > 0 || presetUrls.length > 0
+          ? [...uploadedUrls, ...presetUrls]
+          : [newCategory === "moto" ? PHOTO_PRESETS[3].url : PHOTO_PRESETS[0].url];
+
+      const { error: insertErr } = await supabase.from("listings").insert({
+        user_id: userId,
+        seller_name: userName || userEmail.split("@")[0],
+        seller_phone: newPhone.trim() || "+37120000000",
+        category: newCategory,
+        brand: newBrand,
+        model: newModel.trim() || "Model",
+        city: newCity,
+        price_eur: Number(newPrice) || 5000,
+        year: Number(newYear) || 2020,
+        mileage_km: Number(newKm) || 100000,
+        fuel: newFuel,
+        transmission: newTrans,
+        body_type: newBody,
+        engine_volume: newEngine.trim() || "2.0",
+        ta_valid_until: newTa.trim() || "TA derīga",
+        badge: newTa.trim() ? `TA ${newTa.trim()}` : "TA derīga",
+        images: finalImages,
+        description_lv: newDesc.trim() || "Papildu informācija pa tālruni vai WhatsApp.",
+        description_en: newDesc.trim() || "Additional details by phone or WhatsApp.",
+      });
+
+      if (!insertErr) {
+        await loadListings();
+        setIsWizardOpen(false);
+        setStep(1);
+      }
+    } finally {
+      setIsPublishing(false);
+    }
+  }
+
+  async function handleDeleteListing(id: string) {
+    await supabase.from("listings").delete().eq("id", id);
+    await loadListings();
+  }
+
+  async function handleQuickPriceUpdate(id: string, currentPrice: number) {
+    const nextStr = window.prompt("Jaunā cena (EUR) / New price (EUR):", String(currentPrice));
+    if (!nextStr) return;
+    const parsed = Number(nextStr);
+    if (Number.isNaN(parsed) || parsed <= 0) return;
+    await supabase.from("listings").update({ price_eur: parsed }).eq("id", id);
+    await loadListings();
   }
 
   function handleCardMouseMove(
     e: React.MouseEvent<HTMLDivElement>,
-    listingId: number,
+    listingId: string,
     photoCount: number
   ) {
     if (photoCount <= 1) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 0.999);
-    const idx = Math.floor(ratio * photoCount);
-    setHoverPhotoIndex((prev) => ({ ...prev, [listingId]: idx }));
-  }
-
-  function handleCardMouseLeave(listingId: number) {
-    setHoverPhotoIndex((prev) => ({ ...prev, [listingId]: 0 }));
-  }
-
-  function handlePublish(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) {
-      setIsWizardOpen(false);
-      setPendingWizardAfterAuth(true);
-      setIsAuthOpen(true);
-      return;
-    }
-
-    const finalModel = newModel.trim() || "Model";
-    const fuelObj = fuelMap[newFuelEn] || { lv: newFuelEn, en: newFuelEn };
-    const safePhotos =
-      newPhotos.length > 0
-        ? newPhotos
-        : [newCategory === "moto" ? PHOTO_PRESETS[3].url : PHOTO_PRESETS[0].url];
-
-    const created: Listing = {
-      id: Date.now(),
-      category: newCategory,
-      brand: newBrand,
-      model: finalModel,
-      city: newCity,
-      priceEur: Number(newPrice) || 6500,
-      year: Number(newYear) || 2020,
-      mileageKm: Number(newKm) || 110000,
-      fuel: fuelObj,
-      badge:
-        newCategory === "moto"
-          ? { lv: "Moto sludinājums", en: "Moto listing" }
-          : { lv: "Jauns sludinājums", en: "New listing" },
-      images: safePhotos,
-      sellerName: user.name,
-      description: {
-        lv: newDesc.trim() || "Papildu informācija pēc pieprasījuma.",
-        en: newDesc.trim() || "Additional details available upon request.",
-      },
-    };
-
-    setListings((prev) => [created, ...prev]);
-    setIsWizardOpen(false);
-    setStep(1);
+    setHoverPhotoIndex((prev) => ({ ...prev, [listingId]: Math.floor(ratio * photoCount) }));
   }
 
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-100">
+      {/* Header */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f17]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button
@@ -546,26 +685,33 @@ export default function HomePage() {
             </span>
           </button>
 
-          <div className="flex items-center gap-2">
-            {user ? (
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs">
-                <span className="font-semibold text-amber-300">{user.name}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {userId ? (
+              <>
                 <button
                   type="button"
-                  onClick={() => setUser(null)}
-                  className="text-slate-400 hover:text-white cursor-pointer"
+                  onClick={() => setIsMyListingsOpen(true)}
+                  className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-white/10 cursor-pointer"
+                >
+                  {t.myListingsBtn} ({myListings.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="rounded-xl border border-white/10 px-2.5 py-2 text-xs text-slate-400 hover:text-white cursor-pointer"
                 >
                   {t.logoutBtn}
                 </button>
-              </div>
+              </>
             ) : (
               <button
                 type="button"
                 onClick={() => {
-                  setPendingWizardAfterAuth(false);
+                  setAuthError("");
+                  setAuthMessage("");
                   setIsAuthOpen(true);
                 }}
-                className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 transition cursor-pointer"
+                className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
               >
                 {t.loginBtn}
               </button>
@@ -573,8 +719,8 @@ export default function HomePage() {
 
             <button
               type="button"
-              onClick={handlePostButtonClick}
-              className="rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 transition cursor-pointer"
+              onClick={handlePostClick}
+              className="rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
             >
               {t.postBtn}
             </button>
@@ -603,6 +749,7 @@ export default function HomePage() {
         </div>
       </header>
 
+      {/* Detail Page */}
       {activeListing ? (
         <main className="mx-auto max-w-5xl px-4 py-6">
           <button
@@ -621,7 +768,7 @@ export default function HomePage() {
                 className="h-full w-full object-cover"
               />
               <span className="absolute left-4 top-4 rounded-lg bg-slate-950/85 px-3 py-1 text-xs font-semibold text-amber-300">
-                {activeListing.badge[lang]}
+                {activeListing.badge}
               </span>
             </div>
 
@@ -632,17 +779,11 @@ export default function HomePage() {
                     key={`${imgUrl}-${idx}`}
                     type="button"
                     onClick={() => setDetailPhotoIndex(idx)}
-                    className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border transition cursor-pointer ${
-                      detailPhotoIndex === idx
-                        ? "border-amber-400"
-                        : "border-white/10 opacity-65 hover:opacity-100"
+                    className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border cursor-pointer ${
+                      detailPhotoIndex === idx ? "border-amber-400" : "border-white/10 opacity-65"
                     }`}
                   >
-                    <img
-                      src={imgUrl}
-                      alt={`Thumb ${idx + 1}`}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={imgUrl} alt="" className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -655,42 +796,79 @@ export default function HomePage() {
                     {activeListing.brand} • {activeListing.city}
                   </span>
                   <h1 className="mt-1 text-2xl font-extrabold text-white">
-                    {activeListing.brand} {activeListing.model}
+                    {activeListing.brand} {activeListing.model} ({activeListing.engine_volume})
                   </h1>
                 </div>
                 <div className="text-2xl font-black text-amber-400">
-                  €{activeListing.priceEur.toLocaleString("en-US")}
+                  €{activeListing.price_eur.toLocaleString("en-US")}
                 </div>
               </div>
 
-              <p className="mt-4 text-sm leading-relaxed text-slate-300">
-                {activeListing.description[lang]}
-              </p>
-
-              <div className="mt-6 grid grid-cols-2 gap-3 rounded-xl bg-[#0b0f17] p-4 text-xs sm:grid-cols-4">
+              {/* Latvia Market Specs Grid */}
+              <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-[#0b0f17] p-4 text-xs sm:grid-cols-3 lg:grid-cols-6">
                 <div>
                   <span className="block text-slate-400">{t.yearLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-white">
-                    {activeListing.year}
-                  </strong>
+                  <strong className="mt-0.5 block text-sm text-white">{activeListing.year}</strong>
                 </div>
                 <div>
                   <span className="block text-slate-400">{t.kmLabel}</span>
                   <strong className="mt-0.5 block text-sm text-white">
-                    {activeListing.mileageKm.toLocaleString("en-US")} km
+                    {activeListing.mileage_km.toLocaleString("en-US")} km
                   </strong>
                 </div>
                 <div>
                   <span className="block text-slate-400">{t.fuelLabel}</span>
                   <strong className="mt-0.5 block text-sm text-white">
-                    {activeListing.fuel[lang]}
+                    {activeListing.engine_volume} ({LABELS.fuel[activeListing.fuel]?.[lang] ?? activeListing.fuel})
                   </strong>
                 </div>
                 <div>
-                  <span className="block text-slate-400">{t.sellerLabel}</span>
-                  <strong className="mt-0.5 block text-sm text-amber-300">
-                    {activeListing.sellerName}
+                  <span className="block text-slate-400">{t.transLabel}</span>
+                  <strong className="mt-0.5 block text-sm text-white">
+                    {LABELS.transmission[activeListing.transmission]?.[lang] ?? activeListing.transmission}
                   </strong>
+                </div>
+                <div>
+                  <span className="block text-slate-400">{t.bodyLabel}</span>
+                  <strong className="mt-0.5 block text-sm text-white">
+                    {LABELS.body[activeListing.body_type]?.[lang] ?? activeListing.body_type}
+                  </strong>
+                </div>
+                <div>
+                  <span className="block text-slate-400">{t.taLabel}</span>
+                  <strong className="mt-0.5 block text-sm text-emerald-400">
+                    {activeListing.ta_valid_until}
+                  </strong>
+                </div>
+              </div>
+
+              <p className="mt-5 text-sm leading-relaxed text-slate-300">
+                {lang === "lv" ? activeListing.description_lv : activeListing.description_en}
+              </p>
+
+              {/* Direct Seller Contact Bar */}
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
+                <div className="text-xs">
+                  <span className="text-slate-400">{t.sellerLabel}: </span>
+                  <strong className="text-sm text-white">{activeListing.seller_name}</strong>
+                  <span className="ml-2 text-slate-400">({activeListing.seller_phone})</span>
+                </div>
+
+                <div className="flex flex-wrap gap-2.5">
+                  <a
+                    href={`tel:${activeListing.seller_phone}`}
+                    className="rounded-xl bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20"
+                  >
+                    📞 {t.callSeller}
+                  </a>
+                  <a
+                    href={`https://wa.me/${activeListing.seller_phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 hover:bg-emerald-400"
+                  >
+                    💬 {t.whatsappSeller}
+                  </a>
                 </div>
               </div>
             </div>
@@ -698,6 +876,7 @@ export default function HomePage() {
         </main>
       ) : (
         <>
+          {/* Filter Bar */}
           <section className="border-b border-white/10 bg-[#0e1420]">
             <div className="mx-auto max-w-7xl px-4 py-5">
               <div className="flex flex-wrap items-end justify-between gap-4">
@@ -705,9 +884,7 @@ export default function HomePage() {
                   <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
                     {t.heroTitle}
                   </h1>
-                  <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-                    {t.heroSubtitle}
-                  </p>
+                  <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
@@ -726,7 +903,7 @@ export default function HomePage() {
                         setFilterBrand("All");
                         setFilterModel("All");
                       }}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer ${
                         categoryFilter === cat.key
                           ? "bg-amber-400 text-slate-950"
                           : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
@@ -738,7 +915,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Sahibinden-like Brand & Model Filter Grid */}
               <div className="mt-4 grid gap-2.5 rounded-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
                 <select
                   value={filterBrand}
@@ -746,7 +922,7 @@ export default function HomePage() {
                     setFilterBrand(e.target.value);
                     setFilterModel("All");
                   }}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
                 >
                   <option value="All">{t.allBrands}</option>
                   {filterBrandOptions.map((b) => (
@@ -760,7 +936,7 @@ export default function HomePage() {
                   value={filterModel}
                   disabled={filterBrand === "All"}
                   onChange={(e) => setFilterModel(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none disabled:opacity-50"
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white disabled:opacity-50"
                 >
                   <option value="All">{t.allModels}</option>
                   {filterModelOptions.map((m) => (
@@ -773,7 +949,7 @@ export default function HomePage() {
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none"
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
                 >
                   {CITIES.map((city) => (
                     <option key={city} value={city}>
@@ -787,17 +963,15 @@ export default function HomePage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t.searchPlaceholder}
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
                 />
 
                 <select
                   value={sortBy}
                   onChange={(e) =>
-                    setSortBy(
-                      e.target.value as "priceAsc" | "priceDesc" | "yearDesc"
-                    )
+                    setSortBy(e.target.value as "priceAsc" | "priceDesc" | "yearDesc")
                   }
-                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none lg:col-span-2"
+                  className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white lg:col-span-2"
                 >
                   <option value="yearDesc">{t.sortYearDesc}</option>
                   <option value="priceAsc">{t.sortPriceAsc}</option>
@@ -807,6 +981,7 @@ export default function HomePage() {
             </div>
           </section>
 
+          {/* Compact Cards Grid */}
           <main className="mx-auto max-w-7xl px-4 py-6">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -826,19 +1001,19 @@ export default function HomePage() {
                     className="group cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
                   >
                     <div
-                      onMouseMove={(e) =>
-                        handleCardMouseMove(e, item.id, item.images.length)
+                      onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
+                      onMouseLeave={() =>
+                        setHoverPhotoIndex((prev) => ({ ...prev, [item.id]: 0 }))
                       }
-                      onMouseLeave={() => handleCardMouseLeave(item.id)}
                       className="relative h-36 w-full overflow-hidden bg-slate-950"
                     >
                       <img
                         src={currentSrc}
                         alt={`${item.brand} ${item.model}`}
-                        className="h-full w-full object-cover transition duration-200"
+                        className="h-full w-full object-cover"
                       />
-                      <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
-                        {item.badge[lang]}
+                      <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                        {item.badge}
                       </span>
                       <span className="absolute right-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] text-slate-200">
                         {item.city}
@@ -849,7 +1024,7 @@ export default function HomePage() {
                           {item.images.map((_, i) => (
                             <span
                               key={i}
-                              className={`h-1 w-3 rounded-full transition ${
+                              className={`h-1 w-3 rounded-full ${
                                 activeIdx === i ? "bg-amber-400" : "bg-white/35"
                               }`}
                             />
@@ -862,21 +1037,21 @@ export default function HomePage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="text-[11px] font-bold text-amber-400/90">
-                            {item.brand}
+                            {item.brand} • {item.engine_volume}
                           </div>
-                          <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300 transition">
+                          <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300">
                             {item.model}
                           </h2>
                         </div>
                         <span className="shrink-0 text-base font-black text-amber-400">
-                          €{item.priceEur.toLocaleString("en-US")}
+                          €{item.price_eur.toLocaleString("en-US")}
                         </span>
                       </div>
 
                       <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-slate-400">
                         <span>{item.year}</span>
-                        <span>{item.mileageKm.toLocaleString("en-US")} km</span>
-                        <span>{item.fuel[lang]}</span>
+                        <span>{item.mileage_km.toLocaleString("en-US")} km</span>
+                        <span>{LABELS.transmission[item.transmission]?.[lang] ?? item.transmission}</span>
                       </div>
                     </div>
                   </article>
@@ -887,6 +1062,7 @@ export default function HomePage() {
         </>
       )}
 
+      {/* Email Verification Auth Modal */}
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
@@ -895,62 +1071,169 @@ export default function HomePage() {
           >
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-base font-extrabold text-white">
-                  {t.authTitle}
-                </h3>
+                <h3 className="text-base font-extrabold text-white">{t.authTitle}</h3>
                 <p className="mt-1 text-xs text-slate-400">{t.authDesc}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAuthOpen(false)}
-                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white cursor-pointer"
+                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-300">
-                  {t.nameLabel}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={authName}
-                  onChange={(e) => setAuthName(e.target.value)}
-                  placeholder="Mustafa"
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
-                />
+            <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl bg-[#0b0f17] p-1 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setAuthMode("signin")}
+                className={`rounded-lg py-1.5 cursor-pointer ${
+                  authMode === "signin" ? "bg-amber-400 text-slate-950" : "text-slate-300"
+                }`}
+              >
+                {t.authSignInTab}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthMode("signup")}
+                className={`rounded-lg py-1.5 cursor-pointer ${
+                  authMode === "signup" ? "bg-amber-400 text-slate-950" : "text-slate-300"
+                }`}
+              >
+                {t.authSignUpTab}
+              </button>
+            </div>
+
+            {authMessage && (
+              <div className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+                {authMessage}
               </div>
+            )}
+            {authError && (
+              <div className="mt-3 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-300">
+                {authError}
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
+              {authMode === "signup" && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-300">{t.nameLabel}</label>
+                  <input
+                    type="text"
+                    required
+                    value={authName}
+                    onChange={(e) => setAuthName(e.target.value)}
+                    placeholder="Mustafa"
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
+                  />
+                </div>
+              )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-300">
-                  {t.emailLabel}
-                </label>
+                <label className="block text-xs font-bold text-slate-300">{t.emailLabel}</label>
                 <input
                   type="email"
                   required
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="mustafa@example.lv"
+                  placeholder="name@example.lv"
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300">{t.passwordLabel}</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
                 />
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-amber-400 px-4 py-2.5 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
-              >
-                {t.createAccountBtn}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="mt-5 w-full rounded-xl bg-amber-400 px-4 py-2.5 text-xs font-extrabold text-slate-950 hover:bg-amber-300 disabled:opacity-60 cursor-pointer"
+            >
+              {authMode === "signup" ? t.signUpSubmit : t.signInSubmit}
+            </button>
           </form>
         </div>
       )}
 
+      {/* My Listings Management Modal */}
+      {isMyListingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-2xl rounded-2xl border border-white/15 bg-[#121826] p-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
+              <div>
+                <h3 className="text-base font-extrabold text-white">{t.myPanelTitle}</h3>
+                <p className="text-xs text-slate-400">{userEmail}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMyListingsOpen(false)}
+                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-96 space-y-3 overflow-y-auto">
+              {myListings.length === 0 ? (
+                <p className="py-8 text-center text-xs text-slate-400">{t.noMyListings}</p>
+              ) : (
+                myListings.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0b0f17] p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={item.images[0]}
+                        alt=""
+                        className="h-14 w-20 rounded-lg object-cover"
+                      />
+                      <div>
+                        <div className="text-sm font-bold text-white">
+                          {item.brand} {item.model} ({item.year})
+                        </div>
+                        <div className="text-xs text-amber-400">
+                          €{item.price_eur.toLocaleString("en-US")} • {item.city}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickPriceUpdate(item.id, item.price_eur)}
+                        className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
+                      >
+                        {t.updatePriceBtn}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteListing(item.id)}
+                        className="rounded-lg bg-rose-500/20 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/30 cursor-pointer"
+                      >
+                        {t.deleteBtn}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4-Step Listing Wizard */}
       {isWizardOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
@@ -959,9 +1242,7 @@ export default function HomePage() {
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
               <div>
-                <h3 className="text-base font-extrabold text-white">
-                  {t.wizardTitle}
-                </h3>
+                <h3 className="text-base font-extrabold text-white">{t.wizardTitle}</h3>
                 <p className="text-xs font-semibold text-amber-400">
                   {step === 1 && t.step1Title}
                   {step === 2 && t.step2Title}
@@ -972,7 +1253,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setIsWizardOpen(false)}
-                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white cursor-pointer"
+                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 cursor-pointer"
               >
                 ✕
               </button>
@@ -982,9 +1263,7 @@ export default function HomePage() {
               {[1, 2, 3, 4].map((s) => (
                 <div
                   key={s}
-                  className={`h-1.5 rounded-full ${
-                    step >= s ? "bg-amber-400" : "bg-white/10"
-                  }`}
+                  className={`h-1.5 rounded-full ${step >= s ? "bg-amber-400" : "bg-white/10"}`}
                 />
               ))}
             </div>
@@ -999,7 +1278,8 @@ export default function HomePage() {
                       const b = Object.keys(MODELS_BY_BRAND.car)[0];
                       setNewBrand(b);
                       setNewModel(MODELS_BY_BRAND.car[b][0]);
-                      setNewPhotos([PHOTO_PRESETS[0].url]);
+                      setNewBody("Wagon");
+                      setNewPreviewUrls([PHOTO_PRESETS[0].url]);
                     }}
                     className={`rounded-xl border p-3.5 text-left cursor-pointer ${
                       newCategory === "car"
@@ -1017,7 +1297,8 @@ export default function HomePage() {
                       const b = Object.keys(MODELS_BY_BRAND.moto)[0];
                       setNewBrand(b);
                       setNewModel(MODELS_BY_BRAND.moto[b][0]);
-                      setNewPhotos([PHOTO_PRESETS[3].url]);
+                      setNewBody("Naked");
+                      setNewPreviewUrls([PHOTO_PRESETS[3].url]);
                     }}
                     className={`rounded-xl border p-3.5 text-left cursor-pointer ${
                       newCategory === "moto"
@@ -1030,9 +1311,7 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300">
-                    {t.cityLabel}
-                  </label>
+                  <label className="block text-xs font-bold text-slate-300">{t.cityLabel}</label>
                   <select
                     value={newCity}
                     onChange={(e) => setNewCity(e.target.value)}
@@ -1059,10 +1338,10 @@ export default function HomePage() {
                         setNewBrand(brand);
                         setNewModel(MODELS_BY_BRAND[newCategory][brand]?.[0] ?? "");
                       }}
-                      className={`rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition cursor-pointer ${
+                      className={`rounded-xl border px-3 py-2.5 text-left text-xs font-bold cursor-pointer ${
                         newBrand === brand
                           ? "border-amber-400 bg-amber-400/15 text-amber-300"
-                          : "border-white/10 bg-[#0b0f17] text-slate-200 hover:border-white/25"
+                          : "border-white/10 bg-[#0b0f17] text-slate-200"
                       }`}
                     >
                       {brand}
@@ -1073,18 +1352,18 @@ export default function HomePage() {
             )}
 
             {step === 3 && (
-              <div className="mt-5 space-y-4">
+              <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1">
                 <div>
                   <label className="block text-xs font-bold text-slate-300">
                     {newBrand} — {t.chooseModel}
                   </label>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {availableModels.map((mdl) => (
                       <button
                         key={mdl}
                         type="button"
                         onClick={() => setNewModel(mdl)}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold cursor-pointer ${
+                        className={`rounded-lg border px-2.5 py-1 text-xs font-bold cursor-pointer ${
                           newModel === mdl
                             ? "border-amber-400 bg-amber-400 text-slate-950"
                             : "border-white/10 bg-[#0b0f17] text-slate-300"
@@ -1099,15 +1378,13 @@ export default function HomePage() {
                     value={newModel}
                     onChange={(e) => setNewModel(e.target.value)}
                     placeholder={t.customModelPlaceholder}
-                    className="mt-2 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-xs text-white"
+                    className="mt-2 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
                   />
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">
-                      {t.priceLabel}
-                    </label>
+                    <label className="block text-xs font-bold text-slate-300">{t.priceLabel}</label>
                     <input
                       type="number"
                       required
@@ -1117,24 +1394,17 @@ export default function HomePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">
-                      {t.fuelInputLabel}
-                    </label>
-                    <select
-                      value={newFuelEn}
-                      onChange={(e) => setNewFuelEn(e.target.value)}
+                    <label className="block text-xs font-bold text-slate-300">{t.engineLabel}</label>
+                    <input
+                      type="text"
+                      required
+                      value={newEngine}
+                      onChange={(e) => setNewEngine(e.target.value)}
                       className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                    >
-                      <option value="Diesel">Diesel / Dīzelis</option>
-                      <option value="Petrol">Petrol / Benzīns</option>
-                      <option value="Hybrid">Hybrid / Hibrīds</option>
-                      <option value="Electric">Electric / Elektro</option>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">
-                      {t.yearInputLabel}
-                    </label>
+                    <label className="block text-xs font-bold text-slate-300">{t.yearInputLabel}</label>
                     <input
                       type="number"
                       required
@@ -1144,9 +1414,7 @@ export default function HomePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">
-                      {t.kmInputLabel}
-                    </label>
+                    <label className="block text-xs font-bold text-slate-300">{t.kmInputLabel}</label>
                     <input
                       type="number"
                       required
@@ -1155,22 +1423,79 @@ export default function HomePage() {
                       className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.fuelLabel}</label>
+                    <select
+                      value={newFuel}
+                      onChange={(e) => setNewFuel(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      <option value="Diesel">Dīzelis / Diesel</option>
+                      <option value="Petrol">Benzīns / Petrol</option>
+                      <option value="Hybrid">Hibrīds / Hybrid</option>
+                      <option value="Electric">Elektro / Electric</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.transLabel}</label>
+                    <select
+                      value={newTrans}
+                      onChange={(e) => setNewTrans(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      <option value="Automatic">Automāts / Automatic</option>
+                      <option value="Manual">Manuālā / Manual</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.bodyLabel}</label>
+                    <select
+                      value={newBody}
+                      onChange={(e) => setNewBody(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      {newCategory === "car" ? (
+                        <>
+                          <option value="Wagon">Universālis / Wagon</option>
+                          <option value="Sedan">Sedans / Sedan</option>
+                          <option value="Hatchback">Hečbeks / Hatchback</option>
+                          <option value="SUV">Apvidus / SUV</option>
+                          <option value="Coupe">Kupeja / Coupe</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="Naked">Naked / Street</option>
+                          <option value="Sport">Sporta / Sport</option>
+                          <option value="Touring">Tūrisma / Enduro</option>
+                          <option value="Scooter">Motorolleris / Scooter</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.taInputLabel}</label>
+                    <input
+                      type="text"
+                      value={newTa}
+                      onChange={(e) => setNewTa(e.target.value)}
+                      placeholder="10.2027"
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
             {step === 4 && (
-              <div className="mt-5 space-y-4">
+              <div className="mt-4 space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300">
-                    {t.addPhotosLabel}
-                  </label>
+                  <label className="block text-xs font-bold text-slate-300">{t.addPhotosLabel}</label>
                   <input
                     type="file"
                     accept="image/*"
                     multiple
-                    onChange={handleMultipleFiles}
-                    className="mt-1.5 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 py-1.5 file:font-semibold file:text-white hover:file:bg-white/20"
+                    onChange={handleFileSelect}
+                    className="mt-1.5 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:font-semibold file:text-white"
                   />
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1178,7 +1503,7 @@ export default function HomePage() {
                       <button
                         key={p.url}
                         type="button"
-                        onClick={() => setNewPhotos((prev) => [...prev, p.url])}
+                        onClick={() => setNewPreviewUrls((prev) => [...prev, p.url])}
                         className="rounded-lg border border-white/15 bg-[#0b0f17] px-2.5 py-1 text-[11px] text-slate-200 hover:border-amber-400 cursor-pointer"
                       >
                         + {p.label[lang]}
@@ -1186,23 +1511,21 @@ export default function HomePage() {
                     ))}
                   </div>
 
-                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-                    {newPhotos.map((src, idx) => (
-                      <div key={`${idx}`} className="relative h-20 w-28 shrink-0">
+                  <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
+                    {newPreviewUrls.map((src, idx) => (
+                      <div key={idx} className="relative h-16 w-24 shrink-0">
                         <img
                           src={src}
-                          alt={`Selected ${idx + 1}`}
-                          className="h-full w-full rounded-lg object-cover border border-white/10"
+                          alt=""
+                          className="h-full w-full rounded-lg border border-white/10 object-cover"
                         />
-                        {newPhotos.length > 1 && (
+                        {newPreviewUrls.length > 1 && (
                           <button
                             type="button"
                             onClick={() =>
-                              setNewPhotos((prev) =>
-                                prev.filter((_, i) => i !== idx)
-                              )
+                              setNewPreviewUrls((prev) => prev.filter((_, i) => i !== idx))
                             }
-                            className="absolute right-1 top-1 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-bold text-rose-300 cursor-pointer"
+                            className="absolute right-1 top-1 rounded bg-black/75 px-1 text-[10px] font-bold text-rose-300 cursor-pointer"
                           >
                             ✕
                           </button>
@@ -1213,21 +1536,31 @@ export default function HomePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300">
-                    {t.descLabel}
-                  </label>
+                  <label className="block text-xs font-bold text-slate-300">{t.phoneLabel}</label>
+                  <input
+                    type="tel"
+                    required
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="+37120000000"
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300">{t.descLabel}</label>
                   <textarea
                     rows={2}
                     value={newDesc}
                     onChange={(e) => setNewDesc(e.target.value)}
                     placeholder={t.descPlaceholder}
-                    className="mt-1.5 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-xs text-white"
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
                   />
                 </div>
               </div>
             )}
 
-            <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
+            <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
               {step > 1 ? (
                 <button
                   type="button"
@@ -1251,9 +1584,10 @@ export default function HomePage() {
               ) : (
                 <button
                   type="submit"
-                  className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                  disabled={isPublishing}
+                  className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 disabled:opacity-60 cursor-pointer"
                 >
-                  {t.publishBtn}
+                  {isPublishing ? t.publishingBtn : t.publishBtn}
                 </button>
               )}
             </div>
