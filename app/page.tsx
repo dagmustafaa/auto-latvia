@@ -27,7 +27,6 @@ interface Listing {
   images: string[];
   description_lv: string;
   description_en: string;
-  isDemo?: boolean;
 }
 
 const CITIES = ["All", "Rīga", "Daugavpils", "Liepāja", "Jelgava", "Ventspils", "Valmiera", "Jūrmala"];
@@ -101,7 +100,6 @@ const DEMO_LISTINGS: Listing[] = [
     images: [PHOTO_PRESETS[0].url, PHOTO_PRESETS[1].url, PHOTO_PRESETS[2].url],
     description_lv: "Kopts auto no Rīgas, pilna servisa vēsture, jaunas ziemas riepas.",
     description_en: "Well-kept car from Riga, full service history, fresh winter tires.",
-    isDemo: true,
   },
   {
     id: "demo-2",
@@ -123,7 +121,6 @@ const DEMO_LISTINGS: Listing[] = [
     images: [PHOTO_PRESETS[1].url, PHOTO_PRESETS[0].url],
     description_lv: "Ekonomisks hibrīds ikdienai un garākiem braucieniem pa Latviju.",
     description_en: "Economical hybrid for daily commuting and trips across Latvia.",
-    isDemo: true,
   },
   {
     id: "demo-3",
@@ -145,7 +142,6 @@ const DEMO_LISTINGS: Listing[] = [
     images: [PHOTO_PRESETS[2].url, PHOTO_PRESETS[0].url, PHOTO_PRESETS[1].url],
     description_lv: "Pilnpiedziņa Latvijas ziemai, ietilpīgs universālis.",
     description_en: "All-wheel drive for Latvian winter, spacious wagon.",
-    isDemo: true,
   },
   {
     id: "demo-4",
@@ -167,7 +163,6 @@ const DEMO_LISTINGS: Listing[] = [
     images: [PHOTO_PRESETS[3].url, PHOTO_PRESETS[0].url],
     description_lv: "Veikls 125cc motocikls ar ABS un šķidruma dzesēšanu pilsētai.",
     description_en: "Agile 125cc motorcycle with ABS and liquid cooling for city rides.",
-    isDemo: true,
   },
 ];
 
@@ -223,7 +218,6 @@ const UI_TEXT = {
     transLabel: "Ātrumkārba",
     bodyLabel: "Virsbūves tips",
     taLabel: "Tehniskā apskate (TA)",
-    cityLabel: "Pilsēta",
     callSeller: "Zvanīt pārdevējam",
     whatsappSeller: "Rakstīt WhatsApp",
     authSignInTab: "Ieiet kontā",
@@ -260,6 +254,7 @@ const UI_TEXT = {
     noMyListings: "Tev vēl nav publicētu sludinājumu.",
     deleteBtn: "Dzēst",
     updatePriceBtn: "Mainīt cenu",
+    cityLabel: "Pilsēta",
   },
   en: {
     brand: "AutoLatvija",
@@ -288,7 +283,6 @@ const UI_TEXT = {
     transLabel: "Transmission",
     bodyLabel: "Body type",
     taLabel: "Inspection (TA)",
-    cityLabel: "City",
     callSeller: "Call seller",
     whatsappSeller: "Message on WhatsApp",
     authSignInTab: "Sign in",
@@ -325,6 +319,7 @@ const UI_TEXT = {
     noMyListings: "You have not published any listings yet.",
     deleteBtn: "Delete",
     updatePriceBtn: "Edit price",
+    cityLabel: "City",
   },
 };
 
@@ -435,9 +430,7 @@ export default function HomePage() {
     return () => window.removeEventListener("hashchange", syncFromHash);
   }, []);
 
-  const allListings = useMemo(() => {
-    return [...dbListings, ...DEMO_LISTINGS];
-  }, [dbListings]);
+  const allListings = useMemo(() => [...dbListings, ...DEMO_LISTINGS], [dbListings]);
 
   const myListings = useMemo(() => {
     if (!userId) return [];
