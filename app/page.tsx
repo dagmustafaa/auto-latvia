@@ -240,7 +240,6 @@ const UI_TEXT = {
     taLabel: "Tehniskā apskate (TA)",
     plateLabel: "Valsts numurs",
     vinLabel: "VIN kods",
-    csddCheckBtn: "Pārbaudīt e.CSDD ↗",
     similarTitle: "Līdzīgi sludinājumi",
     saveAction: "Saglabāt",
     savedAction: "Saglabāts",
@@ -326,7 +325,6 @@ const UI_TEXT = {
     taLabel: "Техосмотр (ТО)",
     plateLabel: "Госномер",
     vinLabel: "VIN код",
-    csddCheckBtn: "Проверить в e.CSDD ↗",
     similarTitle: "Похожие объявления",
     saveAction: "В избранное",
     savedAction: "Сохранено",
@@ -412,7 +410,6 @@ const UI_TEXT = {
     taLabel: "Inspection (TA)",
     plateLabel: "License plate",
     vinLabel: "VIN code",
-    csddCheckBtn: "Check on e.CSDD ↗",
     similarTitle: "Similar listings",
     saveAction: "Save",
     savedAction: "Saved",
@@ -1127,13 +1124,6 @@ export default function HomePage() {
                     )}
                   </div>
                   <a
-                    href="https://e.csdd.lv/tlizmainas/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-bold text-amber-400 hover:underline"
-                  >
-                    {t.csddCheckBtn}
-                  </a>
                 </div>
               )}
 
