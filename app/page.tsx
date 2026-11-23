@@ -542,33 +542,37 @@ export default function HomePage() {
     setAuthMessage("");
     setAuthLoading(true);
 
-    if (authMode === "signup") {
-      const { error } = await supabase.auth.signUp({
-        email: authEmail.trim(),
-        password: authPassword,
-        options: {
-          emailRedirectTo: "https://auto-latvia.vercel.app",
-          data: { name: authName.trim() || authEmail.split("@")[0] },
-        },
-      });
-      setAuthLoading(false);
-      if (error) {
-        setAuthError(error.message);
-        return;
+    try {
+      if (authMode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email: authEmail.trim(),
+          password: authPassword,
+          options: {
+            emailRedirectTo: "https://auto-latvia.vercel.app",
+            data: { name: authName.trim() || authEmail.split("@")[0] },
+          },
+        });
+        if (error) {
+          setAuthError(error.message);
+          return;
+        }
+        setAuthMessage(t.verifyNotice);
+        setAuthMode("signin");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail.trim(),
+          password: authPassword,
+        });
+        if (error) {
+          setAuthError(error.message);
+          return;
+        }
+        setIsAuthOpen(false);
       }
-      setAuthMessage(t.verifyNotice);
-      setAuthMode("signin");
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: authEmail.trim(),
-        password: authPassword,
-      });
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : "Connection error. Check Supabase URL/SMTP.");
+    } finally {
       setAuthLoading(false);
-      if (error) {
-        setAuthError(error.message);
-        return;
-      }
-      setIsAuthOpen(false);
     }
   }
 
