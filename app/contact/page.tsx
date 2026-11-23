@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 type Lang = "lv" | "ru" | "en";
 
-const CONTACT_EMAIL = "dagmmm34@gmail.com";
+const CONTACT_EMAIL = "autolatvia.lv@gmail.com";
 
 const TEXT: Record<
   Lang,
