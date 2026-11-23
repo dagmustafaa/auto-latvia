@@ -223,13 +223,13 @@ const UI_TEXT = {
     authSignInTab: "Ieiet kontā",
     authSignUpTab: "Reģistrēties",
     authTitle: "Konts sludinājumu pārvaldībai",
-    authDesc: "Reģistrējies ar e-pastu un apstiprini saiti savā pastkastē.",
+    authDesc: "Reģistrējies ar e-pastu un apstiprini AutoLatvija saiti savā pastkastē.",
     nameLabel: "Vārds",
     emailLabel: "E-pasts",
     passwordLabel: "Parole (min. 6 simboli)",
     signInSubmit: "Pieslēgties",
     signUpSubmit: "Izveidot kontu",
-    verifyNotice: "Apstiprinājuma saite nosūtīta uz e-pastu! Pēc apstiprināšanas spied 'Ieiet kontā'.",
+    verifyNotice: "AutoLatvija apstiprinājuma saite nosūtīta uz e-pastu! Pēc apstiprināšanas spied 'Ieiet kontā'.",
     wizardTitle: "Jauns sludinājums",
     step1Title: "1. Kategorija & Pilsēta",
     step2Title: "2. Izvēlies marku",
@@ -243,7 +243,9 @@ const UI_TEXT = {
     engineLabel: "Motors (piem. 2.0 TDI / 125cc)",
     taInputLabel: "TA derīga līdz (piem. 10.2027)",
     phoneLabel: "Tālrunis (WhatsApp)",
-    addPhotosLabel: "Augšupielādēt bildes (vairākas) vai pievienot paraugus",
+    addPhotosLabel: "Sludinājuma bildes",
+    uploadBoxTitle: "Spied šeit, lai izvēlētos bildes no datora vai telefona",
+    uploadBoxSub: "Var izvēlēties vairākas bildes vienlaicīgi (JPG, PNG, WEBP)",
     descLabel: "Apraksts",
     descPlaceholder: "Apraksti stāvokli, apkopi, riepas...",
     backBtn: "Atpakaļ",
@@ -288,13 +290,13 @@ const UI_TEXT = {
     authSignInTab: "Sign in",
     authSignUpTab: "Register",
     authTitle: "Account for posting & managing ads",
-    authDesc: "Register with your email and confirm the verification link sent to your inbox.",
+    authDesc: "Register with your email and confirm the AutoLatvija verification link in your inbox.",
     nameLabel: "Name",
     emailLabel: "Email",
     passwordLabel: "Password (min. 6 chars)",
     signInSubmit: "Sign in",
     signUpSubmit: "Create account",
-    verifyNotice: "Verification email sent! Please click the link in your inbox, then sign in.",
+    verifyNotice: "AutoLatvija verification email sent! Click the link in your inbox, then sign in.",
     wizardTitle: "New listing",
     step1Title: "1. Category & City",
     step2Title: "2. Choose brand",
@@ -308,7 +310,9 @@ const UI_TEXT = {
     engineLabel: "Engine (e.g. 2.0 TDI / 125cc)",
     taInputLabel: "TA valid until (e.g. 10.2027)",
     phoneLabel: "Phone (WhatsApp)",
-    addPhotosLabel: "Upload photos (multiple) or add presets",
+    addPhotosLabel: "Listing photos",
+    uploadBoxTitle: "Click here to select photos from your computer or phone",
+    uploadBoxSub: "You can select multiple photos at once (JPG, PNG, WEBP)",
     descLabel: "Description",
     descPlaceholder: "Describe condition, service, tires...",
     backBtn: "Back",
@@ -322,6 +326,19 @@ const UI_TEXT = {
     cityLabel: "City",
   },
 };
+
+function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M16.004 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.256.59 4.46 1.71 6.404L3.09 28.8l6.566-1.722a12.74 12.74 0 0 0 6.348 1.694h.006c7.058 0 12.798-5.74 12.798-12.8 0-3.42-1.332-6.636-3.75-9.052A12.716 12.716 0 0 0 16.004 3.2zm0 23.41h-.004a10.6 10.6 0 0 1-5.404-1.48l-.388-.23-3.896 1.022 1.04-3.798-.252-.402a10.575 10.575 0 0 1-1.622-5.642c0-5.854 4.764-10.618 10.624-10.618 2.836 0 5.502 1.106 7.506 3.112a10.548 10.548 0 0 1 3.11 7.51c0 5.856-4.764 10.626-10.614 10.626zm5.826-7.954c-.32-.16-1.89-.932-2.182-1.038-.292-.106-.506-.16-.718.16-.214.318-.826 1.038-1.012 1.252-.186.212-.372.24-.692.08-.32-.16-1.35-.498-2.572-1.588-.95-.848-1.592-1.896-1.778-2.214-.186-.32-.02-.492.14-.652.144-.142.32-.372.48-.558.16-.186.212-.32.32-.532.106-.214.052-.4-.028-.558-.08-.16-.718-1.732-.984-2.37-.26-.622-.524-.538-.718-.548l-.612-.01c-.214 0-.56.08-.852.4-.292.318-1.118 1.092-1.118 2.662s1.144 3.088 1.304 3.3c.16.214 2.252 3.438 5.456 4.822.762.33 1.358.526 1.822.674.766.244 1.462.21 2.012.128.614-.092 1.89-.772 2.156-1.518.266-.746.266-1.384.186-1.518-.08-.132-.292-.212-.612-.372z" />
+    </svg>
+  );
+}
 
 export default function HomePage() {
   const [lang, setLang] = useState<Lang>("lv");
@@ -838,17 +855,19 @@ export default function HomePage() {
                 <div className="flex flex-wrap gap-2.5">
                   <a
                     href={`tel:${activeListing.seller_phone}`}
-                    className="rounded-xl bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition cursor-pointer"
                   >
-                    📞 {t.callSeller}
+                    <span>📞</span>
+                    <span>{t.callSeller}</span>
                   </a>
                   <a
                     href={`https://wa.me/${activeListing.seller_phone.replace(/[^0-9]/g, "")}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 hover:bg-emerald-400"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-md shadow-[#25D366]/20 hover:bg-[#20bd5a] transition cursor-pointer"
                   >
-                    💬 {t.whatsappSeller}
+                    <WhatsAppIcon className="h-4 w-4 text-slate-950" />
+                    <span>{t.whatsappSeller}</span>
                   </a>
                 </div>
               </div>
@@ -1465,14 +1484,23 @@ export default function HomePage() {
             {step === 4 && (
               <div className="mt-4 space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300">{t.addPhotosLabel}</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleFileSelect}
-                    className="mt-1.5 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 py-1.5 file:font-semibold file:text-white"
-                  />
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">{t.addPhotosLabel}</label>
+                  
+                  {/* Prominent Clickable Upload Button / Dropzone */}
+                  <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-400/60 bg-amber-400/5 px-4 py-4 text-center transition hover:border-amber-400 hover:bg-amber-400/10 cursor-pointer">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-amber-300">
+                      <span className="text-base">📷</span>
+                      <span>{t.uploadBoxTitle}</span>
+                    </div>
+                    <span className="mt-1 text-[11px] text-slate-400">{t.uploadBoxSub}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </label>
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {PHOTO_PRESETS.map((p) => (
