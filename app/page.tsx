@@ -534,33 +534,14 @@ export default function HomePage() {
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-      function getAdHref(item: Listing) {
-    const slug = `--`
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-    return `#ad=--`;
+        function getAdHref(item: Listing) {
+    const slug = (item.brand + "-" + item.model + "-" + item.year).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return "#ad=" + slug + "--" + encodeURIComponent(item.id);
   }
 
   const t = UI_TEXT[lang];
 
-  useEffect(() => {
-    function readAdFromHash() {
-      const h = window.location.hash || "";
-      if (h.startsWith("#ad=")) {
-        const val = h.slice(4);
-        const idPart = val.includes("--") ? val.split("--").pop() || val : val;
-        setSelectedId(decodeURIComponent(idPart));
-        setDetailPhotoIndex(0);
-      } else if (h.startsWith("#listing-")) {
-        setSelectedId(decodeURIComponent(h.replace("#listing-", "")));
-        setDetailPhotoIndex(0);
-      }
-    }
-    readAdFromHash();
-    window.addEventListener("hashchange", readAdFromHash);
-    return () => window.removeEventListener("hashchange", readAdFromHash);
-  }, []);
+  
 
   async function loadListings() {
     const { data, error } = await supabase
@@ -618,22 +599,7 @@ export default function HomePage() {
     return `${window.location.pathname}?ad=${slug}--${encodeURIComponent(item.id)}`;
   }
 
-  useEffect(() => {
-    function syncFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-      const adParam = params.get("ad");
-      if (adParam) {
-        const extractedId = adParam.includes("--") ? adParam.split("--").pop() || adParam : adParam;
-        setSelectedId(decodeURIComponent(extractedId));
-        setDetailPhotoIndex(0);
-        return;
-      }
-      setSelectedId(null);
-    }
-    syncFromUrl();
-    window.addEventListener("popstate", syncFromUrl);
-    return () => window.removeEventListener("popstate", syncFromUrl);
-  }, []);
+  
 
   function toggleSave(e: React.MouseEvent, id: string) {
     e.stopPropagation();
@@ -762,10 +728,10 @@ export default function HomePage() {
     sortBy,
   ]);
 
-  function closeListingDetail() {
+    function closeListingDetail() {
     setSelectedId(null);
-    if (window.location.search.includes("ad=")) {
-      window.history.pushState({}, "", window.location.pathname);
+    if (window.location.hash) {
+      window.history.pushState("", document.title, window.location.pathname + window.location.search);
     }
   }
 
