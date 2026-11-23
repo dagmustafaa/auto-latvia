@@ -288,6 +288,23 @@ const UI_TEXT = {
     saveChangesBtn: "Saglabāt izmaiņas",
     savingChangesBtn: "Saglabā...",
     cancelBtn: "Atcelt",
+    privacyBtn: "Privātuma politika",
+    termsBtn: "Lietošanas noteikumi",
+    legalCloseBtn: "Aizvērt",
+    privacyTitle: "Privātuma politika (GDPR / ES & LV)",
+    privacyBody: [
+      "1. Pārzinis un darbības joma: AutoLatvija darbojas kā transportlīdzekļu sludinājumu platforma Latvijā un ievēro ES Vispārīgo datu aizsardzības regulu (GDPR) un Latvijas Fizisko personu datu apstrādes likumu.",
+      "2. Apstrādātie dati: Konta izveidei un verifikācijai tiek izmantota e-pasta adrese; sludinājumu publicēšanai un saziņai — norādītais tālruņa numurs un sludinājuma dati; saglabātie favorīti tiek glabāti pārlūkprogrammā (localStorage).",
+      "3. Datu glabāšana un dzēšana: Sludinājumu dati un attēli tiek glabāti mākoņpakalpojumā (Supabase). Lietotājs var dzēst savus sludinājumus sadaļā 'Mani sludinājumi' vai pieprasīt sava konta un datu dzēšanu, sazinoties ar platformas pārvaldnieku.",
+      "4. Jūsu tiesības: Jums ir tiesības piekļūt saviem datiem, labot neprecizitātes, ierobežot apstrādi vai pieprasīt dzēšanu atbilstoši GDPR."
+    ],
+    termsTitle: "Lietošanas noteikumi (Tüzük)",
+    termsBody: [
+      "1. Pakalpojuma būtība: AutoLatvija nodrošina vietu sludinājumu publicēšanai un pircēju/pārdevēju saziņai. Platforma nepārdod transportlīdzekļus un nav darījuma puse.",
+      "2. Pārdevēja atbildība: Par transportlīdzekļa tehnisko stāvokli, dokumentiem, cenu, nobraukumu, TA un sniegtās informācijas patiesumu pilnībā atbild sludinājuma autors.",
+      "3. Aizliegts saturs: Aizliegts publicēt viltus sludinājumus, krāpnieciskus piedāvājumus, trešo personu autortiesību pārkāpumus vai Latvijas un ES tiesību aktiem neatbilstošu saturu.",
+      "4. Moderācija: Platformai ir tiesības dzēst noteikumiem neatbilstošus sludinājumus vai ierobežot piekļuvi ļaunprātīgas izmantošanas gadījumā."
+    ],
     cityLabel: "Pilsēta",
     topBtn: "Augšup",
     copyrightText: "© 2026 AutoLatvija — visas tiesības aizsargātas",
@@ -391,6 +408,23 @@ const UI_TEXT = {
     saveChangesBtn: "Сохранить",
     savingChangesBtn: "Сохранение...",
     cancelBtn: "Отмена",
+    privacyBtn: "Политика конфиденциальности",
+    termsBtn: "Условия использования",
+    legalCloseBtn: "Закрыть",
+    privacyTitle: "Политика конфиденциальности (GDPR / ЕС и Латвия)",
+    privacyBody: [
+      "1. Общие положения: AutoLatvija является платформой объявлений о транспорте в Латвии и соблюдает Регламент ЕС по защите данных (GDPR) и законодательство Латвийской Республики.",
+      "2. Какие данные обрабатываются: для регистрации и подтверждения аккаунта используется e-mail; для связи по объявлениям — указанный телефон и данные объявления; избранное сохраняется в браузере (localStorage).",
+      "3. Хранение и удаление: объявления и фото хранятся в облачной инфраструктуре (Supabase). Вы можете удалить свои объявления в разделе 'Мои объявления' или запросить удаление данных у администрации.",
+      "4. Права пользователя: в соответствии с GDPR вы вправе запросить доступ к своим данным, их исправление, ограничение обработки или удаление."
+    ],
+    termsTitle: "Условия использования (Правила)",
+    termsBody: [
+      "1. Назначение сервиса: AutoLatvija предоставляет площадку для размещения объявлений и связи между продавцами и покупателями. Сервис не является стороной сделки.",
+      "2. Ответственность продавца: за достоверность данных, цену, пробег, состояние, документы и техосмотр (ТО) транспортного средства отвечает автор объявления.",
+      "3. Запрещенный контент: запрещены ложные объявления, мошенничество, нарушение авторских прав и публикация материалов, нарушающих законы Латвии и ЕС.",
+      "4. Модерация: администрация вправе удалять объявления, нарушающие правила, и ограничивать доступ при злоупотреблениях."
+    ],
     cityLabel: "Город",
     topBtn: "Наверх",
     copyrightText: "© 2026 AutoLatvija — все права защищены",
@@ -494,6 +528,23 @@ const UI_TEXT = {
     saveChangesBtn: "Save changes",
     savingChangesBtn: "Saving...",
     cancelBtn: "Cancel",
+    privacyBtn: "Privacy Policy",
+    termsBtn: "Terms of Use",
+    legalCloseBtn: "Close",
+    privacyTitle: "Privacy Policy (GDPR / EU & Latvia)",
+    privacyBody: [
+      "1. Controller & Scope: AutoLatvija operates as a vehicle classifieds platform in Latvia and follows the EU General Data Protection Regulation (GDPR) and applicable Latvian data protection law.",
+      "2. Data Processed: email address is used for account registration and verification; phone number and listing details are used for buyer-seller contact; saved favorites are stored locally in your browser (localStorage).",
+      "3. Storage & Deletion: listings and photos are stored via cloud infrastructure (Supabase). You can delete your listings under 'My listings' or request account/data deletion from the platform operator.",
+      "4. Your GDPR Rights: you have the right to access, rectify, restrict processing of, or request deletion of your personal data under GDPR."
+    ],
+    termsTitle: "Terms of Use",
+    termsBody: [
+      "1. Platform Role: AutoLatvija provides a classifieds space for listing vehicles and connecting buyers and sellers. The platform is not a party to any transaction.",
+      "2. Seller Responsibility: the listing author is solely responsible for the accuracy of details, pricing, mileage, condition, documentation, and TA inspection status.",
+      "3. Prohibited Content: fraudulent listings, misleading information, copyright infringement, or content violating Latvian or EU law is prohibited.",
+      "4. Moderation: listings violating these terms may be removed and abusive accounts may be restricted."
+    ],
     cityLabel: "City",
     topBtn: "Top",
     copyrightText: "© 2026 AutoLatvija — all rights reserved",
@@ -1718,6 +1769,26 @@ export default function HomePage() {
                   {t.col3Link3}
                 </button>
               </div>
+              <div className="pt-1.5 border-t border-white/10 space-y-1">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setLegalModal("privacy")}
+                    className="hover:text-amber-400 cursor-pointer"
+                  >
+                    {t.privacyBtn}
+                  </button>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setLegalModal("terms")}
+                    className="hover:text-amber-400 cursor-pointer"
+                  >
+                    {t.termsBtn}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1733,6 +1804,40 @@ export default function HomePage() {
         </button>
       </footer>
 
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-xl rounded-2xl border border-white/15 bg-[#121826] p-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-base font-extrabold text-white">
+                {legalModal === "privacy" ? t.privacyTitle : t.termsTitle}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setLegalModal(null)}
+                className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1 text-xs leading-relaxed text-slate-300">
+              {(legalModal === "privacy" ? t.privacyBody : t.termsBody).map((para, idx) => (
+                <p key={idx}>{para}</p>
+              ))}
+            </div>
+
+            <div className="mt-5 flex justify-end border-t border-white/10 pt-4">
+              <button
+                type="button"
+                onClick={() => setLegalModal(null)}
+                className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+              >
+                {t.legalCloseBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
