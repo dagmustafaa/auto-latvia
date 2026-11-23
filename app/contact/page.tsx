@@ -115,14 +115,25 @@ export default function ContactPage() {
     setStatus("idle");
 
     try {
-      const { error } = await supabase.from("contact_messages").insert({
+      await supabase.from("contact_messages").insert({
         topic,
         sender_name: name.trim(),
         sender_email: senderEmail.trim(),
         message: message.trim(),
       });
 
-      if (error) {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          senderName: name.trim(),
+          senderEmail: senderEmail.trim(),
+          message: message.trim(),
+        }),
+      });
+
+      if (!res.ok) {
         setStatus("error");
         return;
       }
