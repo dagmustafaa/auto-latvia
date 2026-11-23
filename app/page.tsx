@@ -1194,7 +1194,7 @@ export default function HomePage() {
                         </span>
                       </div>
                     </div>
-                  </article>
+                  </a>
                 ))}
               </div>
             </section>
@@ -1429,7 +1429,7 @@ export default function HomePage() {
 
                         <button
                           type="button"
-                          onClick={(e) => toggleSave(e, item.id)}
+                          onClick={(e) => { e.preventDefault(); toggleSave(e, item.id); }}
                           aria-label="Save listing"
                           className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
                             isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
@@ -1473,7 +1473,7 @@ export default function HomePage() {
                           <span>{item.city}</span>
                         </div>
                       </div>
-                    </article>
+                    </a>
                   );
                 })}
               </div>
