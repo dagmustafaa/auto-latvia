@@ -823,7 +823,7 @@ export default function HomePage() {
   }, [typeof user !== "undefined" ? user : null]);
 
   async function loadAccountData(uid: string) {
-    if (!uid) return;
+    if (!uid) return; let cancelled = false;
     const { data: msgs } = await supabase
       .from("messages")
       .select("*")
