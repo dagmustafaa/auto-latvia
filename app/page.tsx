@@ -663,6 +663,8 @@ const UI_TEXT = {
 
 function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
 
+
+
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
@@ -1897,7 +1899,6 @@ const t = UI_TEXT[lang];
       {isAccountOpen && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm">
           <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0e1420] shadow-2xl md:flex-row">
-            {/* Sol Menu */}
             <aside className="w-full border-b border-white/10 bg-[#0b0f17] p-4 md:w-64 md:border-b-0 md:border-r md:overflow-y-auto">
               <div className="mb-3 flex items-center justify-between md:block">
                 <div className="text-sm font-extrabold text-white">{user.user_metadata?.name || user.email}</div>
@@ -1927,7 +1928,7 @@ const t = UI_TEXT[lang];
                 >
                   <span>{t.dashMyListings}</span>
                   <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
-                    {listings.filter((l) => l.user_id === user.id).length}
+                    {listings.filter((l: Listing) => l.user_id === user.id).length}
                   </span>
                 </button>
 
@@ -2005,7 +2006,6 @@ const t = UI_TEXT[lang];
               </nav>
             </aside>
 
-            {/* Sag Icerik Alani */}
             <div className="flex-1 overflow-y-auto p-5">
               <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
                 <h2 className="text-lg font-extrabold text-white">{t.accountBtn}</h2>
@@ -2022,7 +2022,7 @@ const t = UI_TEXT[lang];
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div onClick={() => setAccountTab("listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
                     <div className="text-xs text-slate-400">{t.dashMyListings}</div>
-                    <div className="mt-1 text-2xl font-black text-amber-400">{listings.filter((l) => l.user_id === user.id).length}</div>
+                    <div className="mt-1 text-2xl font-black text-amber-400">{listings.filter((l: Listing) => l.user_id === user.id).length}</div>
                   </div>
                   <div onClick={() => setAccountTab("fav_listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
                     <div className="text-xs text-slate-400">{t.dashFavListings}</div>
@@ -2041,12 +2041,12 @@ const t = UI_TEXT[lang];
 
               {accountTab === "listings" && (
                 <div className="space-y-3">
-                  {listings.filter((l) => l.user_id === user.id).length === 0 ? (
+                  {listings.filter((l: Listing) => l.user_id === user.id).length === 0 ? (
                     <p className="text-xs text-slate-400">No active listings yet.</p>
                   ) : (
                     listings
-                      .filter((l) => l.user_id === user.id)
-                      .map((item) => (
+                      .filter((l: Listing) => l.user_id === user.id)
+                      .map((item: Listing) => (
                         <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
                           <div>
                             <div className="text-sm font-bold text-white">{item.brand} {item.model} ({item.year})</div>
@@ -2070,12 +2070,12 @@ const t = UI_TEXT[lang];
 
               {accountTab === "fav_listings" && (
                 <div className="space-y-3">
-                  {listings.filter((l) => favorites.includes(l.id)).length === 0 ? (
+                  {listings.filter((l: Listing) => favorites.includes(l.id)).length === 0 ? (
                     <p className="text-xs text-slate-400">No favorite listings yet.</p>
                   ) : (
                     listings
-                      .filter((l) => favorites.includes(l.id))
-                      .map((item) => (
+                      .filter((l: Listing) => favorites.includes(l.id))
+                      .map((item: Listing) => (
                         <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
                           <div>
                             <div className="text-sm font-bold text-white">{item.brand} {item.model} ({item.year})</div>
@@ -2102,7 +2102,7 @@ const t = UI_TEXT[lang];
                   {savedSearches.length === 0 ? (
                     <p className="text-xs text-slate-400">No saved searches yet.</p>
                   ) : (
-                    savedSearches.map((s) => (
+                    savedSearches.map((s: SavedSearch) => (
                       <div key={s.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
                         <div className="text-xs font-bold text-white">{s.label}</div>
                         <div className="flex gap-2">
@@ -2139,9 +2139,9 @@ const t = UI_TEXT[lang];
                   {messagesList.length === 0 ? (
                     <p className="text-xs text-slate-400">No messages yet.</p>
                   ) : (
-                    messagesList.map((m) => {
+                    messagesList.map((m: ChatMessage) => {
                       const otherUserId = m.sender_id === user.id ? m.receiver_id : m.sender_id;
-                      const relatedListing = listings.find((l) => l.id === m.listing_id);
+                      const relatedListing = listings.find((l: Listing) => l.id === m.listing_id);
                       return (
                         <div key={m.id} className="rounded-2xl border border-white/10 bg-[#121826] p-3.5">
                           <div className="flex items-center justify-between text-[11px] text-slate-400">
@@ -2154,7 +2154,7 @@ const t = UI_TEXT[lang];
                               <input
                                 type="text"
                                 value={chatReplyText[m.id] || ""}
-                                onChange={(e) => setChatReplyText((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                                onChange={(e) => setChatReplyText((prev: Record<string, string>) => ({ ...prev, [m.id]: e.target.value }))}
                                 placeholder={t.msgPlaceholder}
                                 className="flex-1 rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-1.5 text-xs text-white"
                               />
@@ -2164,7 +2164,7 @@ const t = UI_TEXT[lang];
                                   const txt = chatReplyText[m.id] || "";
                                   if (!txt.trim()) return;
                                   handleSendMessageToSeller(relatedListing, txt, otherUserId);
-                                  setChatReplyText((prev) => ({ ...prev, [m.id]: "" }));
+                                  setChatReplyText((prev: Record<string, string>) => ({ ...prev, [m.id]: "" }));
                                 }}
                                 className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
                               >
@@ -2184,7 +2184,7 @@ const t = UI_TEXT[lang];
                   {notificationsList.length === 0 ? (
                     <p className="text-xs text-slate-400">No notifications yet.</p>
                   ) : (
-                    notificationsList.map((n) => (
+                    notificationsList.map((n: UserNotification) => (
                       <div key={n.id} className="rounded-2xl border border-white/10 bg-[#121826] p-3.5">
                         <div className="text-xs font-bold text-amber-400">{n.title}</div>
                         <div className="mt-1 text-xs text-slate-300">{n.body}</div>
@@ -2229,6 +2229,7 @@ const t = UI_TEXT[lang];
           </div>
         </div>
       )}
+
       <footer className="relative mt-10 border-t border-white/10 bg-[#090d14] text-xs text-slate-400">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-8 sm:flex-row">
           <div className="space-y-2">
