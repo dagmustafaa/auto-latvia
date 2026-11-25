@@ -1878,40 +1878,19 @@ const t = UI_TEXT[lang];
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-[#0b0f17] p-1 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setAuthMethod("email")}
-                  className={`rounded-lg py-1.5 cursor-pointer ${
-                    authMethod === "email" ? "bg-white/15 text-white" : "text-slate-400"
-                  }`}
-                >
-                  {t.methodEmail}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuthMethod("phone")}
-                  className={`rounded-lg py-1.5 cursor-pointer ${
-                    authMethod === "phone" ? "bg-white/15 text-white" : "text-slate-400"
-                  }`}
-                >
-                  {t.methodPhone}
-                </button>
+              <div>
+                <label className="block text-xs font-bold text-slate-300">{t.emailLabel}</label>
+                <input
+                  type="email"
+                  required
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  placeholder="name@example.lv"
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
+                />
               </div>
 
-              {authMethod === "email" ? (
-                <div>
-                  <label className="block text-xs font-bold text-slate-300">{t.emailLabel}</label>
-                  <input
-                    type="email"
-                    required
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    placeholder="name@example.lv"
-                    className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
-                  />
-                </div>
-              ) : (
+              {authMode === "signup" && (
                 <div>
                   <label className="block text-xs font-bold text-slate-300">{t.phoneAuthLabel}</label>
                   <input
@@ -1924,7 +1903,6 @@ const t = UI_TEXT[lang];
                   />
                 </div>
               )}
-
               <div>
                 <label className="block text-xs font-bold text-slate-300">{t.passwordLabel}</label>
                 <input
