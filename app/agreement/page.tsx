@@ -212,6 +212,11 @@ export default function AgreementPage() {
             ))}
           </div>
         </article>
+                <div className="mt-6 rounded-2xl border border-amber-400/25 bg-amber-400/5 p-4 text-xs leading-relaxed text-slate-300 space-y-2">
+            <p><strong className="text-amber-300">LV — Saziņas noteikumi:</strong> Aizliegts izmantot platformas ziņojumus surogātpastam vai krāpšanai. Drošības un pārkāpumu izskatīšanas nolūkos administrācijai ir tiesības pārskatīt saraksti.</p>
+            <p><strong className="text-amber-300">RU — Правила переписки:</strong> Запрещено использовать сообщения платформы для спама или мошенничества. В целях безопасности и рассмотрения жалоб администрация вправе просматривать переписку.</p>
+            <p><strong className="text-amber-300">EN — Messaging Rules:</strong> Using platform messaging for spam or fraud is prohibited. Platform-internal messages may be reviewed by authorized administrators for safety, dispute resolution, and policy enforcement.</p>
+          </div>
       </main>
     </div>
   );

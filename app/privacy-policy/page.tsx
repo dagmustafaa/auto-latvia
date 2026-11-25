@@ -212,6 +212,11 @@ export default function PrivacyPolicyPage() {
             ))}
           </div>
         </article>
+                <div className="mt-6 rounded-2xl border border-amber-400/25 bg-amber-400/5 p-4 text-xs leading-relaxed text-slate-300 space-y-2">
+            <p><strong className="text-amber-300">LV — Ziņojumu drošība:</strong> Platformas iekšējie ziņojumi starp pircējiem un pārdevējiem tiek saglabāti krāpšanas novēršanai, strīdu risināšanai un drošības nodrošināšanai, un nepieciešamības gadījumā tos var pārskatīt pilnvarota platformas administrācija.</p>
+            <p><strong className="text-amber-300">RU — Безопасность сообщений:</strong> Внутренние сообщения между покупателями и продавцами сохраняются для предотвращения мошенничества, разрешения споров и обеспечения безопасности и при необходимости могут быть проверены уполномоченной администрацией платформы.</p>
+            <p><strong className="text-amber-300">EN — Message Moderation &amp; Safety:</strong> Platform-internal messages between buyers and sellers are stored for fraud prevention, dispute resolution, and technical security, and may be reviewed by authorized platform administration when necessary.</p>
+          </div>
       </main>
     </div>
   );
