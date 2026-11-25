@@ -250,8 +250,6 @@ const UI_TEXT = {
     authTitle: "Konts sludinājumu pārvaldībai",
     authDesc: "Reģistrējies ar e-pastu un apstiprini AutoLatvija saiti savā pastkastē.",
     nameLabel: "Vārds",
-    methodEmail: "Ar e-pastu",
-    methodPhone: "Ar tālruni",
     emailLabel: "E-pasts",
     phoneAuthLabel: "Tālruņa numurs (+371...)",
     passwordLabel: "Parole (min. 6 simboli)",
@@ -374,8 +372,6 @@ const UI_TEXT = {
     authTitle: "Аккаунт для управления объявлениями",
     authDesc: "Зарегистрируйтесь по e-mail и подтвердите ссылку AutoLatvija в почте.",
     nameLabel: "Имя",
-    methodEmail: "По e-mail",
-    methodPhone: "По телефону",
     emailLabel: "E-mail",
     phoneAuthLabel: "Номер телефона (+371...)",
     passwordLabel: "Пароль (мин. 6 символов)",
@@ -498,8 +494,6 @@ const UI_TEXT = {
     authTitle: "Account for posting & managing ads",
     authDesc: "Register with your email and confirm the AutoLatvija verification link in your inbox.",
     nameLabel: "Name",
-    methodEmail: "With email",
-    methodPhone: "With phone",
     emailLabel: "Email",
     phoneAuthLabel: "Phone number (+371...)",
     passwordLabel: "Password (min. 6 chars)",
@@ -646,7 +640,6 @@ export default function HomePage() {
   // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [authPhone, setAuthPhone] = useState("+371");
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
@@ -909,25 +902,23 @@ const t = UI_TEXT[lang];
     setAuthMessage("");
     setAuthLoading(true);
 
-    const digits = authPhone.replace(/[^0-9]/g, "");
-    const resolvedEmail =
-      authMethod === "phone" ? `phone.${digits}@autolatvija.app` : authEmail.trim();
-
     try {
-      if (authMethod === "phone" && digits.length < 8) {
-        setAuthError("Ievadiet derīgu tālruņa numuru / Enter a valid phone number.");
-        return;
-      }
-
       if (authMode === "signup") {
+        const cleanPhone = authPhone.trim();
+        const digits = cleanPhone.replace(/[^0-9]/g, "");
+        if (digits.length < 8) {
+          setAuthError("Ievadiet derīgu tālruņa numuru / Enter a valid phone number.");
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
-          email: resolvedEmail,
+          email: authEmail.trim(),
           password: authPassword,
           options: {
             emailRedirectTo: "https://auto-latvia.vercel.app",
             data: {
-              name: authName.trim() || (authMethod === "phone" ? authPhone.trim() : authEmail.split("@")[0]),
-              phone: authMethod === "phone" ? authPhone.trim() : "",
+              name: authName.trim() || authEmail.split("@")[0],
+              phone: cleanPhone,
             },
           },
         });
@@ -939,21 +930,11 @@ const t = UI_TEXT[lang];
           setIsAuthOpen(false);
           return;
         }
-        if (authMethod === "phone") {
-          const { error: signInErr } = await supabase.auth.signInWithPassword({
-            email: resolvedEmail,
-            password: authPassword,
-          });
-          if (!signInErr) {
-            setIsAuthOpen(false);
-            return;
-          }
-        }
         setAuthMessage(t.verifyNotice);
         setAuthMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email: resolvedEmail,
+          email: authEmail.trim(),
           password: authPassword,
         });
         if (error) {
