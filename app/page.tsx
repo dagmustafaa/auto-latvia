@@ -7,6 +7,38 @@ type Lang = "lv" | "ru" | "en";
 type Category = "car" | "moto";
 type ListingType = "sale" | "rent";
 
+type DashboardTab = "overview" | "listings" | "fav_listings" | "fav_searches" | "messages" | "notifications" | "settings";
+
+interface ChatMessage {
+  id: string;
+  created_at: string;
+  listing_id: string;
+  listing_title: string;
+  sender_id: string;
+  sender_name: string;
+  receiver_id: string;
+  body: string;
+  is_read: boolean;
+}
+
+interface UserNotification {
+  id: string;
+  created_at: string;
+  user_id: string;
+  title: string;
+  body: string;
+  is_read: boolean;
+}
+
+interface SavedSearch {
+  id: string;
+  label: string;
+  category: "all" | Category;
+  listingType: "all" | ListingType;
+  brand: string;
+  model: string;
+  city: string;
+}
 interface Listing {
   id: string;
   user_id?: string | null;
@@ -654,6 +686,151 @@ export default function HomePage() {
 
   // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
+  const [notificationsList, setNotificationsList] = useState<UserNotification[]>([]);
+  const [chatDraft, setChatDraft] = useState("");
+  const [chatReplyText, setChatReplyText] = useState<Record<string, string>>({});
+  const [profileNameInput, setProfileNameInput] = useState("");
+  const [profilePhoneInput, setProfilePhoneInput] = useState("");
+  const [profileSaveStatus, setProfileSaveStatus] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("autolatvija_saved_searches");
+      if (raw) setSavedSearches(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setMessagesList([]);
+      setNotificationsList([]);
+      return;
+    }
+    setProfileNameInput(user.user_metadata?.name || "");
+    setProfilePhoneInput(user.user_metadata?.phone || "");
+    loadAccountData(user.id);
+  }, [user]);
+
+  async function loadAccountData(uid: string) {
+    const { data: msgs } = await supabase
+      .from("messages")
+      .select("*")
+      .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
+      .order("created_at", { ascending: false });
+    if (msgs) setMessagesList(msgs as ChatMessage[]);
+
+    const { data: notifs } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false });
+    if (notifs) setNotificationsList(notifs as UserNotification[]);
+  }
+
+  function handleSaveCurrentSearch() {
+    const parts = [
+      selectedCategory !== "all" ? selectedCategory.toUpperCase() : null,
+      selectedListingType !== "all" ? selectedListingType.toUpperCase() : null,
+      selectedBrand !== "All" ? selectedBrand : null,
+      selectedModel !== "All" ? selectedModel : null,
+      selectedCity !== "All" ? selectedCity : null,
+    ].filter(Boolean);
+    const label = parts.length > 0 ? parts.join(" • ") : "All Vehicles";
+    const entry: SavedSearch = {
+      id: String(Date.now()),
+      label,
+      category: selectedCategory,
+      listingType: selectedListingType,
+      brand: selectedBrand,
+      model: selectedModel,
+      city: selectedCity,
+    };
+    const next = [entry, ...savedSearches].slice(0, 15);
+    setSavedSearches(next);
+    try {
+      localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
+    } catch {}
+    setAccountTab("fav_searches");
+    setIsAccountOpen(true);
+  }
+
+  function handleDeleteSavedSearch(id: string) {
+    const next = savedSearches.filter((s) => s.id !== id);
+    setSavedSearches(next);
+    try {
+      localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
+    } catch {}
+  }
+
+  async function handleSendMessageToSeller(listing: Listing, customBody?: string, customReceiverId?: string) {
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+    const textBody = (customBody ?? chatDraft).trim();
+    const targetReceiver = customReceiverId || listing.user_id;
+    if (!textBody || !targetReceiver) return;
+
+    const senderDisplay = user.user_metadata?.name || user.email?.split("@")[0] || "User";
+    const titleStr = `${listing.brand} ${listing.model} (${listing.year})`;
+
+    const { error } = await supabase.from("messages").insert({
+      listing_id: listing.id,
+      listing_title: titleStr,
+      sender_id: user.id,
+      sender_name: senderDisplay,
+      receiver_id: targetReceiver,
+      body: textBody,
+    });
+
+    if (!error) {
+      await supabase.from("notifications").insert({
+        user_id: targetReceiver,
+        title: `Jauna ziņa / New message: ${titleStr}`,
+        body: `${senderDisplay}: ${textBody.slice(0, 80)}`,
+      });
+      if (!customBody) setChatDraft("");
+      loadAccountData(user.id);
+    }
+  }
+
+  async function handleMarkNotificationsRead() {
+    if (!user) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id);
+    setNotificationsList((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  }
+
+  async function handleUpdateProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setProfileSaveStatus("");
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        name: profileNameInput.trim(),
+        phone: profilePhoneInput.trim(),
+      },
+    });
+    if (error) {
+      setProfileSaveStatus(error.message);
+    } else {
+      setProfileSaveStatus("✓ Saved / Saglabāts");
+    }
+  }
+
+  const unreadMessagesCount = useMemo(
+    () => (user ? messagesList.filter((m) => m.receiver_id === user.id && !m.is_read).length : 0),
+    [messagesList, user]
+  );
+
+  const unreadNotificationsCount = useMemo(
+    () => notificationsList.filter((n) => !n.is_read).length,
+    [notificationsList]
+  );
+
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authPhone, setAuthPhone] = useState("+371");
   const [authName, setAuthName] = useState("");
@@ -1670,6 +1847,341 @@ const t = UI_TEXT[lang];
       </div>
 
       {/* Footer + Scroll-to-Top button */}
+      {isAccountOpen && user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0e1420] shadow-2xl md:flex-row">
+            {/* Sol Menu */}
+            <aside className="w-full border-b border-white/10 bg-[#0b0f17] p-4 md:w-64 md:border-b-0 md:border-r md:overflow-y-auto">
+              <div className="mb-3 flex items-center justify-between md:block">
+                <div className="text-sm font-extrabold text-white">{user.user_metadata?.name || user.email}</div>
+                <div className="text-[11px] text-slate-400">{user.email}</div>
+              </div>
+
+              <nav className="space-y-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setAccountTab("overview")}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-bold cursor-pointer ${
+                    accountTab === "overview" ? "bg-amber-400 text-slate-950" : "text-slate-200 hover:bg-white/10"
+                  }`}
+                >
+                  <span>{t.dashOverview}</span>
+                </button>
+
+                <div className="pt-3 pb-1 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                  {t.dashListingMgmt}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAccountTab("listings")}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
+                    accountTab === "listings" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  <span>{t.dashMyListings}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
+                    {listings.filter((l) => l.user_id === user.id).length}
+                  </span>
+                </button>
+
+                <div className="pt-3 pb-1 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                  {t.dashFavorites}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAccountTab("fav_listings")}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
+                    accountTab === "fav_listings" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  <span>{t.dashFavListings}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{favorites.length}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountTab("fav_searches")}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
+                    accountTab === "fav_searches" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  <span>{t.dashFavSearches}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{savedSearches.length}</span>
+                </button>
+
+                <div className="pt-3 pb-1 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                  {t.dashMessaging}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAccountTab("messages")}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
+                    accountTab === "messages" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  <span>{t.dashMessages}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{messagesList.length}</span>
+                </button>
+
+                <div className="pt-3 pb-1 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                  {t.dashNotifications}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountTab("notifications");
+                    handleMarkNotificationsRead();
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
+                    accountTab === "notifications" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  <span>{t.dashNotifications}</span>
+                  {unreadNotificationsCount > 0 && (
+                    <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] text-white">
+                      {unreadNotificationsCount}
+                    </span>
+                  )}
+                </button>
+
+                <div className="pt-3 pb-1 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                  {t.dashSettings}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAccountTab("settings")}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
+                    accountTab === "settings" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  <span>{t.dashSettings}</span>
+                </button>
+              </nav>
+            </aside>
+
+            {/* Sag Icerik Alani */}
+            <div className="flex-1 overflow-y-auto p-5">
+              <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+                <h2 className="text-lg font-extrabold text-white">{t.accountBtn}</h2>
+                <button
+                  type="button"
+                  onClick={() => setIsAccountOpen(false)}
+                  className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {accountTab === "overview" && (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div onClick={() => setAccountTab("listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                    <div className="text-xs text-slate-400">{t.dashMyListings}</div>
+                    <div className="mt-1 text-2xl font-black text-amber-400">{listings.filter((l) => l.user_id === user.id).length}</div>
+                  </div>
+                  <div onClick={() => setAccountTab("fav_listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                    <div className="text-xs text-slate-400">{t.dashFavListings}</div>
+                    <div className="mt-1 text-2xl font-black text-white">{favorites.length}</div>
+                  </div>
+                  <div onClick={() => setAccountTab("messages")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                    <div className="text-xs text-slate-400">{t.dashMessages}</div>
+                    <div className="mt-1 text-2xl font-black text-emerald-400">{messagesList.length}</div>
+                  </div>
+                  <div onClick={() => setAccountTab("notifications")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                    <div className="text-xs text-slate-400">{t.dashNotifications}</div>
+                    <div className="mt-1 text-2xl font-black text-rose-400">{notificationsList.length}</div>
+                  </div>
+                </div>
+              )}
+
+              {accountTab === "listings" && (
+                <div className="space-y-3">
+                  {listings.filter((l) => l.user_id === user.id).length === 0 ? (
+                    <p className="text-xs text-slate-400">No active listings yet.</p>
+                  ) : (
+                    listings
+                      .filter((l) => l.user_id === user.id)
+                      .map((item) => (
+                        <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
+                          <div>
+                            <div className="text-sm font-bold text-white">{item.brand} {item.model} ({item.year})</div>
+                            <div className="text-xs text-amber-400">€{item.price_eur.toLocaleString()} • {item.city}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAccountOpen(false);
+                              openListingDetails(item);
+                            }}
+                            className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/10 cursor-pointer"
+                          >
+                            Open
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              )}
+
+              {accountTab === "fav_listings" && (
+                <div className="space-y-3">
+                  {listings.filter((l) => favorites.includes(l.id)).length === 0 ? (
+                    <p className="text-xs text-slate-400">No favorite listings yet.</p>
+                  ) : (
+                    listings
+                      .filter((l) => favorites.includes(l.id))
+                      .map((item) => (
+                        <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
+                          <div>
+                            <div className="text-sm font-bold text-white">{item.brand} {item.model} ({item.year})</div>
+                            <div className="text-xs text-amber-400">€{item.price_eur.toLocaleString()} • {item.city}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAccountOpen(false);
+                              openListingDetails(item);
+                            }}
+                            className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
+                          >
+                            View
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              )}
+
+              {accountTab === "fav_searches" && (
+                <div className="space-y-3">
+                  {savedSearches.length === 0 ? (
+                    <p className="text-xs text-slate-400">No saved searches yet.</p>
+                  ) : (
+                    savedSearches.map((s) => (
+                      <div key={s.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
+                        <div className="text-xs font-bold text-white">{s.label}</div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCategory(s.category);
+                              setSelectedListingType(s.listingType);
+                              setSelectedBrand(s.brand);
+                              setSelectedModel(s.model);
+                              setSelectedCity(s.city);
+                              setIsAccountOpen(false);
+                            }}
+                            className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSavedSearch(s.id)}
+                            className="rounded-xl border border-rose-500/40 px-2.5 py-1.5 text-xs font-bold text-rose-300 cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {accountTab === "messages" && (
+                <div className="space-y-3">
+                  {messagesList.length === 0 ? (
+                    <p className="text-xs text-slate-400">No messages yet.</p>
+                  ) : (
+                    messagesList.map((m) => {
+                      const otherUserId = m.sender_id === user.id ? m.receiver_id : m.sender_id;
+                      const relatedListing = listings.find((l) => l.id === m.listing_id);
+                      return (
+                        <div key={m.id} className="rounded-2xl border border-white/10 bg-[#121826] p-3.5">
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span className="font-bold text-amber-400">{m.listing_title}</span>
+                            <span>{m.sender_name} • {new Date(m.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <p className="mt-1.5 text-xs text-white">{m.body}</p>
+                          {relatedListing && (
+                            <div className="mt-2.5 flex gap-2">
+                              <input
+                                type="text"
+                                value={chatReplyText[m.id] || ""}
+                                onChange={(e) => setChatReplyText((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                                placeholder={t.msgPlaceholder}
+                                className="flex-1 rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-1.5 text-xs text-white"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const txt = chatReplyText[m.id] || "";
+                                  if (!txt.trim()) return;
+                                  handleSendMessageToSeller(relatedListing, txt, otherUserId);
+                                  setChatReplyText((prev) => ({ ...prev, [m.id]: "" }));
+                                }}
+                                className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
+                              >
+                                {t.sendBtnShort}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {accountTab === "notifications" && (
+                <div className="space-y-2.5">
+                  {notificationsList.length === 0 ? (
+                    <p className="text-xs text-slate-400">No notifications yet.</p>
+                  ) : (
+                    notificationsList.map((n) => (
+                      <div key={n.id} className="rounded-2xl border border-white/10 bg-[#121826] p-3.5">
+                        <div className="text-xs font-bold text-amber-400">{n.title}</div>
+                        <div className="mt-1 text-xs text-slate-300">{n.body}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {accountTab === "settings" && (
+                <form onSubmit={handleUpdateProfile} className="max-w-md space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.nameLabel}</label>
+                    <input
+                      type="text"
+                      value={profileNameInput}
+                      onChange={(e) => setProfileNameInput(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-xs text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300">{t.phoneAuthLabel}</label>
+                    <input
+                      type="tel"
+                      value={profilePhoneInput}
+                      onChange={(e) => setProfilePhoneInput(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-xs text-white"
+                    />
+                  </div>
+                  {profileSaveStatus && (
+                    <div className="text-xs font-bold text-emerald-400">{profileSaveStatus}</div>
+                  )}
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                  >
+                    Save
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <footer className="relative mt-10 border-t border-white/10 bg-[#090d14] text-xs text-slate-400">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-8 sm:flex-row">
           <div className="space-y-2">
