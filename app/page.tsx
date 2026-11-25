@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 
 type Lang = "lv" | "ru" | "en";
 type Category = "car" | "moto";
+type ListingType = "sale" | "rent";
 
 interface Listing {
   id: string;
@@ -12,6 +13,7 @@ interface Listing {
   seller_name: string;
   seller_phone: string;
   category: Category;
+  listing_type?: ListingType;
   brand: string;
   model: string;
   city: string;
@@ -107,6 +109,7 @@ const DEMO_LISTINGS: Listing[] = [
   },
   {
     id: "lv-2",
+    listing_type: "rent",
     seller_name: "Elīna K.",
     seller_phone: "+37120003344",
     category: "car",
@@ -307,6 +310,10 @@ const UI_TEXT = {
       "4. Moderācija: Platformai ir tiesības dzēst noteikumiem neatbilstošus sludinājumus vai ierobežot piekļuvi ļaunprātīgas izmantošanas gadījumā."
     ],
     contactBtn: "Sazināties",
+    listingTypeSale: "Pārdošana",
+    listingTypeRent: "Īre (Kiralık)",
+    filterAllTypes: "Visi (Pārdošana + Īre)",
+    perDaySuffix: "/ dienā",
     cityLabel: "Pilsēta",
     topBtn: "Augšup",
     copyrightText: "© 2026 AutoLatvija — visas tiesības aizsargātas",
@@ -429,6 +436,10 @@ const UI_TEXT = {
       "4. Модерация: администрация вправе удалять объявления, нарушающие правила, и ограничивать доступ при злоупотреблениях."
     ],
     contactBtn: "Связаться",
+    listingTypeSale: "Продажа",
+    listingTypeRent: "Аренда",
+    filterAllTypes: "Все (Продажа + Аренда)",
+    perDaySuffix: "/ день",
     cityLabel: "Город",
     topBtn: "Наверх",
     copyrightText: "© 2026 AutoLatvija — все права защищены",
@@ -551,6 +562,10 @@ const UI_TEXT = {
       "4. Moderation: listings violating these terms may be removed and abusive accounts may be restricted."
     ],
     contactBtn: "Contact",
+    listingTypeSale: "For Sale",
+    listingTypeRent: "For Rent",
+    filterAllTypes: "All (Sale + Rent)",
+    perDaySuffix: "/ day",
     cityLabel: "City",
     topBtn: "Top",
     copyrightText: "© 2026 AutoLatvija — all rights reserved",
