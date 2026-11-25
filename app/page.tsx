@@ -250,7 +250,10 @@ const UI_TEXT = {
     authTitle: "Konts sludinājumu pārvaldībai",
     authDesc: "Reģistrējies ar e-pastu un apstiprini AutoLatvija saiti savā pastkastē.",
     nameLabel: "Vārds",
+    methodEmail: "Ar e-pastu",
+    methodPhone: "Ar tālruni",
     emailLabel: "E-pasts",
+    phoneAuthLabel: "Tālruņa numurs (+371...)",
     passwordLabel: "Parole (min. 6 simboli)",
     signInSubmit: "Pieslēgties",
     signUpSubmit: "Izveidot kontu",
@@ -371,7 +374,10 @@ const UI_TEXT = {
     authTitle: "Аккаунт для управления объявлениями",
     authDesc: "Зарегистрируйтесь по e-mail и подтвердите ссылку AutoLatvija в почте.",
     nameLabel: "Имя",
+    methodEmail: "По e-mail",
+    methodPhone: "По телефону",
     emailLabel: "E-mail",
+    phoneAuthLabel: "Номер телефона (+371...)",
     passwordLabel: "Пароль (мин. 6 символов)",
     signInSubmit: "Войти",
     signUpSubmit: "Создать аккаунт",
@@ -492,7 +498,10 @@ const UI_TEXT = {
     authTitle: "Account for posting & managing ads",
     authDesc: "Register with your email and confirm the AutoLatvija verification link in your inbox.",
     nameLabel: "Name",
+    methodEmail: "With email",
+    methodPhone: "With phone",
     emailLabel: "Email",
+    phoneAuthLabel: "Phone number (+371...)",
     passwordLabel: "Password (min. 6 chars)",
     signInSubmit: "Sign in",
     signUpSubmit: "Create account",
@@ -637,6 +646,8 @@ export default function HomePage() {
   // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
+  const [authPhone, setAuthPhone] = useState("+371");
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -898,29 +909,51 @@ const t = UI_TEXT[lang];
     setAuthMessage("");
     setAuthLoading(true);
 
+    const digits = authPhone.replace(/[^0-9]/g, "");
+    const resolvedEmail =
+      authMethod === "phone" ? `phone.${digits}@autolatvija.app` : authEmail.trim();
+
     try {
+      if (authMethod === "phone" && digits.length < 8) {
+        setAuthError("Ievadiet derīgu tālruņa numuru / Enter a valid phone number.");
+        return;
+      }
+
       if (authMode === "signup") {
-        const signUpReq = supabase.auth.signUp({
-          email: authEmail.trim(),
+        const { data, error } = await supabase.auth.signUp({
+          email: resolvedEmail,
           password: authPassword,
           options: {
             emailRedirectTo: "https://auto-latvia.vercel.app",
-            data: { name: authName.trim() || authEmail.split("@")[0] },
+            data: {
+              name: authName.trim() || (authMethod === "phone" ? authPhone.trim() : authEmail.split("@")[0]),
+              phone: authMethod === "phone" ? authPhone.trim() : "",
+            },
           },
         });
-        const timeoutReq = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("SMTP timeout (10s). Check Supabase SMTP settings.")), 10000)
-        );
-        const { error } = await Promise.race([signUpReq, timeoutReq]);
         if (error) {
           setAuthError(error.message);
           return;
+        }
+        if (data.session) {
+          setIsAuthOpen(false);
+          return;
+        }
+        if (authMethod === "phone") {
+          const { error: signInErr } = await supabase.auth.signInWithPassword({
+            email: resolvedEmail,
+            password: authPassword,
+          });
+          if (!signInErr) {
+            setIsAuthOpen(false);
+            return;
+          }
         }
         setAuthMessage(t.verifyNotice);
         setAuthMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email: authEmail.trim(),
+          email: resolvedEmail,
           password: authPassword,
         });
         if (error) {
@@ -1858,23 +1891,58 @@ const t = UI_TEXT[lang];
                     required
                     value={authName}
                     onChange={(e) => setAuthName(e.target.value)}
-                    placeholder="Mustafa"
+                    
                     className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
                   />
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300">{t.emailLabel}</label>
-                <input
-                  type="email"
-                  required
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="name@example.lv"
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
-                />
+              <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-[#0b0f17] p-1 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod("email")}
+                  className={`rounded-lg py-1.5 cursor-pointer ${
+                    authMethod === "email" ? "bg-white/15 text-white" : "text-slate-400"
+                  }`}
+                >
+                  {t.methodEmail}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod("phone")}
+                  className={`rounded-lg py-1.5 cursor-pointer ${
+                    authMethod === "phone" ? "bg-white/15 text-white" : "text-slate-400"
+                  }`}
+                >
+                  {t.methodPhone}
+                </button>
               </div>
+
+              {authMethod === "email" ? (
+                <div>
+                  <label className="block text-xs font-bold text-slate-300">{t.emailLabel}</label>
+                  <input
+                    type="email"
+                    required
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="name@example.lv"
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-slate-300">{t.phoneAuthLabel}</label>
+                  <input
+                    type="tel"
+                    required
+                    value={authPhone}
+                    onChange={(e) => setAuthPhone(e.target.value)}
+                    placeholder="+37120000000"
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-300">{t.passwordLabel}</label>
