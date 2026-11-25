@@ -760,9 +760,9 @@ export default function HomePage() {
       setNotificationsList([]);
       return;
     }
-    setProfileNameInput(user?user?.user_metadata?.name || "");
-    setProfilePhoneInput(user?user?.user_metadata?.phone || "");
-    loadAccountData(user?user?.id || "");
+    setProfileNameInput(user?.user_metadata?.name || "");
+    setProfilePhoneInput(user?.user_metadata?.phone || "");
+    loadAccountData(user?.id || "");
   }, [user]);
 
   async function loadAccountData(uid: string) {
@@ -844,7 +844,7 @@ export default function HomePage() {
         body: `${senderDisplay}: ${textBody.slice(0, 80)}`,
       });
       if (!customBody) setChatDraft("");
-      loadAccountData(user?user?.id || "");
+      loadAccountData(user?.id || "");
     }
   }
 
