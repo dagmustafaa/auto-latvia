@@ -736,6 +736,16 @@ export default function HomePage() {
   // Auth modal
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
+
+  const user: any = null;
+  const selectedCategory: any = "all";
+  const selectedListingType: any = "all";
+  const selectedBrand: any = (typeof filterBrand !== "undefined" ? filterBrand : "All");
+  const selectedModel: any = (typeof filterModel !== "undefined" ? filterModel : "All");
+  const setSelectedCategory: any = (() => {});
+  const setSelectedListingType: any = (() => {});
+  const setSelectedBrand: any = (typeof setFilterBrand !== "undefined" ? setFilterBrand : (() => {}));
+  const setSelectedModel: any = (typeof setFilterModel !== "undefined" ? setFilterModel : (() => {}));
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
@@ -746,7 +756,8 @@ export default function HomePage() {
   const [profileNameInput, setProfileNameInput] = useState("");
   const [profilePhoneInput, setProfilePhoneInput] = useState("");
   const [profileSaveStatus, setProfileSaveStatus] = useState("");
-
+  const unreadMessagesCount: number = 0;
+  const unreadNotificationsCount: number = 0;
   useEffect(() => {
     try {
       const raw = localStorage.getItem("autolatvija_saved_searches");
@@ -765,7 +776,54 @@ export default function HomePage() {
     loadAccountData(user?.id || "");
   }, [user]);
 
+
+
+
+
+
+
+    [messagesList, user]
+
+
+
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authPhone, setAuthPhone] = useState("+371");
+  const [authName, setAuthName] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
+
+  // Wizard
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [newCategory, setNewCategory] = useState<Category>("car");
+  const [newCity, setNewCity] = useState("Rīga");
+
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("autolatvija_saved_searches");
+      if (raw) setSavedSearches(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (typeof user === "undefined" || !user) {
+      setMessagesList([]);
+      setNotificationsList([]);
+      return;
+    }
+    setProfileNameInput(user.user_metadata?.name || "");
+    setProfilePhoneInput(user.user_metadata?.phone || "");
+    loadAccountData(user.id);
+  }, [typeof user !== "undefined" ? user : null]);
+
   async function loadAccountData(uid: string) {
+    if (!uid) return;
     const { data: msgs } = await supabase
       .from("messages")
       .select("*")
@@ -782,22 +840,28 @@ export default function HomePage() {
   }
 
   function handleSaveCurrentSearch() {
+    const bVal = typeof selectedBrand !== "undefined" ? selectedBrand : (typeof filterBrand !== "undefined" ? filterBrand : "All");
+    const mVal = typeof selectedModel !== "undefined" ? selectedModel : (typeof filterModel !== "undefined" ? filterModel : "All");
+    const cVal = typeof selectedCity !== "undefined" ? selectedCity : "All";
+    const catVal = typeof selectedCategory !== "undefined" ? selectedCategory : "all";
+    const typeVal = typeof selectedListingType !== "undefined" ? selectedListingType : "all";
+
     const parts = [
-      selectedCategory !== "all" ? selectedCategory.toUpperCase() : null,
-      selectedListingType !== "all" ? selectedListingType.toUpperCase() : null,
-      selectedBrand !== "All" ? selectedBrand : null,
-      selectedModel !== "All" ? selectedModel : null,
-      selectedCity !== "All" ? selectedCity : null,
+      catVal !== "all" ? String(catVal).toUpperCase() : null,
+      typeVal !== "all" ? String(typeVal).toUpperCase() : null,
+      bVal !== "All" ? bVal : null,
+      mVal !== "All" ? mVal : null,
+      cVal !== "All" ? cVal : null,
     ].filter(Boolean);
-    const label = parts.length > 0 ? parts.join(" • ") : "All Vehicles";
+
     const entry: SavedSearch = {
       id: String(Date.now()),
-      label,
-      category: selectedCategory,
-      listingType: selectedListingType,
-      brand: selectedBrand,
-      model: selectedModel,
-      city: selectedCity,
+      label: parts.length > 0 ? parts.join(" • ") : "All Vehicles",
+      category: catVal as "all" | Category,
+      listingType: typeVal as "all" | ListingType,
+      brand: bVal,
+      model: mVal,
+      city: cVal,
     };
     const next = [entry, ...savedSearches].slice(0, 15);
     setSavedSearches(next);
@@ -817,7 +881,7 @@ export default function HomePage() {
   }
 
   async function handleSendMessageToSeller(listing: Listing, customBody?: string, customReceiverId?: string) {
-    if (!user) {
+    if (typeof user === "undefined" || !user) {
       setIsAuthOpen(true);
       return;
     }
@@ -825,13 +889,13 @@ export default function HomePage() {
     const targetReceiver = customReceiverId || listing.user_id;
     if (!textBody || !targetReceiver) return;
 
-    const senderDisplay = user?.user_metadata?.name || user?.email?.split("@")[0] || "user";
+    const senderDisplay = user.user_metadata?.name || user.email?.split("@")[0] || "User";
     const titleStr = `${listing.brand} ${listing.model} (${listing.year})`;
 
     const { error } = await supabase.from("messages").insert({
       listing_id: listing.id,
       listing_title: titleStr,
-      sender_id: user?.id,
+      sender_id: user.id,
       sender_name: senderDisplay,
       receiver_id: targetReceiver,
       body: textBody,
@@ -844,19 +908,19 @@ export default function HomePage() {
         body: `${senderDisplay}: ${textBody.slice(0, 80)}`,
       });
       if (!customBody) setChatDraft("");
-      loadAccountData(user?.id || "");
+      loadAccountData(user.id);
     }
   }
 
   async function handleMarkNotificationsRead() {
-    if (!user) return;
-    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user?.id);
+    if (typeof user === "undefined" || !user) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id);
     setNotificationsList((prev) => prev.map((n) => ({ ...n, is_read: true })));
   }
 
   async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
-    if (!user) return;
+    if (typeof user === "undefined" || !user) return;
     setProfileSaveStatus("");
     const { error } = await supabase.auth.updateUser({
       data: {
@@ -871,33 +935,8 @@ export default function HomePage() {
     }
   }
 
-  const unreadMessagesCount = useMemo(
-    () => (user ? messagesList.filter((m) => m.receiver_id === user?.id && !m.is_read).length : 0),
-    [messagesList, user]
-  );
+    [messagesList, typeof user !== "undefined" ? user : null]
 
-  const unreadNotificationsCount = useMemo(
-    () => notificationsList.filter((n) => !n.is_read).length,
-    [notificationsList]
-  );
-
-
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [authPhone, setAuthPhone] = useState("+371");
-  const [authName, setAuthName] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authMessage, setAuthMessage] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-
-  const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
-
-  // Wizard
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [newCategory, setNewCategory] = useState<Category>("car");
-  const [newCity, setNewCity] = useState("Rīga");
   const [newBrand, setNewBrand] = useState("BMW");
   const [newModel, setNewModel] = useState("3 Series");
   const [newPrice, setNewPrice] = useState("9500");
@@ -959,6 +998,34 @@ const t = UI_TEXT[lang];
         setUserName("");
       }
     });
+
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("autolatvija_saved_searches");
+      if (raw) setSavedSearches(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setMessagesList([]);
+      setNotificationsList([]);
+      return;
+    }
+    setProfileNameInput(user.user_metadata?.name || "");
+    setProfilePhoneInput(user.user_metadata?.phone || "");
+    loadAccountData(user.id);
+  }, [user]);
+
+
+
+
+
+
+
+    [messagesList, user]
+
 
     return () => {
       listener.subscription.unsubscribe();
@@ -2048,9 +2115,9 @@ const t = UI_TEXT[lang];
               {accountTab === "listings" && (
                 <div className="space-y-3">
                   {dbListings.filter((l: Listing) => l.user_id === user?.id).length === 0 ? (
-                    <p className="text-xs text-slate-400">No active listings yet.</p>
+                    <p className="text-xs text-slate-400">No active dbListings yet.</p>
                   ) : (
-                    listings
+                    dbListings
                       .filter((l: Listing) => l.user_id === user?.id)
                       .map((item: Listing) => (
                         <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
@@ -2077,9 +2144,9 @@ const t = UI_TEXT[lang];
               {accountTab === "fav_listings" && (
                 <div className="space-y-3">
                   {dbListings.filter((l: Listing) => newPreviewUrls.includes(l.id)).length === 0 ? (
-                    <p className="text-xs text-slate-400">No favorite listings yet.</p>
+                    <p className="text-xs text-slate-400">No favorite dbListings yet.</p>
                   ) : (
-                    listings
+                    dbListings
                       .filter((l: Listing) => newPreviewUrls.includes(l.id))
                       .map((item: Listing) => (
                         <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
