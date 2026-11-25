@@ -760,9 +760,9 @@ export default function HomePage() {
       setNotificationsList([]);
       return;
     }
-    setProfileNameInput(user.user_metadata?.name || "");
-    setProfilePhoneInput(user.user_metadata?.phone || "");
-    loadAccountData(user.id);
+    setProfileNameInput(.user_metadata?.name || "");
+    setProfilePhoneInput(.user_metadata?.phone || "");
+    loadAccountData(.id);
   }, [user]);
 
   async function loadAccountData(uid: string) {
@@ -825,13 +825,13 @@ export default function HomePage() {
     const targetReceiver = customReceiverId || listing.user_id;
     if (!textBody || !targetReceiver) return;
 
-    const senderDisplay = user.user_metadata?.name || user.email?.split("@")[0] || "User";
+    const senderDisplay = .user_metadata?.name || .email?.split("@")[0] || "user";
     const titleStr = `${listing.brand} ${listing.model} (${listing.year})`;
 
     const { error } = await supabase.from("messages").insert({
       listing_id: listing.id,
       listing_title: titleStr,
-      sender_id: user.id,
+      sender_id: .id,
       sender_name: senderDisplay,
       receiver_id: targetReceiver,
       body: textBody,
@@ -844,13 +844,13 @@ export default function HomePage() {
         body: `${senderDisplay}: ${textBody.slice(0, 80)}`,
       });
       if (!customBody) setChatDraft("");
-      loadAccountData(user.id);
+      loadAccountData(.id);
     }
   }
 
   async function handleMarkNotificationsRead() {
     if (!user) return;
-    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id);
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", .id);
     setNotificationsList((prev) => prev.map((n) => ({ ...n, is_read: true })));
   }
 
@@ -872,7 +872,7 @@ export default function HomePage() {
   }
 
   const unreadMessagesCount = useMemo(
-    () => (user ? messagesList.filter((m) => m.receiver_id === user.id && !m.is_read).length : 0),
+    () => (user ? messagesList.filter((m) => m.receiver_id === .id && !m.is_read).length : 0),
     [messagesList, user]
   );
 
@@ -943,7 +943,7 @@ const t = UI_TEXT[lang];
       if (u) {
         setUserId(u.id);
         setUserEmail(u.email ?? "");
-        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "User"));
+        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "user"));
       }
     });
 
@@ -952,7 +952,7 @@ const t = UI_TEXT[lang];
       if (u) {
         setUserId(u.id);
         setUserEmail(u.email ?? "");
-        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "User"));
+        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "user"));
       } else {
         setUserId(null);
         setUserEmail("");
@@ -1907,8 +1907,8 @@ const t = UI_TEXT[lang];
           <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0e1420] shadow-2xl md:flex-row">
             <aside className="w-full border-b border-white/10 bg-[#0b0f17] p-4 md:w-64 md:border-b-0 md:border-r md:overflow-y-auto">
               <div className="mb-3 flex items-center justify-between md:block">
-                <div className="text-sm font-extrabold text-white">{user.user_metadata?.name || user.email}</div>
-                <div className="text-[11px] text-slate-400">{user.email}</div>
+                <div className="text-sm font-extrabold text-white">{.user_metadata?.name || .email}</div>
+                <div className="text-[11px] text-slate-400">{.email}</div>
               </div>
 
               <nav className="space-y-1 text-xs">
@@ -1934,7 +1934,7 @@ const t = UI_TEXT[lang];
                 >
                   <span>{t.dashMyListings}</span>
                   <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
-                    {listings.filter((l: Listing) => l.user_id === user.id).length}
+                    {dbListings.filter((l: Listing) => l.user_id === .id).length}
                   </span>
                 </button>
 
@@ -1949,7 +1949,7 @@ const t = UI_TEXT[lang];
                   }`}
                 >
                   <span>{t.dashFavListings}</span>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{favorites.length}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{newPreviewUrls.length}</span>
                 </button>
                 <button
                   type="button"
@@ -2028,11 +2028,11 @@ const t = UI_TEXT[lang];
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div onClick={() => setAccountTab("listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
                     <div className="text-xs text-slate-400">{t.dashMyListings}</div>
-                    <div className="mt-1 text-2xl font-black text-amber-400">{listings.filter((l: Listing) => l.user_id === user.id).length}</div>
+                    <div className="mt-1 text-2xl font-black text-amber-400">{dbListings.filter((l: Listing) => l.user_id === .id).length}</div>
                   </div>
                   <div onClick={() => setAccountTab("fav_listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
                     <div className="text-xs text-slate-400">{t.dashFavListings}</div>
-                    <div className="mt-1 text-2xl font-black text-white">{favorites.length}</div>
+                    <div className="mt-1 text-2xl font-black text-white">{newPreviewUrls.length}</div>
                   </div>
                   <div onClick={() => setAccountTab("messages")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
                     <div className="text-xs text-slate-400">{t.dashMessages}</div>
@@ -2047,11 +2047,11 @@ const t = UI_TEXT[lang];
 
               {accountTab === "listings" && (
                 <div className="space-y-3">
-                  {listings.filter((l: Listing) => l.user_id === user.id).length === 0 ? (
+                  {dbListings.filter((l: Listing) => l.user_id === .id).length === 0 ? (
                     <p className="text-xs text-slate-400">No active listings yet.</p>
                   ) : (
                     listings
-                      .filter((l: Listing) => l.user_id === user.id)
+                      .filter((l: Listing) => l.user_id === .id)
                       .map((item: Listing) => (
                         <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
                           <div>
@@ -2062,7 +2062,7 @@ const t = UI_TEXT[lang];
                             type="button"
                             onClick={() => {
                               setIsAccountOpen(false);
-                              openListingDetails(item);
+                              openEditModal(item);
                             }}
                             className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/10 cursor-pointer"
                           >
@@ -2076,11 +2076,11 @@ const t = UI_TEXT[lang];
 
               {accountTab === "fav_listings" && (
                 <div className="space-y-3">
-                  {listings.filter((l: Listing) => favorites.includes(l.id)).length === 0 ? (
+                  {dbListings.filter((l: Listing) => newPreviewUrls.includes(l.id)).length === 0 ? (
                     <p className="text-xs text-slate-400">No favorite listings yet.</p>
                   ) : (
                     listings
-                      .filter((l: Listing) => favorites.includes(l.id))
+                      .filter((l: Listing) => newPreviewUrls.includes(l.id))
                       .map((item: Listing) => (
                         <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
                           <div>
@@ -2091,7 +2091,7 @@ const t = UI_TEXT[lang];
                             type="button"
                             onClick={() => {
                               setIsAccountOpen(false);
-                              openListingDetails(item);
+                              openEditModal(item);
                             }}
                             className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
                           >
@@ -2146,8 +2146,8 @@ const t = UI_TEXT[lang];
                     <p className="text-xs text-slate-400">No messages yet.</p>
                   ) : (
                     messagesList.map((m: ChatMessage) => {
-                      const otherUserId = m.sender_id === user.id ? m.receiver_id : m.sender_id;
-                      const relatedListing = listings.find((l: Listing) => l.id === m.listing_id);
+                      const otherUserId = m.sender_id === .id ? m.receiver_id : m.sender_id;
+                      const relatedListing = dbListings.find((l: Listing) => l.id === m.listing_id);
                       return (
                         <div key={m.id} className="rounded-2xl border border-white/10 bg-[#121826] p-3.5">
                           <div className="flex items-center justify-between text-[11px] text-slate-400">
