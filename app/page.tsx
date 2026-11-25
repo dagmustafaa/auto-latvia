@@ -665,6 +665,77 @@ function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
 
 
 
+
+  return (
+    <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M16.004 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.256.59 4.46 1.71 6.404L3.09 28.8l6.566-1.722a12.74 12.74 0 0 0 6.348 1.694h.006c7.058 0 12.798-5.74 12.798-12.8 0-3.42-1.332-6.636-3.75-9.052A12.716 12.716 0 0 0 16.004 3.2zm0 23.41h-.004a10.6 10.6 0 0 1-5.404-1.48l-.388-.23-3.896 1.022 1.04-3.798-.252-.402a10.575 10.575 0 0 1-1.622-5.642c0-5.854 4.764-10.618 10.624-10.618 2.836 0 5.502 1.106 7.506 3.112a10.548 10.548 0 0 1 3.11 7.51c0 5.856-4.764 10.626-10.614 10.626zm5.826-7.954c-.32-.16-1.89-.932-2.182-1.038-.292-.106-.506-.16-.718.16-.214.318-.826 1.038-1.012 1.252-.186.212-.372.24-.692.08-.32-.16-1.35-.498-2.572-1.588-.95-.848-1.592-1.896-1.778-2.214-.186-.32-.02-.492.14-.652.144-.142.32-.372.48-.558.16-.186.212-.32.32-.532.106-.214.052-.4-.028-.558-.08-.16-.718-1.732-.984-2.37-.26-.622-.524-.538-.718-.548l-.612-.01c-.214 0-.56.08-.852.4-.292.318-1.118 1.092-1.118 2.662s1.144 3.088 1.304 3.3c.16.214 2.252 3.438 5.456 4.822.762.33 1.358.526 1.822.674.766.244 1.462.21 2.012.128.614-.092 1.89-.772 2.156-1.518.266-.746.266-1.384.186-1.518-.08-.132-.292-.212-.612-.372z" />
+    </svg>
+  );
+}
+
+function getAdHref(item: Listing) {
+  const slug = (item.brand + "-" + item.model + "-" + item.year)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return "#ad=" + slug + "--" + encodeURIComponent(item.id);
+}
+
+function parseAdHash(rawHash: string): string | null {
+  const h = rawHash || "";
+  if (h.startsWith("#ad=")) {
+    const parts = h.slice(4).split("--");
+    const last = decodeURIComponent(parts[parts.length - 1] || "").trim();
+    return last || null;
+  }
+  if (h.startsWith("#listing-")) {
+    const val = decodeURIComponent(h.replace("#listing-", "")).trim();
+    return val || null;
+  }
+  return null;
+}
+
+export default function HomePage() {
+  const [lang, setLang] = useState<Lang>("lv");
+  const [dbListings, setDbListings] = useState<Listing[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
+
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [onlySaved, setOnlySaved] = useState(false);
+
+  const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
+  const [filterBrand, setFilterBrand] = useState("All");
+  const [filterModel, setFilterModel] = useState("All");
+  const [selectedCity, setSelectedCity] = useState("All");
+  const [filterFuel, setFilterFuel] = useState("All");
+  const [filterTrans, setFilterTrans] = useState("All");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minYear, setMinYear] = useState("");
+  const [maxYear, setMaxYear] = useState("");
+  const [maxKm, setMaxKm] = useState("");
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc" | "kmAsc">("yearDesc");
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
+  const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
+
+  // Full edit state
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editYear, setEditYear] = useState("");
+  const [editKm, setEditKm] = useState("");
+  const [editCity, setEditCity] = useState("Rīga");
+  const [editTa, setEditTa] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Auth modal
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
@@ -809,75 +880,6 @@ function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
     () => notificationsList.filter((n) => !n.is_read).length,
     [notificationsList]
   );
-  return (
-    <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" className={className}>
-      <path d="M16.004 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.256.59 4.46 1.71 6.404L3.09 28.8l6.566-1.722a12.74 12.74 0 0 0 6.348 1.694h.006c7.058 0 12.798-5.74 12.798-12.8 0-3.42-1.332-6.636-3.75-9.052A12.716 12.716 0 0 0 16.004 3.2zm0 23.41h-.004a10.6 10.6 0 0 1-5.404-1.48l-.388-.23-3.896 1.022 1.04-3.798-.252-.402a10.575 10.575 0 0 1-1.622-5.642c0-5.854 4.764-10.618 10.624-10.618 2.836 0 5.502 1.106 7.506 3.112a10.548 10.548 0 0 1 3.11 7.51c0 5.856-4.764 10.626-10.614 10.626zm5.826-7.954c-.32-.16-1.89-.932-2.182-1.038-.292-.106-.506-.16-.718.16-.214.318-.826 1.038-1.012 1.252-.186.212-.372.24-.692.08-.32-.16-1.35-.498-2.572-1.588-.95-.848-1.592-1.896-1.778-2.214-.186-.32-.02-.492.14-.652.144-.142.32-.372.48-.558.16-.186.212-.32.32-.532.106-.214.052-.4-.028-.558-.08-.16-.718-1.732-.984-2.37-.26-.622-.524-.538-.718-.548l-.612-.01c-.214 0-.56.08-.852.4-.292.318-1.118 1.092-1.118 2.662s1.144 3.088 1.304 3.3c.16.214 2.252 3.438 5.456 4.822.762.33 1.358.526 1.822.674.766.244 1.462.21 2.012.128.614-.092 1.89-.772 2.156-1.518.266-.746.266-1.384.186-1.518-.08-.132-.292-.212-.612-.372z" />
-    </svg>
-  );
-}
-
-function getAdHref(item: Listing) {
-  const slug = (item.brand + "-" + item.model + "-" + item.year)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  return "#ad=" + slug + "--" + encodeURIComponent(item.id);
-}
-
-function parseAdHash(rawHash: string): string | null {
-  const h = rawHash || "";
-  if (h.startsWith("#ad=")) {
-    const parts = h.slice(4).split("--");
-    const last = decodeURIComponent(parts[parts.length - 1] || "").trim();
-    return last || null;
-  }
-  if (h.startsWith("#listing-")) {
-    const val = decodeURIComponent(h.replace("#listing-", "")).trim();
-    return val || null;
-  }
-  return null;
-}
-
-export default function HomePage() {
-  const [lang, setLang] = useState<Lang>("lv");
-  const [dbListings, setDbListings] = useState<Listing[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [userName, setUserName] = useState<string>("");
-
-  const [savedIds, setSavedIds] = useState<string[]>([]);
-  const [onlySaved, setOnlySaved] = useState(false);
-
-  const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
-  const [filterBrand, setFilterBrand] = useState("All");
-  const [filterModel, setFilterModel] = useState("All");
-  const [selectedCity, setSelectedCity] = useState("All");
-  const [filterFuel, setFilterFuel] = useState("All");
-  const [filterTrans, setFilterTrans] = useState("All");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minYear, setMinYear] = useState("");
-  const [maxYear, setMaxYear] = useState("");
-  const [maxKm, setMaxKm] = useState("");
-  const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc" | "kmAsc">("yearDesc");
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
-  const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
-
-  // Full edit state
-  const [editingListing, setEditingListing] = useState<Listing | null>(null);
-  const [editPrice, setEditPrice] = useState("");
-  const [editYear, setEditYear] = useState("");
-  const [editKm, setEditKm] = useState("");
-  const [editCity, setEditCity] = useState("Rīga");
-  const [editTa, setEditTa] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
-
-  // Auth modal
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
 
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
@@ -1814,6 +1816,10 @@ const t = UI_TEXT[lang];
                     const activeIdx = hoverPhotoIndex[item.id] ?? 0;
                     const currentSrc = item.images[activeIdx] ?? item.images[0];
                     const isSaved = savedIds.includes(item.id);
+
+
+
+
 
                     return (
                       <a
