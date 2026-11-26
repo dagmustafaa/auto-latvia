@@ -1428,6 +1428,16 @@ useEffect(() => {
               {t.brand}
             </span>
           </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof setAccountTab === "function") setAccountTab("messages");
+                  if (typeof setIsAccountOpen === "function") setIsAccountOpen(true);
+                }}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white hover:border-amber-400/50 hover:bg-white/10"
+              >
+                Messages ({messagesList.length})
+              </button>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
