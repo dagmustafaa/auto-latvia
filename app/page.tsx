@@ -675,7 +675,6 @@ export default function HomePage() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
 
-  // Wizard
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
@@ -698,7 +697,6 @@ export default function HomePage() {
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-  // Saved & filters
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [onlySaved, setOnlySaved] = useState(false);
@@ -717,12 +715,10 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc" | "kmAsc">("yearDesc");
 
-  // Detail & card hover
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
   const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
 
-  // Full edit state
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [editYear, setEditYear] = useState("");
@@ -732,7 +728,6 @@ export default function HomePage() {
   const [editDesc, setEditDesc] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Messaging, notifications & profile settings
   const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
   const [notificationsList, setNotificationsList] = useState<UserNotification[]>([]);
   const [chatDraft, setChatDraft] = useState("");
@@ -783,16 +778,12 @@ export default function HomePage() {
     try {
       const rawSaved = localStorage.getItem("autolatvija_saved_ids");
       if (rawSaved) setSavedIds(JSON.parse(rawSaved));
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     try {
       const rawSearches = localStorage.getItem("autolatvija_saved_searches");
       if (rawSearches) setSavedSearches(JSON.parse(rawSearches));
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null;
@@ -865,9 +856,7 @@ export default function HomePage() {
       const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
       try {
         localStorage.setItem("autolatvija_saved_ids", JSON.stringify(next));
-      } catch {
-        // ignore
-      }
+      } catch {}
       return next;
     });
   }
@@ -910,9 +899,7 @@ export default function HomePage() {
     setSavedSearches(next);
     try {
       localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     if (userId) {
       setAccountTab("fav_searches");
@@ -927,9 +914,7 @@ export default function HomePage() {
     setSavedSearches(next);
     try {
       localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   async function handleSendMessageToSeller(
@@ -1321,6 +1306,7 @@ export default function HomePage() {
             onClick={() => {
               closeListingDetail();
               setOnlySaved(false);
+              setIsAccountOpen(false);
             }}
             className="flex items-center gap-2.5 text-left cursor-pointer"
           >
@@ -1335,6 +1321,7 @@ export default function HomePage() {
               type="button"
               onClick={() => {
                 closeListingDetail();
+                setIsAccountOpen(false);
                 setOnlySaved((prev) => !prev);
               }}
               className={`rounded-xl border px-3 py-2 text-xs font-bold cursor-pointer ${
@@ -1351,6 +1338,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
+                    closeListingDetail();
                     setAccountTab("overview");
                     setIsAccountOpen(true);
                   }}
@@ -1413,546 +1401,27 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="flex-1">
-        {activeListing ? (
-          <main className="mx-auto max-w-5xl px-4 py-6">
-            <div className="mb-4 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={closeListingDetail}
-                className="rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
-              >
-                {t.backToList}
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => toggleSave(e, activeListing.id)}
-                className={`rounded-xl border px-3.5 py-2 text-xs font-bold cursor-pointer ${
-                  savedIds.includes(activeListing.id)
-                    ? "border-rose-400 bg-rose-500/20 text-rose-200"
-                    : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
-                }`}
-              >
-                {savedIds.includes(activeListing.id) ? `♥ ${t.savedAction}` : `♡ ${t.saveAction}`}
-              </button>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121826]">
-              <div className="relative h-72 w-full bg-slate-950 sm:h-96">
-                <img
-                  src={activeListing.images[detailPhotoIndex] ?? activeListing.images[0]}
-                  alt={`${activeListing.brand} ${activeListing.model}`}
-                  className="h-full w-full object-cover"
-                />
-                <span className="absolute left-4 top-4 rounded-lg bg-slate-950/85 px-3 py-1 text-xs font-semibold text-emerald-300">
-                  {activeListing.badge}
-                </span>
-              </div>
-
-              {activeListing.images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto border-b border-white/10 bg-[#0b0f17] p-3">
-                  {activeListing.images.map((imgUrl, idx) => (
-                    <button
-                      key={`${imgUrl}-${idx}`}
-                      type="button"
-                      onClick={() => setDetailPhotoIndex(idx)}
-                      className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border cursor-pointer ${
-                        detailPhotoIndex === idx ? "border-amber-400" : "border-white/10 opacity-65"
-                      }`}
-                    >
-                      <img src={imgUrl} alt="" className="h-full w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                      {activeListing.brand} • {activeListing.city}
-                    </span>
-                    <h1 className="mt-1 text-2xl font-extrabold text-white">
-                      {activeListing.brand} {activeListing.model} ({activeListing.engine_volume})
-                    </h1>
-                  </div>
-                  <div className="text-2xl font-black text-amber-400">
-                    €{activeListing.price_eur.toLocaleString("en-US")}
-                  </div>
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-[#0b0f17] p-4 text-xs sm:grid-cols-3 lg:grid-cols-6">
-                  <div>
-                    <span className="block text-slate-400">{t.yearLabel}</span>
-                    <strong className="mt-0.5 block text-sm text-white">{activeListing.year}</strong>
-                  </div>
-                  <div>
-                    <span className="block text-slate-400">{t.kmLabel}</span>
-                    <strong className="mt-0.5 block text-sm text-white">
-                      {activeListing.mileage_km.toLocaleString("en-US")} km
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="block text-slate-400">{t.fuelLabel}</span>
-                    <strong className="mt-0.5 block text-sm text-white">
-                      {activeListing.engine_volume} (
-                      {LABELS.fuel[activeListing.fuel]?.[lang] ?? activeListing.fuel})
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="block text-slate-400">{t.transLabel}</span>
-                    <strong className="mt-0.5 block text-sm text-white">
-                      {LABELS.transmission[activeListing.transmission]?.[lang] ??
-                        activeListing.transmission}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="block text-slate-400">{t.bodyLabel}</span>
-                    <strong className="mt-0.5 block text-sm text-white">
-                      {LABELS.body[activeListing.body_type]?.[lang] ?? activeListing.body_type}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="block text-slate-400">{t.taLabel}</span>
-                    <strong className="mt-0.5 block text-sm text-emerald-400">
-                      {activeListing.ta_valid_until}
-                    </strong>
-                  </div>
-                </div>
-
-                {(activeListing.plate_number || activeListing.vin) && (
-                  <div className="mt-3 flex flex-wrap gap-5 rounded-xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-xs">
-                    {activeListing.plate_number && (
-                      <div>
-                        <span className="text-slate-400">{t.plateLabel}: </span>
-                        <strong className="rounded bg-white/10 px-2 py-0.5 font-mono text-white">
-                          {activeListing.plate_number}
-                        </strong>
-                      </div>
-                    )}
-                    {activeListing.vin && (
-                      <div>
-                        <span className="text-slate-400">{t.vinLabel}: </span>
-                        <strong className="font-mono text-slate-200">{activeListing.vin}</strong>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <p className="mt-5 text-sm leading-relaxed text-slate-300">
-                  {lang === "en" ? activeListing.description_en : activeListing.description_lv}
-                </p>
-
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
-                  <div className="text-xs">
-                    <span className="text-slate-400">{t.sellerLabel}: </span>
-                    <strong className="text-sm text-white">{activeListing.seller_name}</strong>
-                    <span className="ml-2 text-slate-400">({activeListing.seller_phone})</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2.5">
-                    <a
-                      href={`tel:${activeListing.seller_phone}`}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition cursor-pointer"
-                    >
-                      <span>📞</span>
-                      <span>{t.callSeller}</span>
-                    </a>
-                    <a
-                      href={`https://wa.me/${activeListing.seller_phone.replace(/[^0-9]/g, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-md shadow-[#25D366]/20 hover:bg-[#20bd5a] transition cursor-pointer"
-                    >
-                      <WhatsAppIcon className="h-4 w-4 text-slate-950" />
-                      <span>{t.whatsappSeller}</span>
-                    </a>
-                  </div>
-                </div>
-
-                {/* Satıcıya doğrudan mesaj gönderme kutusu */}
-                <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b0f17] p-4">
-                  <div className="text-xs font-extrabold text-amber-400">{t.sendSellerMsgBtn}</div>
-                  <p className="mt-1 text-[11px] text-slate-400">{t.msgModerationNotice}</p>
-
-                  {activeListing.user_id ? (
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                      <input
-                        type="text"
-                        value={chatDraft}
-                        onChange={(e) => setChatDraft(e.target.value)}
-                        placeholder={t.msgPlaceholder}
-                        className="flex-1 rounded-xl border border-white/15 bg-[#121826] px-3.5 py-2 text-xs text-white placeholder-slate-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleSendMessageToSeller(activeListing)}
-                        className="rounded-xl bg-amber-400 px-4 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
-                      >
-                        {t.sendBtnShort}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mt-2.5 text-[11px] text-slate-400">
-                      Demo listing — use Phone or WhatsApp above to contact the seller directly.
-                    </div>
-                  )}
-
-                  {chatSentFeedback && (
-                    <div className="mt-2 text-xs font-bold text-emerald-400">{chatSentFeedback}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {similarListings.length > 0 && (
-              <section className="mt-8">
-                <h2 className="mb-3 text-sm font-extrabold uppercase tracking-wider text-slate-300">
-                  {t.similarTitle}
-                </h2>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {similarListings.map((sim) => (
-                    <a
-                      key={sim.id}
-                      href={getAdHref(sim)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
-                    >
-                      <img
-                        src={sim.images[0]}
-                        alt={`${sim.brand} ${sim.model}`}
-                        className="h-32 w-full object-cover"
-                      />
-                      <div className="p-3">
-                        <div className="text-[11px] font-bold text-amber-400">
-                          {sim.brand} • {sim.year}
-                        </div>
-                        <div className="truncate text-sm font-bold text-white">{sim.model}</div>
-                        <div className="mt-1 flex items-center justify-between text-xs">
-                          <span className="text-slate-400">
-                            {sim.mileage_km.toLocaleString("en-US")} km
-                          </span>
-                          <span className="font-black text-amber-400">
-                            €{sim.price_eur.toLocaleString("en-US")}
-                          </span>
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </section>
-            )}
-          </main>
-        ) : (
-          <>
-            <section className="border-b border-white/10 bg-[#0e1420]">
-              <div className="mx-auto max-w-7xl px-4 py-5">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
-                      {t.heroTitle}
-                    </h1>
-                    <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {(
-                      [
-                        { key: "all", label: t.allCategories },
-                        { key: "car", label: t.carsCategory },
-                        { key: "moto", label: t.motosCategory },
-                      ] as const
-                    ).map((cat) => (
-                      <button
-                        key={cat.key}
-                        type="button"
-                        onClick={() => {
-                          setCategoryFilter(cat.key);
-                          setFilterBrand("All");
-                          setFilterModel("All");
-                        }}
-                        className={`rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer ${
-                          categoryFilter === cat.key
-                            ? "bg-amber-400 text-slate-950"
-                            : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                        }`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
-                  <select
-                    value={filterBrand}
-                    onChange={(e) => {
-                      setFilterBrand(e.target.value);
-                      setFilterModel("All");
-                    }}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                  >
-                    <option value="All">{t.allBrands}</option>
-                    {filterBrandOptions.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filterModel}
-                    disabled={filterBrand === "All"}
-                    onChange={(e) => setFilterModel(e.target.value)}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white disabled:opacity-50"
-                  >
-                    <option value="All">{t.allModels}</option>
-                    {filterModelOptions.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={selectedCity}
-                    onChange={(e) => setSelectedCity(e.target.value)}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                  >
-                    {CITIES.map((city) => (
-                      <option key={city} value={city}>
-                        {city === "All" ? t.allCities : city}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filterFuel}
-                    onChange={(e) => setFilterFuel(e.target.value)}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                  >
-                    <option value="All">{t.allFuels}</option>
-                    {Object.keys(LABELS.fuel).map((f) => (
-                      <option key={f} value={f}>
-                        {LABELS.fuel[f][lang]}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filterTrans}
-                    onChange={(e) => setFilterTrans(e.target.value)}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                  >
-                    <option value="All">{t.allTrans}</option>
-                    {Object.keys(LABELS.transmission).map((tr) => (
-                      <option key={tr} value={tr}>
-                        {LABELS.transmission[tr][lang]}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t.searchPlaceholder}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                  />
-                </div>
-
-                <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-8">
-                  <input
-                    type="number"
-                    min={0}
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    placeholder={t.minPricePh}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    placeholder={t.maxPricePh}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                  />
-                  <input
-                    type="number"
-                    min={1970}
-                    max={2027}
-                    value={minYear}
-                    onChange={(e) => setMinYear(e.target.value)}
-                    placeholder={t.minYearPh}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                  />
-                  <input
-                    type="number"
-                    min={1970}
-                    max={2027}
-                    value={maxYear}
-                    onChange={(e) => setMaxYear(e.target.value)}
-                    placeholder={t.maxYearPh}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    step={5000}
-                    value={maxKm}
-                    onChange={(e) => setMaxKm(e.target.value)}
-                    placeholder={t.maxKmPh}
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
-                  />
-                  <select
-                    value={sortBy}
-                    onChange={(e) =>
-                      setSortBy(e.target.value as "priceAsc" | "priceDesc" | "yearDesc" | "kmAsc")
-                    }
-                    className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
-                  >
-                    <option value="yearDesc">{t.sortYearDesc}</option>
-                    <option value="priceAsc">{t.sortPriceAsc}</option>
-                    <option value="priceDesc">{t.sortPriceDesc}</option>
-                    <option value="kmAsc">{t.sortKmAsc}</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={handleSaveCurrentSearch}
-                    className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-400/20 cursor-pointer"
-                  >
-                    ★ {t.saveSearchBtn}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetAllFilters}
-                    className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
-                  >
-                    {t.resetFilters}
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            <main className="mx-auto max-w-7xl px-4 py-6">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  {t.resultsCount(filtered.length)}
-                </span>
-              </div>
-
-              {filtered.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-[#121826] py-12 text-center text-xs text-slate-400">
-                  {onlySaved ? t.noSavedListings : "0"}
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filtered.map((item) => {
-                    const activeIdx = hoverPhotoIndex[item.id] ?? 0;
-                    const currentSrc = item.images[activeIdx] ?? item.images[0];
-                    const isSaved = savedIds.includes(item.id);
-
-                    return (
-                      <a
-                        key={item.id}
-                        href={getAdHref(item)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
-                      >
-                        <div
-                          onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
-                          onMouseLeave={() =>
-                            setHoverPhotoIndex((prev) => ({ ...prev, [item.id]: 0 }))
-                          }
-                          className="relative h-36 w-full overflow-hidden bg-slate-950"
-                        >
-                          <img
-                            src={currentSrc}
-                            alt={`${item.brand} ${item.model}`}
-                            className="h-full w-full object-cover"
-                          />
-                          <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
-                            {item.badge}
-                          </span>
-
-                          <button
-                            type="button"
-                            onClick={(e) => toggleSave(e, item.id)}
-                            aria-label="Save listing"
-                            className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
-                              isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
-                            }`}
-                          >
-                            {isSaved ? "♥" : "♡"}
-                          </button>
-
-                          {item.images.length > 1 && (
-                            <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/60 px-2 py-0.5">
-                              {item.images.map((_, i) => (
-                                <span
-                                  key={i}
-                                  className={`h-1 w-3 rounded-full ${
-                                    activeIdx === i ? "bg-amber-400" : "bg-white/35"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-3.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="text-[11px] font-bold text-amber-400/90">
-                                {item.brand} • {item.engine_volume}
-                              </div>
-                              <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300">
-                                {item.model}
-                              </h2>
-                            </div>
-                            <span className="shrink-0 text-base font-black text-amber-400">
-                              €{item.price_eur.toLocaleString("en-US")}
-                            </span>
-                          </div>
-
-                          <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-slate-400">
-                            <span>{item.year}</span>
-                            <span>{item.mileage_km.toLocaleString("en-US")} km</span>
-                            <span>{item.city}</span>
-                          </div>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              )}
-            </main>
-          </>
-        )}
-      </div>
-
-      {/* Sahibinden tarzı sol menülü hesap ve mesajlaşma paneli */}
-      {isAccountOpen && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm">
-          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0e1420] shadow-2xl md:flex-row">
-            <aside className="w-full border-b border-white/10 bg-[#0b0f17] p-4 md:w-64 md:border-b-0 md:border-r md:overflow-y-auto">
-              <div className="mb-3">
-                <div className="text-sm font-extrabold text-white">
+      <div className="flex flex-1 flex-col lg:flex-row">
+        {user && (
+          <aside className="w-full shrink-0 border-b border-white/10 bg-[#0b0f17] lg:w-64 lg:border-b-0 lg:border-r">
+            <div className="p-4">
+              <div className="mb-3 rounded-2xl border border-white/10 bg-[#121826] p-3">
+                <div className="truncate text-sm font-extrabold text-white">
                   {(user.user_metadata?.name as string) || user.email}
                 </div>
-                <div className="text-[11px] text-slate-400">{user.email}</div>
+                <div className="truncate text-[11px] text-slate-400">{user.email}</div>
               </div>
 
               <nav className="space-y-1 text-xs">
                 <button
                   type="button"
-                  onClick={() => setAccountTab("overview")}
+                  onClick={() => {
+                    closeListingDetail();
+                    setAccountTab("overview");
+                    setIsAccountOpen(true);
+                  }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-bold cursor-pointer ${
-                    accountTab === "overview"
+                    isAccountOpen && accountTab === "overview"
                       ? "bg-amber-400 text-slate-950"
                       : "text-slate-200 hover:bg-white/10"
                   }`}
@@ -1965,9 +1434,13 @@ export default function HomePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setAccountTab("listings")}
+                  onClick={() => {
+                    closeListingDetail();
+                    setAccountTab("listings");
+                    setIsAccountOpen(true);
+                  }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "listings"
+                    isAccountOpen && accountTab === "listings"
                       ? "bg-amber-400 text-slate-950 font-bold"
                       : "text-slate-300 hover:bg-white/10"
                   }`}
@@ -1983,9 +1456,13 @@ export default function HomePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setAccountTab("fav_listings")}
+                  onClick={() => {
+                    closeListingDetail();
+                    setAccountTab("fav_listings");
+                    setIsAccountOpen(true);
+                  }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "fav_listings"
+                    isAccountOpen && accountTab === "fav_listings"
                       ? "bg-amber-400 text-slate-950 font-bold"
                       : "text-slate-300 hover:bg-white/10"
                   }`}
@@ -1997,9 +1474,13 @@ export default function HomePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAccountTab("fav_searches")}
+                  onClick={() => {
+                    closeListingDetail();
+                    setAccountTab("fav_searches");
+                    setIsAccountOpen(true);
+                  }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "fav_searches"
+                    isAccountOpen && accountTab === "fav_searches"
                       ? "bg-amber-400 text-slate-950 font-bold"
                       : "text-slate-300 hover:bg-white/10"
                   }`}
@@ -2015,9 +1496,13 @@ export default function HomePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setAccountTab("messages")}
+                  onClick={() => {
+                    closeListingDetail();
+                    setAccountTab("messages");
+                    setIsAccountOpen(true);
+                  }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "messages"
+                    isAccountOpen && accountTab === "messages"
                       ? "bg-amber-400 text-slate-950 font-bold"
                       : "text-slate-300 hover:bg-white/10"
                   }`}
@@ -2034,11 +1519,13 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
+                    closeListingDetail();
                     setAccountTab("notifications");
+                    setIsAccountOpen(true);
                     handleMarkNotificationsRead();
                   }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "notifications"
+                    isAccountOpen && accountTab === "notifications"
                       ? "bg-amber-400 text-slate-950 font-bold"
                       : "text-slate-300 hover:bg-white/10"
                   }`}
@@ -2056,19 +1543,39 @@ export default function HomePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setAccountTab("settings")}
+                  onClick={() => {
+                    closeListingDetail();
+                    setAccountTab("settings");
+                    setIsAccountOpen(true);
+                  }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "settings"
+                    isAccountOpen && accountTab === "settings"
                       ? "bg-amber-400 text-slate-950 font-bold"
                       : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashSettings}</span>
                 </button>
-              </nav>
-            </aside>
 
-            <div className="flex-1 overflow-y-auto p-5">
+                {isAccountOpen && (
+                  <div className="pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsAccountOpen(false)}
+                      className="flex w-full items-center justify-center rounded-xl border border-white/15 bg-white/5 px-3 py-2 font-bold text-amber-300 hover:bg-white/10 cursor-pointer"
+                    >
+                      {t.backToList.replace("← ", "")}
+                    </button>
+                  </div>
+                )}
+              </nav>
+            </div>
+          </aside>
+        )}
+
+        <div className="min-w-0 flex-1">
+          {isAccountOpen && user ? (
+            <section className="mx-auto max-w-5xl px-4 py-6">
               <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
                 <h2 className="text-lg font-extrabold text-white">{t.accountBtn}</h2>
                 <button
@@ -2076,7 +1583,7 @@ export default function HomePage() {
                   onClick={() => setIsAccountOpen(false)}
                   className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
                 >
-                  ✕
+                  {t.backToList}
                 </button>
               </div>
 
@@ -2087,18 +1594,14 @@ export default function HomePage() {
                     className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50"
                   >
                     <div className="text-xs text-slate-400">{t.dashMyListings}</div>
-                    <div className="mt-1 text-2xl font-black text-amber-400">
-                      {myListings.length}
-                    </div>
+                    <div className="mt-1 text-2xl font-black text-amber-400">{myListings.length}</div>
                   </div>
                   <div
                     onClick={() => setAccountTab("fav_listings")}
                     className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50"
                   >
                     <div className="text-xs text-slate-400">{t.dashFavListings}</div>
-                    <div className="mt-1 text-2xl font-black text-white">
-                      {savedListings.length}
-                    </div>
+                    <div className="mt-1 text-2xl font-black text-white">{savedListings.length}</div>
                   </div>
                   <div
                     onClick={() => setAccountTab("messages")}
@@ -2141,10 +1644,7 @@ export default function HomePage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setIsAccountOpen(false);
-                            openEditModal(item);
-                          }}
+                          onClick={() => openEditModal(item)}
                           className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/10 cursor-pointer"
                         >
                           {t.editBtn}
@@ -2328,12 +1828,532 @@ export default function HomePage() {
                   </button>
                 </form>
               )}
-            </div>
-          </div>
-        </div>
-      )}
+            </section>
+          ) : activeListing ? (
+            <main className="mx-auto max-w-5xl px-4 py-6">
+              <div className="mb-4 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={closeListingDetail}
+                  className="rounded-xl border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
+                >
+                  {t.backToList}
+                </button>
 
-      {/* Footer + Scroll-to-Top button */}
+                <button
+                  type="button"
+                  onClick={(e) => toggleSave(e, activeListing.id)}
+                  className={`rounded-xl border px-3.5 py-2 text-xs font-bold cursor-pointer ${
+                    savedIds.includes(activeListing.id)
+                      ? "border-rose-400 bg-rose-500/20 text-rose-200"
+                      : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
+                  }`}
+                >
+                  {savedIds.includes(activeListing.id) ? `♥ ${t.savedAction}` : `♡ ${t.saveAction}`}
+                </button>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#121826]">
+                <div className="relative h-72 w-full bg-slate-950 sm:h-96">
+                  <img
+                    src={activeListing.images[detailPhotoIndex] ?? activeListing.images[0]}
+                    alt={`${activeListing.brand} ${activeListing.model}`}
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute left-4 top-4 rounded-lg bg-slate-950/85 px-3 py-1 text-xs font-semibold text-emerald-300">
+                    {activeListing.badge}
+                  </span>
+                </div>
+
+                {activeListing.images.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto border-b border-white/10 bg-[#0b0f17] p-3">
+                    {activeListing.images.map((imgUrl, idx) => (
+                      <button
+                        key={`${imgUrl}-${idx}`}
+                        type="button"
+                        onClick={() => setDetailPhotoIndex(idx)}
+                        className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border cursor-pointer ${
+                          detailPhotoIndex === idx ? "border-amber-400" : "border-white/10 opacity-65"
+                        }`}
+                      >
+                        <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                        {activeListing.brand} • {activeListing.city}
+                      </span>
+                      <h1 className="mt-1 text-2xl font-extrabold text-white">
+                        {activeListing.brand} {activeListing.model} ({activeListing.engine_volume})
+                      </h1>
+                    </div>
+                    <div className="text-2xl font-black text-amber-400">
+                      €{activeListing.price_eur.toLocaleString("en-US")}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-[#0b0f17] p-4 text-xs sm:grid-cols-3 lg:grid-cols-6">
+                    <div>
+                      <span className="block text-slate-400">{t.yearLabel}</span>
+                      <strong className="mt-0.5 block text-sm text-white">{activeListing.year}</strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-400">{t.kmLabel}</span>
+                      <strong className="mt-0.5 block text-sm text-white">
+                        {activeListing.mileage_km.toLocaleString("en-US")} km
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-400">{t.fuelLabel}</span>
+                      <strong className="mt-0.5 block text-sm text-white">
+                        {activeListing.engine_volume} (
+                        {LABELS.fuel[activeListing.fuel]?.[lang] ?? activeListing.fuel})
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-400">{t.transLabel}</span>
+                      <strong className="mt-0.5 block text-sm text-white">
+                        {LABELS.transmission[activeListing.transmission]?.[lang] ??
+                          activeListing.transmission}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-400">{t.bodyLabel}</span>
+                      <strong className="mt-0.5 block text-sm text-white">
+                        {LABELS.body[activeListing.body_type]?.[lang] ?? activeListing.body_type}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-400">{t.taLabel}</span>
+                      <strong className="mt-0.5 block text-sm text-emerald-400">
+                        {activeListing.ta_valid_until}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {(activeListing.plate_number || activeListing.vin) && (
+                    <div className="mt-3 flex flex-wrap gap-5 rounded-xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-xs">
+                      {activeListing.plate_number && (
+                        <div>
+                          <span className="text-slate-400">{t.plateLabel}: </span>
+                          <strong className="rounded bg-white/10 px-2 py-0.5 font-mono text-white">
+                            {activeListing.plate_number}
+                          </strong>
+                        </div>
+                      )}
+                      {activeListing.vin && (
+                        <div>
+                          <span className="text-slate-400">{t.vinLabel}: </span>
+                          <strong className="font-mono text-slate-200">{activeListing.vin}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="mt-5 text-sm leading-relaxed text-slate-300">
+                    {lang === "en" ? activeListing.description_en : activeListing.description_lv}
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
+                    <div className="text-xs">
+                      <span className="text-slate-400">{t.sellerLabel}: </span>
+                      <strong className="text-sm text-white">{activeListing.seller_name}</strong>
+                      <span className="ml-2 text-slate-400">({activeListing.seller_phone})</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5">
+                      <a
+                        href={`tel:${activeListing.seller_phone}`}
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition cursor-pointer"
+                      >
+                        <span>📞</span>
+                        <span>{t.callSeller}</span>
+                      </a>
+                      <a
+                        href={`https://wa.me/${activeListing.seller_phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-md shadow-[#25D366]/20 hover:bg-[#20bd5a] transition cursor-pointer"
+                      >
+                        <WhatsAppIcon className="h-4 w-4 text-slate-950" />
+                        <span>{t.whatsappSeller}</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b0f17] p-4">
+                    <div className="text-xs font-extrabold text-amber-400">
+                      {t.sendSellerMsgBtn}
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-400">{t.msgModerationNotice}</p>
+
+                    {activeListing.user_id ? (
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <input
+                          type="text"
+                          value={chatDraft}
+                          onChange={(e) => setChatDraft(e.target.value)}
+                          placeholder={t.msgPlaceholder}
+                          className="flex-1 rounded-xl border border-white/15 bg-[#121826] px-3.5 py-2 text-xs text-white placeholder-slate-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSendMessageToSeller(activeListing)}
+                          className="rounded-xl bg-amber-400 px-4 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                        >
+                          {t.sendBtnShort}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-2.5 text-[11px] text-slate-400">
+                        Demo listing — use Phone or WhatsApp above to contact the seller directly.
+                      </div>
+                    )}
+
+                    {chatSentFeedback && (
+                      <div className="mt-2 text-xs font-bold text-emerald-400">
+                        {chatSentFeedback}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {similarListings.length > 0 && (
+                <section className="mt-8">
+                  <h2 className="mb-3 text-sm font-extrabold uppercase tracking-wider text-slate-300">
+                    {t.similarTitle}
+                  </h2>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {similarListings.map((sim) => (
+                      <a
+                        key={sim.id}
+                        href={getAdHref(sim)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
+                      >
+                        <img
+                          src={sim.images[0]}
+                          alt={`${sim.brand} ${sim.model}`}
+                          className="h-32 w-full object-cover"
+                        />
+                        <div className="p-3">
+                          <div className="text-[11px] font-bold text-amber-400">
+                            {sim.brand} • {sim.year}
+                          </div>
+                          <div className="truncate text-sm font-bold text-white">{sim.model}</div>
+                          <div className="mt-1 flex items-center justify-between text-xs">
+                            <span className="text-slate-400">
+                              {sim.mileage_km.toLocaleString("en-US")} km
+                            </span>
+                            <span className="font-black text-amber-400">
+                              €{sim.price_eur.toLocaleString("en-US")}
+                            </span>
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </main>
+          ) : (
+            <>
+              <section className="border-b border-white/10 bg-[#0e1420]">
+                <div className="mx-auto max-w-7xl px-4 py-5">
+                  <div className="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                      <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                        {t.heroTitle}
+                      </h1>
+                      <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {(
+                        [
+                          { key: "all", label: t.allCategories },
+                          { key: "car", label: t.carsCategory },
+                          { key: "moto", label: t.motosCategory },
+                        ] as const
+                      ).map((cat) => (
+                        <button
+                          key={cat.key}
+                          type="button"
+                          onClick={() => {
+                            setCategoryFilter(cat.key);
+                            setFilterBrand("All");
+                            setFilterModel("All");
+                          }}
+                          className={`rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer ${
+                            categoryFilter === cat.key
+                              ? "bg-amber-400 text-slate-950"
+                              : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                          }`}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
+                    <select
+                      value={filterBrand}
+                      onChange={(e) => {
+                        setFilterBrand(e.target.value);
+                        setFilterModel("All");
+                      }}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      <option value="All">{t.allBrands}</option>
+                      {filterBrandOptions.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={filterModel}
+                      disabled={filterBrand === "All"}
+                      onChange={(e) => setFilterModel(e.target.value)}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white disabled:opacity-50"
+                    >
+                      <option value="All">{t.allModels}</option>
+                      {filterModelOptions.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      {CITIES.map((city) => (
+                        <option key={city} value={city}>
+                          {city === "All" ? t.allCities : city}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={filterFuel}
+                      onChange={(e) => setFilterFuel(e.target.value)}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      <option value="All">{t.allFuels}</option>
+                      {Object.keys(LABELS.fuel).map((f) => (
+                        <option key={f} value={f}>
+                          {LABELS.fuel[f][lang]}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={filterTrans}
+                      onChange={(e) => setFilterTrans(e.target.value)}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      <option value="All">{t.allTrans}</option>
+                      {Object.keys(LABELS.transmission).map((tr) => (
+                        <option key={tr} value={tr}>
+                          {LABELS.transmission[tr][lang]}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder={t.searchPlaceholder}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                  </div>
+
+                  <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-8">
+                    <input
+                      type="number"
+                      min={0}
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      placeholder={t.minPricePh}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      placeholder={t.maxPricePh}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                    <input
+                      type="number"
+                      min={1970}
+                      max={2027}
+                      value={minYear}
+                      onChange={(e) => setMinYear(e.target.value)}
+                      placeholder={t.minYearPh}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                    <input
+                      type="number"
+                      min={1970}
+                      max={2027}
+                      value={maxYear}
+                      onChange={(e) => setMaxYear(e.target.value)}
+                      placeholder={t.maxYearPh}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      step={5000}
+                      value={maxKm}
+                      onChange={(e) => setMaxKm(e.target.value)}
+                      placeholder={t.maxKmPh}
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                    <select
+                      value={sortBy}
+                      onChange={(e) =>
+                        setSortBy(e.target.value as "priceAsc" | "priceDesc" | "yearDesc" | "kmAsc")
+                      }
+                      className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                    >
+                      <option value="yearDesc">{t.sortYearDesc}</option>
+                      <option value="priceAsc">{t.sortPriceAsc}</option>
+                      <option value="priceDesc">{t.sortPriceDesc}</option>
+                      <option value="kmAsc">{t.sortKmAsc}</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleSaveCurrentSearch}
+                      className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-400/20 cursor-pointer"
+                    >
+                      ★ {t.saveSearchBtn}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetAllFilters}
+                      className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
+                    >
+                      {t.resetFilters}
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <main className="mx-auto max-w-7xl px-4 py-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    {t.resultsCount(filtered.length)}
+                  </span>
+                </div>
+
+                {filtered.length === 0 ? (
+                  <div className="rounded-2xl border border-white/10 bg-[#121826] py-12 text-center text-xs text-slate-400">
+                    {onlySaved ? t.noSavedListings : "0"}
+                  </div>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {filtered.map((item) => {
+                      const activeIdx = hoverPhotoIndex[item.id] ?? 0;
+                      const currentSrc = item.images[activeIdx] ?? item.images[0];
+                      const isSaved = savedIds.includes(item.id);
+
+                      return (
+                        <a
+                          key={item.id}
+                          href={getAdHref(item)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group block cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#121826] transition hover:border-amber-400/50"
+                        >
+                          <div
+                            onMouseMove={(e) => handleCardMouseMove(e, item.id, item.images.length)}
+                            onMouseLeave={() =>
+                              setHoverPhotoIndex((prev) => ({ ...prev, [item.id]: 0 }))
+                            }
+                            className="relative h-36 w-full overflow-hidden bg-slate-950"
+                          >
+                            <img
+                              src={currentSrc}
+                              alt={`${item.brand} ${item.model}`}
+                              className="h-full w-full object-cover"
+                            />
+                            <span className="absolute left-2 top-2 rounded bg-slate-950/85 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                              {item.badge}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => toggleSave(e, item.id)}
+                              aria-label="Save listing"
+                              className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/85 text-xs transition cursor-pointer ${
+                                isSaved ? "text-rose-400" : "text-slate-300 hover:text-white"
+                              }`}
+                            >
+                              {isSaved ? "♥" : "♡"}
+                            </button>
+
+                            {item.images.length > 1 && (
+                              <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-black/60 px-2 py-0.5">
+                                {item.images.map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`h-1 w-3 rounded-full ${
+                                      activeIdx === i ? "bg-amber-400" : "bg-white/35"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="p-3.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-bold text-amber-400/90">
+                                  {item.brand} • {item.engine_volume}
+                                </div>
+                                <h2 className="truncate text-sm font-bold text-white group-hover:text-amber-300">
+                                  {item.model}
+                                </h2>
+                              </div>
+                              <span className="shrink-0 text-base font-black text-amber-400">
+                                €{item.price_eur.toLocaleString("en-US")}
+                              </span>
+                            </div>
+
+                            <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-slate-400">
+                              <span>{item.year}</span>
+                              <span>{item.mileage_km.toLocaleString("en-US")} km</span>
+                              <span>{item.city}</span>
+                            </div>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </main>
+            </>
+          )}
+        </div>
+      </div>
+
       <footer className="relative mt-10 border-t border-white/10 bg-[#090d14] text-xs text-slate-400">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-8 sm:flex-row">
           <div className="space-y-2">
@@ -2354,6 +2374,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     closeListingDetail();
+                    setIsAccountOpen(false);
                     setOnlySaved(false);
                     setCategoryFilter("car");
                     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2368,6 +2389,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     closeListingDetail();
+                    setIsAccountOpen(false);
                     setOnlySaved(false);
                     setCategoryFilter("moto");
                     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2382,6 +2404,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     closeListingDetail();
+                    setIsAccountOpen(false);
                     setOnlySaved(true);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
@@ -2417,6 +2440,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     if (userId) {
+                      closeListingDetail();
                       setAccountTab("overview");
                       setIsAccountOpen(true);
                     } else {
@@ -2437,6 +2461,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     closeListingDetail();
+                    setIsAccountOpen(false);
                     setSelectedCity("Rīga");
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
@@ -2450,6 +2475,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     closeListingDetail();
+                    setIsAccountOpen(false);
                     setSelectedCity("Liepāja");
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
@@ -2463,6 +2489,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     closeListingDetail();
+                    setIsAccountOpen(false);
                     setSelectedCity("Daugavpils");
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
