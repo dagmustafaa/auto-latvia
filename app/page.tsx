@@ -696,9 +696,46 @@ function parseAdHash(rawHash: string): string | null {
 }
 
 export default function HomePage() {
+
+
+
+
+
+
+
+  const [authPhone, setAuthPhone] = useState("+371");
+  const [authName, setAuthName] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
+
+  // Wizard
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [newCategory, setNewCategory] = useState<Category>("car");
+  const [newCity, setNewCity] = useState("Rīga");
+
+
+
   const [lang, setLang] = useState<Lang>("lv");
   const [dbListings, setDbListings] = useState<Listing[]>([]);
+
+
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("autolatvija_saved_searches");
+      if (raw) setSavedSearches(JSON.parse(raw));
+    } catch {}
+  }, []);
+
   const [userId, setUserId] = useState<string | null>(null);
+
+
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
@@ -750,6 +787,13 @@ export default function HomePage() {
   const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
+
+    [messagesList, user]
+
+
+
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+
   const [notificationsList, setNotificationsList] = useState<UserNotification[]>([]);
   const [chatDraft, setChatDraft] = useState("");
   const [chatReplyText, setChatReplyText] = useState<Record<string, string>>({});
@@ -758,58 +802,7 @@ export default function HomePage() {
   const [profileSaveStatus, setProfileSaveStatus] = useState("");
   const unreadMessagesCount: number = 0;
   const unreadNotificationsCount: number = 0;
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("autolatvija_saved_searches");
-      if (raw) setSavedSearches(JSON.parse(raw));
-    } catch {}
-  }, []);
 
-  useEffect(() => {
-    if (!user) {
-      setMessagesList([]);
-      setNotificationsList([]);
-      return;
-    }
-    setProfileNameInput(user?.user_metadata?.name || "");
-    setProfilePhoneInput(user?.user_metadata?.phone || "");
-    loadAccountData(user?.id || "");
-  }, [user]);
-
-
-
-
-
-
-
-    [messagesList, user]
-
-
-
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [authPhone, setAuthPhone] = useState("+371");
-  const [authName, setAuthName] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authMessage, setAuthMessage] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-
-  const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
-
-  // Wizard
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [newCategory, setNewCategory] = useState<Category>("car");
-  const [newCity, setNewCity] = useState("Rīga");
-
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("autolatvija_saved_searches");
-      if (raw) setSavedSearches(JSON.parse(raw));
-    } catch {}
-  }, []);
 
   useEffect(() => {
     if (typeof user === "undefined" || !user) {
@@ -954,6 +947,18 @@ export default function HomePage() {
   const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([PHOTO_PRESETS[0].url]);
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setMessagesList([]);
+      setNotificationsList([]);
+      return;
+    }
+    setProfileNameInput(user.user_metadata?.name || "");
+    setProfilePhoneInput(user.user_metadata?.phone || "");
+    loadAccountData(user.id);
+  }, [user]);
+
 const t = UI_TEXT[lang];
 
   async function loadListings() {
@@ -1000,23 +1005,7 @@ const t = UI_TEXT[lang];
     });
 
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("autolatvija_saved_searches");
-      if (raw) setSavedSearches(JSON.parse(raw));
-    } catch {}
-  }, []);
 
-  useEffect(() => {
-    if (!user) {
-      setMessagesList([]);
-      setNotificationsList([]);
-      return;
-    }
-    setProfileNameInput(user.user_metadata?.name || "");
-    setProfilePhoneInput(user.user_metadata?.phone || "");
-    loadAccountData(user.id);
-  }, [user]);
 
 
 
@@ -1392,6 +1381,33 @@ const t = UI_TEXT[lang];
     const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 0.999);
     setHoverPhotoIndex((prev) => ({ ...prev, [listingId]: Math.floor(ratio * photoCount) }));
   }
+
+useEffect(() => {
+    try {
+      const raw = localStorage.getItem("autolatvija_saved_searches");
+      if (raw) setSavedSearches(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+
+useEffect(() => {
+    if (!user) {
+      setMessagesList([]);
+      setNotificationsList([]);
+      return;
+    }
+    setProfileNameInput(user?.user_metadata?.name || "");
+    setProfilePhoneInput(user?.user_metadata?.phone || "");
+    loadAccountData(user?.id || "");
+  }, [user]);
+
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("autolatvija_saved_searches");
+      if (raw) setSavedSearches(JSON.parse(raw));
+    } catch {}
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0b0f17] text-slate-100">
