@@ -1,13 +1,21 @@
 ﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
 type Lang = "lv" | "ru" | "en";
 type Category = "car" | "moto";
 type ListingType = "sale" | "rent";
 
-type DashboardTab = "overview" | "listings" | "fav_listings" | "fav_searches" | "messages" | "notifications" | "settings";
+type DashboardTab =
+  | "overview"
+  | "listings"
+  | "fav_listings"
+  | "fav_searches"
+  | "messages"
+  | "notifications"
+  | "settings";
 
 interface ChatMessage {
   id: string;
@@ -39,6 +47,7 @@ interface SavedSearch {
   model: string;
   city: string;
 }
+
 interface Listing {
   id: string;
   user_id?: string | null;
@@ -258,9 +267,12 @@ const UI_TEXT = {
     dashSettings: "Konts un iestatījumi",
     saveSearchBtn: "Saglabāt meklēšanu",
     sendSellerMsgBtn: "Rakstīt pārdevējam",
-    msgModerationNotice: "Drošības nolūkos ziņojumi tiek saglabāti sistēmā un sūdzību vai pārkāpumu gadījumā tos var pārskatīt platformas administrācija.",
+    msgModerationNotice:
+      "Drošības nolūkos ziņojumi tiek saglabāti sistēmā un sūdzību vai pārkāpumu gadījumā tos var pārskatīt platformas administrācija.",
     msgPlaceholder: "Jūsu jautājums par transportlīdzekli...",
-    sendBtnShort: "Nosūtīt",    allCategories: "Visi",
+    sendBtnShort: "Nosūtīt",
+    msgSentNotice: "Ziņa nosūtīta pārdevējam!",
+    allCategories: "Visi",
     carsCategory: "Vieglie auto",
     motosCategory: "Motocikli",
     searchPlaceholder: "Meklēt (piem. Golf, 2.0 TDI, Rīga)...",
@@ -341,26 +353,7 @@ const UI_TEXT = {
     cancelBtn: "Atcelt",
     privacyBtn: "Privātuma politika",
     termsBtn: "Lietošanas noteikumi",
-    legalCloseBtn: "Aizvērt",
-    privacyTitle: "Privātuma politika (GDPR / ES & LV)",
-    privacyBody: [
-      "1. Pārzinis un darbības joma: AutoLatvija darbojas kā transportlīdzekļu sludinājumu platforma Latvijā un ievēro ES Vispārīgo datu aizsardzības regulu (GDPR) un Latvijas Fizisko personu datu apstrādes likumu.",
-      "2. Apstrādātie dati: Konta izveidei un verifikācijai tiek izmantota e-pasta adrese; sludinājumu publicēšanai un saziņai — norādītais tālruņa numurs un sludinājuma dati; saglabātie favorīti tiek glabāti pārlūkprogrammā (localStorage).",
-      "3. Datu glabāšana un dzēšana: Sludinājumu dati un attēli tiek glabāti mākoņpakalpojumā (Supabase). Lietotājs var dzēst savus sludinājumus sadaļā 'Mani sludinājumi' vai pieprasīt sava konta un datu dzēšanu, sazinoties ar platformas pārvaldnieku.",
-      "4. Jūsu tiesības: Jums ir tiesības piekļūt saviem datiem, labot neprecizitātes, ierobežot apstrādi vai pieprasīt dzēšanu atbilstoši GDPR."
-    ],
-    termsTitle: "Lietošanas noteikumi (Tüzük)",
-    termsBody: [
-      "1. Pakalpojuma būtība: AutoLatvija nodrošina vietu sludinājumu publicēšanai un pircēju/pārdevēju saziņai. Platforma nepārdod transportlīdzekļus un nav darījuma puse.",
-      "2. Pārdevēja atbildība: Par transportlīdzekļa tehnisko stāvokli, dokumentiem, cenu, nobraukumu, TA un sniegtās informācijas patiesumu pilnībā atbild sludinājuma autors.",
-      "3. Aizliegts saturs: Aizliegts publicēt viltus sludinājumus, krāpnieciskus piedāvājumus, trešo personu autortiesību pārkāpumus vai Latvijas un ES tiesību aktiem neatbilstošu saturu.",
-      "4. Moderācija: Platformai ir tiesības dzēst noteikumiem neatbilstošus sludinājumus vai ierobežot piekļuvi ļaunprātīgas izmantošanas gadījumā."
-    ],
     contactBtn: "Sazināties",
-    listingTypeSale: "Pārdošana",
-    listingTypeRent: "Īre (Kiralık)",
-    filterAllTypes: "Visi (Pārdošana + Īre)",
-    perDaySuffix: "/ dienā",
     cityLabel: "Pilsēta",
     topBtn: "Augšup",
     copyrightText: "© 2026 AutoLatvija — visas tiesības aizsargātas",
@@ -371,7 +364,7 @@ const UI_TEXT = {
     col2Title: "Informācija",
     col2Link1: "Ielikt sludinājumu",
     col2Link2: "Mani sludinājumi",
-    col2Link3: "Konts",
+    col2Link3: "Mans konts",
     col3Title: "Reģioni",
     col3Link1: "Rīga",
     col3Link2: "Liepāja & Jelgava",
@@ -399,9 +392,12 @@ const UI_TEXT = {
     dashSettings: "Аккаунт и настройки",
     saveSearchBtn: "Сохранить поиск",
     sendSellerMsgBtn: "Написать продавцу",
-    msgModerationNotice: "В целях безопасности переписка сохраняется и при жалобах или нарушениях может быть проверена администрацией платформы.",
+    msgModerationNotice:
+      "В целях безопасности переписка сохраняется и при жалобах или нарушениях может быть проверена администрацией платформы.",
     msgPlaceholder: "Ваш вопрос по автомобилю...",
-    sendBtnShort: "Отправить",    allCategories: "Все",
+    sendBtnShort: "Отправить",
+    msgSentNotice: "Сообщение отправлено продавцу!",
+    allCategories: "Все",
     carsCategory: "Легковые авто",
     motosCategory: "Мотоциклы",
     searchPlaceholder: "Поиск (напр. Golf, 2.0 TDI, Rīga)...",
@@ -482,26 +478,7 @@ const UI_TEXT = {
     cancelBtn: "Отмена",
     privacyBtn: "Политика конфиденциальности",
     termsBtn: "Условия использования",
-    legalCloseBtn: "Закрыть",
-    privacyTitle: "Политика конфиденциальности (GDPR / ЕС и Латвия)",
-    privacyBody: [
-      "1. Общие положения: AutoLatvija является платформой объявлений о транспорте в Латвии и соблюдает Регламент ЕС по защите данных (GDPR) и законодательство Латвийской Республики.",
-      "2. Какие данные обрабатываются: для регистрации и подтверждения аккаунта используется e-mail; для связи по объявлениям — указанный телефон и данные объявления; избранное сохраняется в браузере (localStorage).",
-      "3. Хранение и удаление: объявления и фото хранятся в облачной инфраструктуре (Supabase). Вы можете удалить свои объявления в разделе 'Мои объявления' или запросить удаление данных у администрации.",
-      "4. Права пользователя: в соответствии с GDPR вы вправе запросить доступ к своим данным, их исправление, ограничение обработки или удаление."
-    ],
-    termsTitle: "Условия использования (Правила)",
-    termsBody: [
-      "1. Назначение сервиса: AutoLatvija предоставляет площадку для размещения объявлений и связи между продавцами и покупателями. Сервис не является стороной сделки.",
-      "2. Ответственность продавца: за достоверность данных, цену, пробег, состояние, документы и техосмотр (ТО) транспортного средства отвечает автор объявления.",
-      "3. Запрещенный контент: запрещены ложные объявления, мошенничество, нарушение авторских прав и публикация материалов, нарушающих законы Латвии и ЕС.",
-      "4. Модерация: администрация вправе удалять объявления, нарушающие правила, и ограничивать доступ при злоупотреблениях."
-    ],
     contactBtn: "Связаться",
-    listingTypeSale: "Продажа",
-    listingTypeRent: "Аренда",
-    filterAllTypes: "Все (Продажа + Аренда)",
-    perDaySuffix: "/ день",
     cityLabel: "Город",
     topBtn: "Наверх",
     copyrightText: "© 2026 AutoLatvija — все права защищены",
@@ -512,7 +489,7 @@ const UI_TEXT = {
     col2Title: "Разделы",
     col2Link1: "Подать объявление",
     col2Link2: "Мои объявления",
-    col2Link3: "Аккаунт",
+    col2Link3: "Мой кабинет",
     col3Title: "Города",
     col3Link1: "Rīga",
     col3Link2: "Liepāja & Jelgava",
@@ -540,9 +517,12 @@ const UI_TEXT = {
     dashSettings: "Account & Settings",
     saveSearchBtn: "Save search",
     sendSellerMsgBtn: "Message Seller",
-    msgModerationNotice: "For safety and fraud prevention, messages are stored and may be reviewed by platform moderation in case of reports or violations.",
+    msgModerationNotice:
+      "For safety and fraud prevention, messages are stored and may be reviewed by platform moderation in case of reports or violations.",
     msgPlaceholder: "Ask the seller a question...",
-    sendBtnShort: "Send",    allCategories: "All",
+    sendBtnShort: "Send",
+    msgSentNotice: "Message sent to the seller!",
+    allCategories: "All",
     carsCategory: "Cars",
     motosCategory: "Motorcycles",
     searchPlaceholder: "Search (e.g. Golf, 2.0 TDI, Riga)...",
@@ -623,26 +603,7 @@ const UI_TEXT = {
     cancelBtn: "Cancel",
     privacyBtn: "Privacy Policy",
     termsBtn: "Terms of Use",
-    legalCloseBtn: "Close",
-    privacyTitle: "Privacy Policy (GDPR / EU & Latvia)",
-    privacyBody: [
-      "1. Controller & Scope: AutoLatvija operates as a vehicle classifieds platform in Latvia and follows the EU General Data Protection Regulation (GDPR) and applicable Latvian data protection law.",
-      "2. Data Processed: email address is used for account registration and verification; phone number and listing details are used for buyer-seller contact; saved favorites are stored locally in your browser (localStorage).",
-      "3. Storage & Deletion: listings and photos are stored via cloud infrastructure (Supabase). You can delete your listings under 'My listings' or request account/data deletion from the platform operator.",
-      "4. Your GDPR Rights: you have the right to access, rectify, restrict processing of, or request deletion of your personal data under GDPR."
-    ],
-    termsTitle: "Terms of Use",
-    termsBody: [
-      "1. Platform Role: AutoLatvija provides a classifieds space for listing vehicles and connecting buyers and sellers. The platform is not a party to any transaction.",
-      "2. Seller Responsibility: the listing author is solely responsible for the accuracy of details, pricing, mileage, condition, documentation, and TA inspection status.",
-      "3. Prohibited Content: fraudulent listings, misleading information, copyright infringement, or content violating Latvian or EU law is prohibited.",
-      "4. Moderation: listings violating these terms may be removed and abusive accounts may be restricted."
-    ],
     contactBtn: "Contact",
-    listingTypeSale: "For Sale",
-    listingTypeRent: "For Rent",
-    filterAllTypes: "All (Sale + Rent)",
-    perDaySuffix: "/ day",
     cityLabel: "City",
     topBtn: "Top",
     copyrightText: "© 2026 AutoLatvija — all rights reserved",
@@ -653,7 +614,7 @@ const UI_TEXT = {
     col2Title: "Actions",
     col2Link1: "Post listing",
     col2Link2: "My listings",
-    col2Link3: "Account",
+    col2Link3: "My Account",
     col3Title: "Cities",
     col3Link1: "Rīga",
     col3Link2: "Liepāja & Jelgava",
@@ -662,10 +623,6 @@ const UI_TEXT = {
 };
 
 function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
-
-
-
-
   return (
     <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" className={className}>
       <path d="M16.004 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.256.59 4.46 1.71 6.404L3.09 28.8l6.566-1.722a12.74 12.74 0 0 0 6.348 1.694h.006c7.058 0 12.798-5.74 12.798-12.8 0-3.42-1.332-6.636-3.75-9.052A12.716 12.716 0 0 0 16.004 3.2zm0 23.41h-.004a10.6 10.6 0 0 1-5.404-1.48l-.388-.23-3.896 1.022 1.04-3.798-.252-.402a10.575 10.575 0 0 1-1.622-5.642c0-5.854 4.764-10.618 10.624-10.618 2.836 0 5.502 1.106 7.506 3.112a10.548 10.548 0 0 1 3.11 7.51c0 5.856-4.764 10.626-10.614 10.626zm5.826-7.954c-.32-.16-1.89-.932-2.182-1.038-.292-.106-.506-.16-.718.16-.214.318-.826 1.038-1.012 1.252-.186.212-.372.24-.692.08-.32-.16-1.35-.498-2.572-1.588-.95-.848-1.592-1.896-1.778-2.214-.186-.32-.02-.492.14-.652.144-.142.32-.372.48-.558.16-.186.212-.32.32-.532.106-.214.052-.4-.028-.558-.08-.16-.718-1.732-.984-2.37-.26-.622-.524-.538-.718-.548l-.612-.01c-.214 0-.56.08-.852.4-.292.318-1.118 1.092-1.118 2.662s1.144 3.088 1.304 3.3c.16.214 2.252 3.438 5.456 4.822.762.33 1.358.526 1.822.674.766.244 1.462.21 2.012.128.614-.092 1.89-.772 2.156-1.518.266-.746.266-1.384.186-1.518-.08-.132-.292-.212-.612-.372z" />
@@ -696,12 +653,13 @@ function parseAdHash(rawHash: string): string | null {
 }
 
 export default function HomePage() {
+  const [lang, setLang] = useState<Lang>("lv");
+  const [dbListings, setDbListings] = useState<Listing[]>([]);
 
-
-
-
-
-
+  const [user, setUser] = useState<User | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
 
   const [authPhone, setAuthPhone] = useState("+371");
   const [authName, setAuthName] = useState("");
@@ -710,226 +668,18 @@ export default function HomePage() {
   const [authMessage, setAuthMessage] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
 
   // Wizard
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [newCategory, setNewCategory] = useState<Category>("car");
   const [newCity, setNewCity] = useState("Rīga");
-
-
-
-  const [lang, setLang] = useState<Lang>("lv");
-  const [dbListings, setDbListings] = useState<Listing[]>([]);
-
-
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("autolatvija_saved_searches");
-      if (raw) setSavedSearches(JSON.parse(raw));
-    } catch {}
-  }, []);
-
-  const [userId, setUserId] = useState<string | null>(null);
-
-
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [userName, setUserName] = useState<string>("");
-
-  const [savedIds, setSavedIds] = useState<string[]>([]);
-  const [onlySaved, setOnlySaved] = useState(false);
-
-  const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
-  const [filterBrand, setFilterBrand] = useState("All");
-  const [filterModel, setFilterModel] = useState("All");
-  const [selectedCity, setSelectedCity] = useState("All");
-  const [filterFuel, setFilterFuel] = useState("All");
-  const [filterTrans, setFilterTrans] = useState("All");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minYear, setMinYear] = useState("");
-  const [maxYear, setMaxYear] = useState("");
-  const [maxKm, setMaxKm] = useState("");
-  const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc" | "kmAsc">("yearDesc");
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
-  const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
-
-  // Full edit state
-  const [editingListing, setEditingListing] = useState<Listing | null>(null);
-  const [editPrice, setEditPrice] = useState("");
-  const [editYear, setEditYear] = useState("");
-  const [editKm, setEditKm] = useState("");
-  const [editCity, setEditCity] = useState("Rīga");
-  const [editTa, setEditTa] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
-
-  // Auth modal
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-
-
-  const user: any = null;
-  const selectedCategory: any = "all";
-  const selectedListingType: any = "all";
-  const selectedBrand: any = (typeof filterBrand !== "undefined" ? filterBrand : "All");
-  const selectedModel: any = (typeof filterModel !== "undefined" ? filterModel : "All");
-  const setSelectedCategory: any = (() => {});
-  const setSelectedListingType: any = (() => {});
-  const setSelectedBrand: any = (typeof setFilterBrand !== "undefined" ? setFilterBrand : (() => {}));
-  const setSelectedModel: any = (typeof setFilterModel !== "undefined" ? setFilterModel : (() => {}));
-  const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [accountTab, setAccountTab] = useState<DashboardTab>("overview");
-  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
-  const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
-
-    [messagesList, user]
-
-
-
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-
-  const [notificationsList, setNotificationsList] = useState<UserNotification[]>([]);
-  const [chatDraft, setChatDraft] = useState("");
-  const [chatReplyText, setChatReplyText] = useState<Record<string, string>>({});
-  const [profileNameInput, setProfileNameInput] = useState("");
-  const [profilePhoneInput, setProfilePhoneInput] = useState("");
-  const [profileSaveStatus, setProfileSaveStatus] = useState("");
-  const unreadMessagesCount: number = 0;
-  const unreadNotificationsCount: number = 0;
-
-
-  useEffect(() => {
-    if (typeof user === "undefined" || !user) {
-      setMessagesList([]);
-      setNotificationsList([]);
-      return;
-    }
-    setProfileNameInput(user.user_metadata?.name || "");
-    setProfilePhoneInput(user.user_metadata?.phone || "");
-    loadAccountData(user.id);
-  }, [typeof user !== "undefined" ? user : null]);
-
-  async function loadAccountData(uid: string) {
-    if (!uid) return; let cancelled = false;
-    const { data: msgs } = await supabase
-      .from("messages")
-      .select("*")
-      .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
-      .order("created_at", { ascending: false });
-    if (msgs) setMessagesList(msgs as ChatMessage[]);
-
-    const { data: notifs } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
-    if (notifs) setNotificationsList(notifs as UserNotification[]);
-  }
-
-  function handleSaveCurrentSearch() {
-    const bVal = typeof selectedBrand !== "undefined" ? selectedBrand : (typeof filterBrand !== "undefined" ? filterBrand : "All");
-    const mVal = typeof selectedModel !== "undefined" ? selectedModel : (typeof filterModel !== "undefined" ? filterModel : "All");
-    const cVal = typeof selectedCity !== "undefined" ? selectedCity : "All";
-    const catVal = typeof selectedCategory !== "undefined" ? selectedCategory : "all";
-    const typeVal = typeof selectedListingType !== "undefined" ? selectedListingType : "all";
-
-    const parts = [
-      catVal !== "all" ? String(catVal).toUpperCase() : null,
-      typeVal !== "all" ? String(typeVal).toUpperCase() : null,
-      bVal !== "All" ? bVal : null,
-      mVal !== "All" ? mVal : null,
-      cVal !== "All" ? cVal : null,
-    ].filter(Boolean);
-
-    const entry: SavedSearch = {
-      id: String(Date.now()),
-      label: parts.length > 0 ? parts.join(" • ") : "All Vehicles",
-      category: catVal as "all" | Category,
-      listingType: typeVal as "all" | ListingType,
-      brand: bVal,
-      model: mVal,
-      city: cVal,
-    };
-    const next = [entry, ...savedSearches].slice(0, 15);
-    setSavedSearches(next);
-    try {
-      localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
-    } catch {}
-    setAccountTab("fav_searches");
-    setIsAccountOpen(true);
-  }
-
-  function handleDeleteSavedSearch(id: string) {
-    const next = savedSearches.filter((s) => s.id !== id);
-    setSavedSearches(next);
-    try {
-      localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
-    } catch {}
-  }
-
-  async function handleSendMessageToSeller(listing: Listing, customBody?: string, customReceiverId?: string) {
-    if (typeof user === "undefined" || !user) {
-      setIsAuthOpen(true);
-      return;
-    }
-    const textBody = (customBody ?? chatDraft).trim();
-    const targetReceiver = customReceiverId || listing.user_id;
-    if (!textBody || !targetReceiver) return;
-
-    const senderDisplay = user.user_metadata?.name || user.email?.split("@")[0] || "User";
-    const titleStr = `${listing.brand} ${listing.model} (${listing.year})`;
-
-    const { error } = await supabase.from("messages").insert({
-      listing_id: listing.id,
-      listing_title: titleStr,
-      sender_id: user.id,
-      sender_name: senderDisplay,
-      receiver_id: targetReceiver,
-      body: textBody,
-    });
-
-    if (!error) {
-      await supabase.from("notifications").insert({
-        user_id: targetReceiver,
-        title: `Jauna ziņa / New message: ${titleStr}`,
-        body: `${senderDisplay}: ${textBody.slice(0, 80)}`,
-      });
-      if (!customBody) setChatDraft("");
-      loadAccountData(user.id);
-    }
-  }
-
-  async function handleMarkNotificationsRead() {
-    if (typeof user === "undefined" || !user) return;
-    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id);
-    setNotificationsList((prev) => prev.map((n) => ({ ...n, is_read: true })));
-  }
-
-  async function handleUpdateProfile(e: React.FormEvent) {
-    e.preventDefault();
-    if (typeof user === "undefined" || !user) return;
-    setProfileSaveStatus("");
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        name: profileNameInput.trim(),
-        phone: profilePhoneInput.trim(),
-      },
-    });
-    if (error) {
-      setProfileSaveStatus(error.message);
-    } else {
-      setProfileSaveStatus("✓ Saved / Saglabāts");
-    }
-  }
-
-    [messagesList, typeof user !== "undefined" ? user : null]
-
   const [newBrand, setNewBrand] = useState("BMW");
   const [newModel, setNewModel] = useState("3 Series");
   const [newPrice, setNewPrice] = useState("9500");
@@ -948,18 +698,56 @@ export default function HomePage() {
   const [newDesc, setNewDesc] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      setMessagesList([]);
-      setNotificationsList([]);
-      return;
-    }
-    setProfileNameInput(user.user_metadata?.name || "");
-    setProfilePhoneInput(user.user_metadata?.phone || "");
-    loadAccountData(user.id);
-  }, [user]);
+  // Saved & filters
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [onlySaved, setOnlySaved] = useState(false);
 
-const t = UI_TEXT[lang];
+  const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
+  const [filterBrand, setFilterBrand] = useState("All");
+  const [filterModel, setFilterModel] = useState("All");
+  const [selectedCity, setSelectedCity] = useState("All");
+  const [filterFuel, setFilterFuel] = useState("All");
+  const [filterTrans, setFilterTrans] = useState("All");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minYear, setMinYear] = useState("");
+  const [maxYear, setMaxYear] = useState("");
+  const [maxKm, setMaxKm] = useState("");
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc" | "kmAsc">("yearDesc");
+
+  // Detail & card hover
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
+  const [hoverPhotoIndex, setHoverPhotoIndex] = useState<Record<string, number>>({});
+
+  // Full edit state
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editYear, setEditYear] = useState("");
+  const [editKm, setEditKm] = useState("");
+  const [editCity, setEditCity] = useState("Rīga");
+  const [editTa, setEditTa] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Messaging, notifications & profile settings
+  const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
+  const [notificationsList, setNotificationsList] = useState<UserNotification[]>([]);
+  const [chatDraft, setChatDraft] = useState("");
+  const [chatSentFeedback, setChatSentFeedback] = useState("");
+  const [chatReplyText, setChatReplyText] = useState<Record<string, string>>({});
+  const [profileNameInput, setProfileNameInput] = useState("");
+  const [profilePhoneInput, setProfilePhoneInput] = useState("");
+  const [profileSaveStatus, setProfileSaveStatus] = useState("");
+
+  const t = UI_TEXT[lang];
+
+  const unreadNotificationsCount = useMemo(
+    () => notificationsList.filter((n) => !n.is_read).length,
+    [notificationsList]
+  );
 
   async function loadListings() {
     const { data, error } = await supabase
@@ -972,6 +760,23 @@ const t = UI_TEXT[lang];
     }
   }
 
+  async function loadAccountData(uid: string) {
+    if (!uid) return;
+    const { data: msgs } = await supabase
+      .from("messages")
+      .select("*")
+      .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
+      .order("created_at", { ascending: false });
+    if (msgs) setMessagesList(msgs as ChatMessage[]);
+
+    const { data: notifs } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false });
+    if (notifs) setNotificationsList(notifs as UserNotification[]);
+  }
+
   useEffect(() => {
     loadListings();
 
@@ -982,17 +787,16 @@ const t = UI_TEXT[lang];
       // ignore
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      const u = data.session?.user;
-      if (u) {
-        setUserId(u.id);
-        setUserEmail(u.email ?? "");
-        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "user"));
-      }
-    });
+    try {
+      const rawSearches = localStorage.getItem("autolatvija_saved_searches");
+      if (rawSearches) setSavedSearches(JSON.parse(rawSearches));
+    } catch {
+      // ignore
+    }
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user;
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user ?? null;
+      setUser(u);
       if (u) {
         setUserId(u.id);
         setUserEmail(u.email ?? "");
@@ -1004,17 +808,19 @@ const t = UI_TEXT[lang];
       }
     });
 
-
-
-
-
-
-
-
-
-
-    [messagesList, user]
-
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        setUserId(u.id);
+        setUserEmail(u.email ?? "");
+        setUserName((u.user_metadata?.name as string) || (u.email?.split("@")[0] ?? "user"));
+      } else {
+        setUserId(null);
+        setUserEmail("");
+        setUserName("");
+      }
+    });
 
     return () => {
       listener.subscription.unsubscribe();
@@ -1022,10 +828,22 @@ const t = UI_TEXT[lang];
   }, []);
 
   useEffect(() => {
+    if (!user) {
+      setMessagesList([]);
+      setNotificationsList([]);
+      return;
+    }
+    setProfileNameInput((user.user_metadata?.name as string) || "");
+    setProfilePhoneInput((user.user_metadata?.phone as string) || "");
+    loadAccountData(user.id);
+  }, [user]);
+
+  useEffect(() => {
     function syncFromHash() {
       const parsedId = parseAdHash(window.location.hash);
       setSelectedId(parsedId);
       setDetailPhotoIndex(0);
+      setChatSentFeedback("");
     }
     syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
@@ -1034,6 +852,7 @@ const t = UI_TEXT[lang];
 
   function closeListingDetail() {
     setSelectedId(null);
+    setChatSentFeedback("");
     if (window.location.hash) {
       window.history.pushState("", document.title, window.location.pathname + window.location.search);
     }
@@ -1069,6 +888,114 @@ const t = UI_TEXT[lang];
     setOnlySaved(false);
   }
 
+  function handleSaveCurrentSearch() {
+    const parts = [
+      categoryFilter !== "all" ? categoryFilter.toUpperCase() : null,
+      filterBrand !== "All" ? filterBrand : null,
+      filterModel !== "All" ? filterModel : null,
+      selectedCity !== "All" ? selectedCity : null,
+    ].filter(Boolean);
+
+    const entry: SavedSearch = {
+      id: String(Date.now()),
+      label: parts.length > 0 ? parts.join(" • ") : "All Vehicles",
+      category: categoryFilter,
+      listingType: "all",
+      brand: filterBrand,
+      model: filterModel,
+      city: selectedCity,
+    };
+
+    const next = [entry, ...savedSearches].slice(0, 15);
+    setSavedSearches(next);
+    try {
+      localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+
+    if (userId) {
+      setAccountTab("fav_searches");
+      setIsAccountOpen(true);
+    } else {
+      setIsAuthOpen(true);
+    }
+  }
+
+  function handleDeleteSavedSearch(id: string) {
+    const next = savedSearches.filter((s) => s.id !== id);
+    setSavedSearches(next);
+    try {
+      localStorage.setItem("autolatvija_saved_searches", JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+  }
+
+  async function handleSendMessageToSeller(
+    listing: Listing,
+    customBody?: string,
+    customReceiverId?: string
+  ) {
+    setChatSentFeedback("");
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+
+    const textBody = (customBody ?? chatDraft).trim();
+    const targetReceiver = customReceiverId || listing.user_id;
+    if (!textBody || !targetReceiver) return;
+
+    const senderDisplay = (user.user_metadata?.name as string) || user.email?.split("@")[0] || "User";
+    const titleStr = `${listing.brand} ${listing.model} (${listing.year})`;
+
+    const { error } = await supabase.from("messages").insert({
+      listing_id: listing.id,
+      listing_title: titleStr,
+      sender_id: user.id,
+      sender_name: senderDisplay,
+      receiver_id: targetReceiver,
+      body: textBody,
+    });
+
+    if (!error) {
+      await supabase.from("notifications").insert({
+        user_id: targetReceiver,
+        title: `Jauna ziņa / New message: ${titleStr}`,
+        body: `${senderDisplay}: ${textBody.slice(0, 80)}`,
+      });
+      if (!customBody) {
+        setChatDraft("");
+        setChatSentFeedback(t.msgSentNotice);
+      }
+      await loadAccountData(user.id);
+    }
+  }
+
+  async function handleMarkNotificationsRead() {
+    if (!user) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id);
+    setNotificationsList((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  }
+
+  async function handleUpdateProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setProfileSaveStatus("");
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        name: profileNameInput.trim(),
+        phone: profilePhoneInput.trim(),
+      },
+    });
+    if (error) {
+      setProfileSaveStatus(error.message);
+    } else {
+      setProfileSaveStatus("✓ Saved / Saglabāts");
+    }
+  }
+
   const allListings = useMemo(() => [...dbListings, ...DEMO_LISTINGS], [dbListings]);
 
   const myListings = useMemo(() => {
@@ -1076,12 +1003,15 @@ const t = UI_TEXT[lang];
     return dbListings.filter((item) => item.user_id === userId);
   }, [dbListings, userId]);
 
+  const savedListings = useMemo(() => {
+    return allListings.filter((item) => savedIds.includes(item.id));
+  }, [allListings, savedIds]);
+
   const activeListing = useMemo(() => {
     if (!selectedId) return null;
     return allListings.find((item) => item.id === selectedId) ?? null;
   }, [allListings, selectedId]);
 
-  // Dynamic browser tab title
   useEffect(() => {
     if (activeListing) {
       document.title = `${activeListing.brand} ${activeListing.model} (${activeListing.year}) — AutoLatvija`;
@@ -1115,10 +1045,7 @@ const t = UI_TEXT[lang];
     );
   }, [filterBrand]);
 
-  const availableBrands = useMemo(
-    () => Object.keys(MODELS_BY_BRAND[newCategory]),
-    [newCategory]
-  );
+  const availableBrands = useMemo(() => Object.keys(MODELS_BY_BRAND[newCategory]), [newCategory]);
 
   const availableModels = useMemo(
     () => MODELS_BY_BRAND[newCategory][newBrand] ?? [],
@@ -1146,7 +1073,9 @@ const t = UI_TEXT[lang];
       if (maxY !== null && !Number.isNaN(maxY) && item.year > maxY) return false;
       if (maxK !== null && !Number.isNaN(maxK) && item.mileage_km > maxK) return false;
 
-      const searchBlob = `${item.brand} ${item.model} ${item.engine_volume} ${item.city} ${item.plate_number ?? ""}`.toLowerCase();
+      const searchBlob = `${item.brand} ${item.model} ${item.engine_volume} ${item.city} ${
+        item.plate_number ?? ""
+      }`.toLowerCase();
       if (query.trim() !== "" && !searchBlob.includes(query.trim().toLowerCase())) return false;
       return true;
     });
@@ -1252,6 +1181,7 @@ const t = UI_TEXT[lang];
   async function handleSignOut() {
     await supabase.auth.signOut();
     setIsMyListingsOpen(false);
+    setIsAccountOpen(false);
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1382,33 +1312,6 @@ const t = UI_TEXT[lang];
     setHoverPhotoIndex((prev) => ({ ...prev, [listingId]: Math.floor(ratio * photoCount) }));
   }
 
-useEffect(() => {
-    try {
-      const raw = localStorage.getItem("autolatvija_saved_searches");
-      if (raw) setSavedSearches(JSON.parse(raw));
-    } catch {}
-  }, []);
-
-
-useEffect(() => {
-    if (!user) {
-      setMessagesList([]);
-      setNotificationsList([]);
-      return;
-    }
-    setProfileNameInput(user?.user_metadata?.name || "");
-    setProfilePhoneInput(user?.user_metadata?.phone || "");
-    loadAccountData(user?.id || "");
-  }, [user]);
-
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("autolatvija_saved_searches");
-      if (raw) setSavedSearches(JSON.parse(raw));
-    } catch {}
-  }, []);
-
   return (
     <div className="flex min-h-screen flex-col bg-[#0b0f17] text-slate-100">
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f17]/90 backdrop-blur-md">
@@ -1424,20 +1327,8 @@ useEffect(() => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400 text-sm font-black text-slate-950">
               LV
             </div>
-            <span className="text-base font-extrabold tracking-tight text-white">
-              {t.brand}
-            </span>
+            <span className="text-base font-extrabold tracking-tight text-white">{t.brand}</span>
           </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof setAccountTab === "function") setAccountTab("messages");
-                  if (typeof setIsAccountOpen === "function") setIsAccountOpen(true);
-                }}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white hover:border-amber-400/50 hover:bg-white/10"
-              >
-                Messages ({messagesList.length})
-              </button>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -1459,8 +1350,18 @@ useEffect(() => {
               <>
                 <button
                   type="button"
+                  onClick={() => {
+                    setAccountTab("overview");
+                    setIsAccountOpen(true);
+                  }}
+                  className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-400/20 cursor-pointer"
+                >
+                  {t.accountBtn} ({messagesList.length})
+                </button>
+                <button
+                  type="button"
                   onClick={() => setIsMyListingsOpen(true)}
-                  className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-white/10 cursor-pointer"
+                  className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
                 >
                   {t.myListingsBtn} ({myListings.length})
                 </button>
@@ -1595,13 +1496,15 @@ useEffect(() => {
                   <div>
                     <span className="block text-slate-400">{t.fuelLabel}</span>
                     <strong className="mt-0.5 block text-sm text-white">
-                      {activeListing.engine_volume} ({LABELS.fuel[activeListing.fuel]?.[lang] ?? activeListing.fuel})
+                      {activeListing.engine_volume} (
+                      {LABELS.fuel[activeListing.fuel]?.[lang] ?? activeListing.fuel})
                     </strong>
                   </div>
                   <div>
                     <span className="block text-slate-400">{t.transLabel}</span>
                     <strong className="mt-0.5 block text-sm text-white">
-                      {LABELS.transmission[activeListing.transmission]?.[lang] ?? activeListing.transmission}
+                      {LABELS.transmission[activeListing.transmission]?.[lang] ??
+                        activeListing.transmission}
                     </strong>
                   </div>
                   <div>
@@ -1667,6 +1570,39 @@ useEffect(() => {
                     </a>
                   </div>
                 </div>
+
+                {/* Satıcıya doğrudan mesaj gönderme kutusu */}
+                <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b0f17] p-4">
+                  <div className="text-xs font-extrabold text-amber-400">{t.sendSellerMsgBtn}</div>
+                  <p className="mt-1 text-[11px] text-slate-400">{t.msgModerationNotice}</p>
+
+                  {activeListing.user_id ? (
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <input
+                        type="text"
+                        value={chatDraft}
+                        onChange={(e) => setChatDraft(e.target.value)}
+                        placeholder={t.msgPlaceholder}
+                        className="flex-1 rounded-xl border border-white/15 bg-[#121826] px-3.5 py-2 text-xs text-white placeholder-slate-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSendMessageToSeller(activeListing)}
+                        className="rounded-xl bg-amber-400 px-4 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                      >
+                        {t.sendBtnShort}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2.5 text-[11px] text-slate-400">
+                      Demo listing — use Phone or WhatsApp above to contact the seller directly.
+                    </div>
+                  )}
+
+                  {chatSentFeedback && (
+                    <div className="mt-2 text-xs font-bold text-emerald-400">{chatSentFeedback}</div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1695,7 +1631,9 @@ useEffect(() => {
                         </div>
                         <div className="truncate text-sm font-bold text-white">{sim.model}</div>
                         <div className="mt-1 flex items-center justify-between text-xs">
-                          <span className="text-slate-400">{sim.mileage_km.toLocaleString("en-US")} km</span>
+                          <span className="text-slate-400">
+                            {sim.mileage_km.toLocaleString("en-US")} km
+                          </span>
                           <span className="font-black text-amber-400">
                             €{sim.price_eur.toLocaleString("en-US")}
                           </span>
@@ -1825,7 +1763,7 @@ useEffect(() => {
                   />
                 </div>
 
-                <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-7">
+                <div className="grid gap-2 rounded-b-xl border border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-8">
                   <input
                     type="number"
                     min={0}
@@ -1883,6 +1821,13 @@ useEffect(() => {
                   </select>
                   <button
                     type="button"
+                    onClick={handleSaveCurrentSearch}
+                    className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-400/20 cursor-pointer"
+                  >
+                    ★ {t.saveSearchBtn}
+                  </button>
+                  <button
+                    type="button"
                     onClick={resetAllFilters}
                     className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
                   >
@@ -1909,10 +1854,6 @@ useEffect(() => {
                     const activeIdx = hoverPhotoIndex[item.id] ?? 0;
                     const currentSrc = item.images[activeIdx] ?? item.images[0];
                     const isSaved = savedIds.includes(item.id);
-
-
-
-
 
                     return (
                       <a
@@ -1994,14 +1935,16 @@ useEffect(() => {
         )}
       </div>
 
-      {/* Footer + Scroll-to-Top button */}
+      {/* Sahibinden tarzı sol menülü hesap ve mesajlaşma paneli */}
       {isAccountOpen && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm">
           <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0e1420] shadow-2xl md:flex-row">
             <aside className="w-full border-b border-white/10 bg-[#0b0f17] p-4 md:w-64 md:border-b-0 md:border-r md:overflow-y-auto">
-              <div className="mb-3 flex items-center justify-between md:block">
-                <div className="text-sm font-extrabold text-white">{user?.user_metadata?.name || user?.email}</div>
-                <div className="text-[11px] text-slate-400">{user?.email}</div>
+              <div className="mb-3">
+                <div className="text-sm font-extrabold text-white">
+                  {(user.user_metadata?.name as string) || user.email}
+                </div>
+                <div className="text-[11px] text-slate-400">{user.email}</div>
               </div>
 
               <nav className="space-y-1 text-xs">
@@ -2009,7 +1952,9 @@ useEffect(() => {
                   type="button"
                   onClick={() => setAccountTab("overview")}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-bold cursor-pointer ${
-                    accountTab === "overview" ? "bg-amber-400 text-slate-950" : "text-slate-200 hover:bg-white/10"
+                    accountTab === "overview"
+                      ? "bg-amber-400 text-slate-950"
+                      : "text-slate-200 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashOverview}</span>
@@ -2022,12 +1967,14 @@ useEffect(() => {
                   type="button"
                   onClick={() => setAccountTab("listings")}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "listings" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                    accountTab === "listings"
+                      ? "bg-amber-400 text-slate-950 font-bold"
+                      : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashMyListings}</span>
                   <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
-                    {dbListings.filter((l: Listing) => l.user_id === user?.id).length}
+                    {myListings.length}
                   </span>
                 </button>
 
@@ -2038,21 +1985,29 @@ useEffect(() => {
                   type="button"
                   onClick={() => setAccountTab("fav_listings")}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "fav_listings" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                    accountTab === "fav_listings"
+                      ? "bg-amber-400 text-slate-950 font-bold"
+                      : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashFavListings}</span>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{newPreviewUrls.length}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
+                    {savedListings.length}
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setAccountTab("fav_searches")}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "fav_searches" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                    accountTab === "fav_searches"
+                      ? "bg-amber-400 text-slate-950 font-bold"
+                      : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashFavSearches}</span>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{savedSearches.length}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
+                    {savedSearches.length}
+                  </span>
                 </button>
 
                 <div className="pt-3 pb-1 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
@@ -2062,11 +2017,15 @@ useEffect(() => {
                   type="button"
                   onClick={() => setAccountTab("messages")}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "messages" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                    accountTab === "messages"
+                      ? "bg-amber-400 text-slate-950 font-bold"
+                      : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashMessages}</span>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">{messagesList.length}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px]">
+                    {messagesList.length}
+                  </span>
                 </button>
 
                 <div className="pt-3 pb-1 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
@@ -2079,7 +2038,9 @@ useEffect(() => {
                     handleMarkNotificationsRead();
                   }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "notifications" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                    accountTab === "notifications"
+                      ? "bg-amber-400 text-slate-950 font-bold"
+                      : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashNotifications}</span>
@@ -2097,7 +2058,9 @@ useEffect(() => {
                   type="button"
                   onClick={() => setAccountTab("settings")}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 font-semibold cursor-pointer ${
-                    accountTab === "settings" ? "bg-amber-400 text-slate-950 font-bold" : "text-slate-300 hover:bg-white/10"
+                    accountTab === "settings"
+                      ? "bg-amber-400 text-slate-950 font-bold"
+                      : "text-slate-300 hover:bg-white/10"
                   }`}
                 >
                   <span>{t.dashSettings}</span>
@@ -2119,79 +2082,106 @@ useEffect(() => {
 
               {accountTab === "overview" && (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <div onClick={() => setAccountTab("listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                  <div
+                    onClick={() => setAccountTab("listings")}
+                    className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50"
+                  >
                     <div className="text-xs text-slate-400">{t.dashMyListings}</div>
-                    <div className="mt-1 text-2xl font-black text-amber-400">{dbListings.filter((l: Listing) => l.user_id === user?.id).length}</div>
+                    <div className="mt-1 text-2xl font-black text-amber-400">
+                      {myListings.length}
+                    </div>
                   </div>
-                  <div onClick={() => setAccountTab("fav_listings")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                  <div
+                    onClick={() => setAccountTab("fav_listings")}
+                    className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50"
+                  >
                     <div className="text-xs text-slate-400">{t.dashFavListings}</div>
-                    <div className="mt-1 text-2xl font-black text-white">{newPreviewUrls.length}</div>
+                    <div className="mt-1 text-2xl font-black text-white">
+                      {savedListings.length}
+                    </div>
                   </div>
-                  <div onClick={() => setAccountTab("messages")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                  <div
+                    onClick={() => setAccountTab("messages")}
+                    className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50"
+                  >
                     <div className="text-xs text-slate-400">{t.dashMessages}</div>
-                    <div className="mt-1 text-2xl font-black text-emerald-400">{messagesList.length}</div>
+                    <div className="mt-1 text-2xl font-black text-emerald-400">
+                      {messagesList.length}
+                    </div>
                   </div>
-                  <div onClick={() => setAccountTab("notifications")} className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50">
+                  <div
+                    onClick={() => setAccountTab("notifications")}
+                    className="cursor-pointer rounded-2xl border border-white/10 bg-[#121826] p-4 hover:border-amber-400/50"
+                  >
                     <div className="text-xs text-slate-400">{t.dashNotifications}</div>
-                    <div className="mt-1 text-2xl font-black text-rose-400">{notificationsList.length}</div>
+                    <div className="mt-1 text-2xl font-black text-rose-400">
+                      {notificationsList.length}
+                    </div>
                   </div>
                 </div>
               )}
 
               {accountTab === "listings" && (
                 <div className="space-y-3">
-                  {dbListings.filter((l: Listing) => l.user_id === user?.id).length === 0 ? (
-                    <p className="text-xs text-slate-400">No active dbListings yet.</p>
+                  {myListings.length === 0 ? (
+                    <p className="text-xs text-slate-400">{t.noMyListings}</p>
                   ) : (
-                    dbListings
-                      .filter((l: Listing) => l.user_id === user?.id)
-                      .map((item: Listing) => (
-                        <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
-                          <div>
-                            <div className="text-sm font-bold text-white">{item.brand} {item.model} ({item.year})</div>
-                            <div className="text-xs text-amber-400">€{item.price_eur.toLocaleString()} • {item.city}</div>
+                    myListings.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3"
+                      >
+                        <div>
+                          <div className="text-sm font-bold text-white">
+                            {item.brand} {item.model} ({item.year})
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsAccountOpen(false);
-                              openEditModal(item);
-                            }}
-                            className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/10 cursor-pointer"
-                          >
-                            Open
-                          </button>
+                          <div className="text-xs text-amber-400">
+                            €{item.price_eur.toLocaleString("en-US")} • {item.city}
+                          </div>
                         </div>
-                      ))
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAccountOpen(false);
+                            openEditModal(item);
+                          }}
+                          className="rounded-xl border border-white/15 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/10 cursor-pointer"
+                        >
+                          {t.editBtn}
+                        </button>
+                      </div>
+                    ))
                   )}
                 </div>
               )}
 
               {accountTab === "fav_listings" && (
                 <div className="space-y-3">
-                  {dbListings.filter((l: Listing) => newPreviewUrls.includes(l.id)).length === 0 ? (
-                    <p className="text-xs text-slate-400">No favorite dbListings yet.</p>
+                  {savedListings.length === 0 ? (
+                    <p className="text-xs text-slate-400">{t.noSavedListings}</p>
                   ) : (
-                    dbListings
-                      .filter((l: Listing) => newPreviewUrls.includes(l.id))
-                      .map((item: Listing) => (
-                        <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
-                          <div>
-                            <div className="text-sm font-bold text-white">{item.brand} {item.model} ({item.year})</div>
-                            <div className="text-xs text-amber-400">€{item.price_eur.toLocaleString()} • {item.city}</div>
+                    savedListings.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3"
+                      >
+                        <div>
+                          <div className="text-sm font-bold text-white">
+                            {item.brand} {item.model} ({item.year})
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsAccountOpen(false);
-                              openEditModal(item);
-                            }}
-                            className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
-                          >
-                            View
-                          </button>
+                          <div className="text-xs text-amber-400">
+                            €{item.price_eur.toLocaleString("en-US")} • {item.city}
+                          </div>
                         </div>
-                      ))
+                        <a
+                          href={getAdHref(item)}
+                          onClick={() => setIsAccountOpen(false)}
+                          className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
+                        >
+                          View
+                        </a>
+                      </div>
+                    ))
                   )}
                 </div>
               )}
@@ -2201,17 +2191,19 @@ useEffect(() => {
                   {savedSearches.length === 0 ? (
                     <p className="text-xs text-slate-400">No saved searches yet.</p>
                   ) : (
-                    savedSearches.map((s: SavedSearch) => (
-                      <div key={s.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3">
+                    savedSearches.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#121826] p-3"
+                      >
                         <div className="text-xs font-bold text-white">{s.label}</div>
                         <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedCategory(s.category);
-                              setSelectedListingType(s.listingType);
-                              setSelectedBrand(s.brand);
-                              setSelectedModel(s.model);
+                              setCategoryFilter(s.category);
+                              setFilterBrand(s.brand);
+                              setFilterModel(s.model);
                               setSelectedCity(s.city);
                               setIsAccountOpen(false);
                             }}
@@ -2238,14 +2230,19 @@ useEffect(() => {
                   {messagesList.length === 0 ? (
                     <p className="text-xs text-slate-400">No messages yet.</p>
                   ) : (
-                    messagesList.map((m: ChatMessage) => {
-                      const otherUserId = m.sender_id === user?.id ? m.receiver_id : m.sender_id;
-                      const relatedListing = dbListings.find((l: Listing) => l.id === m.listing_id);
+                    messagesList.map((m) => {
+                      const otherUserId = m.sender_id === user.id ? m.receiver_id : m.sender_id;
+                      const relatedListing = allListings.find((l) => l.id === m.listing_id);
                       return (
-                        <div key={m.id} className="rounded-2xl border border-white/10 bg-[#121826] p-3.5">
+                        <div
+                          key={m.id}
+                          className="rounded-2xl border border-white/10 bg-[#121826] p-3.5"
+                        >
                           <div className="flex items-center justify-between text-[11px] text-slate-400">
                             <span className="font-bold text-amber-400">{m.listing_title}</span>
-                            <span>{m.sender_name} • {new Date(m.created_at).toLocaleDateString()}</span>
+                            <span>
+                              {m.sender_name} • {new Date(m.created_at).toLocaleDateString()}
+                            </span>
                           </div>
                           <p className="mt-1.5 text-xs text-white">{m.body}</p>
                           {relatedListing && (
@@ -2253,7 +2250,9 @@ useEffect(() => {
                               <input
                                 type="text"
                                 value={chatReplyText[m.id] || ""}
-                                onChange={(e) => setChatReplyText((prev: Record<string, string>) => ({ ...prev, [m.id]: e.target.value }))}
+                                onChange={(e) =>
+                                  setChatReplyText((prev) => ({ ...prev, [m.id]: e.target.value }))
+                                }
                                 placeholder={t.msgPlaceholder}
                                 className="flex-1 rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-1.5 text-xs text-white"
                               />
@@ -2263,7 +2262,7 @@ useEffect(() => {
                                   const txt = chatReplyText[m.id] || "";
                                   if (!txt.trim()) return;
                                   handleSendMessageToSeller(relatedListing, txt, otherUserId);
-                                  setChatReplyText((prev: Record<string, string>) => ({ ...prev, [m.id]: "" }));
+                                  setChatReplyText((prev) => ({ ...prev, [m.id]: "" }));
                                 }}
                                 className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-slate-950 cursor-pointer"
                               >
@@ -2283,8 +2282,11 @@ useEffect(() => {
                   {notificationsList.length === 0 ? (
                     <p className="text-xs text-slate-400">No notifications yet.</p>
                   ) : (
-                    notificationsList.map((n: UserNotification) => (
-                      <div key={n.id} className="rounded-2xl border border-white/10 bg-[#121826] p-3.5">
+                    notificationsList.map((n) => (
+                      <div
+                        key={n.id}
+                        className="rounded-2xl border border-white/10 bg-[#121826] p-3.5"
+                      >
                         <div className="text-xs font-bold text-amber-400">{n.title}</div>
                         <div className="mt-1 text-xs text-slate-300">{n.body}</div>
                       </div>
@@ -2305,7 +2307,9 @@ useEffect(() => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.phoneAuthLabel}</label>
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.phoneAuthLabel}
+                    </label>
                     <input
                       type="tel"
                       value={profilePhoneInput}
@@ -2320,7 +2324,7 @@ useEffect(() => {
                     type="submit"
                     className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
                   >
-                    Save
+                    {t.saveChangesBtn}
                   </button>
                 </form>
               )}
@@ -2329,6 +2333,7 @@ useEffect(() => {
         </div>
       )}
 
+      {/* Footer + Scroll-to-Top button */}
       <footer className="relative mt-10 border-t border-white/10 bg-[#090d14] text-xs text-slate-400">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-8 sm:flex-row">
           <div className="space-y-2">
@@ -2410,7 +2415,14 @@ useEffect(() => {
               <div>
                 <button
                   type="button"
-                  onClick={() => setIsAuthOpen(true)}
+                  onClick={() => {
+                    if (userId) {
+                      setAccountTab("overview");
+                      setIsAccountOpen(true);
+                    } else {
+                      setIsAuthOpen(true);
+                    }
+                  }}
                   className="hover:text-amber-400 cursor-pointer"
                 >
                   {t.col2Link3}
@@ -2461,13 +2473,34 @@ useEffect(() => {
               </div>
               <div className="pt-1.5 border-t border-white/10 space-y-1">
                 <div>
-                  <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 cursor-pointer">{t.privacyBtn}</a>
+                  <a
+                    href="/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-amber-400 cursor-pointer"
+                  >
+                    {t.privacyBtn}
+                  </a>
                 </div>
                 <div>
-                  <a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 cursor-pointer">{t.termsBtn}</a>
-                <div>
-                  <a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 cursor-pointer">{t.contactBtn}</a>
+                  <a
+                    href="/agreement"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-amber-400 cursor-pointer"
+                  >
+                    {t.termsBtn}
+                  </a>
                 </div>
+                <div>
+                  <a
+                    href="/contact"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-amber-400 cursor-pointer"
+                  >
+                    {t.contactBtn}
+                  </a>
                 </div>
               </div>
             </div>
@@ -2546,7 +2579,6 @@ useEffect(() => {
                     required
                     value={authName}
                     onChange={(e) => setAuthName(e.target.value)}
-                    
                     className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
                   />
                 </div>
@@ -2566,7 +2598,9 @@ useEffect(() => {
 
               {authMode === "signup" && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-300">{t.phoneAuthLabel}</label>
+                  <label className="block text-xs font-bold text-slate-300">
+                    {t.phoneAuthLabel}
+                  </label>
                   <input
                     type="tel"
                     required
@@ -2638,7 +2672,8 @@ useEffect(() => {
                           {item.brand} {item.model} ({item.year})
                         </div>
                         <div className="text-xs text-amber-400">
-                          €{item.price_eur.toLocaleString("en-US")} • {item.mileage_km.toLocaleString("en-US")} km • {item.city}
+                          €{item.price_eur.toLocaleString("en-US")} •{" "}
+                          {item.mileage_km.toLocaleString("en-US")} km • {item.city}
                         </div>
                       </div>
                     </div>
@@ -2717,7 +2752,9 @@ useEffect(() => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300">{t.yearInputLabel}</label>
+                <label className="block text-xs font-bold text-slate-300">
+                  {t.yearInputLabel}
+                </label>
                 <input
                   type="number"
                   required
@@ -2939,7 +2976,9 @@ useEffect(() => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.engineLabel}</label>
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.engineLabel}
+                    </label>
                     <input
                       type="text"
                       required
@@ -2949,7 +2988,9 @@ useEffect(() => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.yearInputLabel}</label>
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.yearInputLabel}
+                    </label>
                     <input
                       type="number"
                       required
@@ -2959,7 +3000,9 @@ useEffect(() => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.kmInputLabel}</label>
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.kmInputLabel}
+                    </label>
                     <input
                       type="number"
                       required
@@ -3018,7 +3061,9 @@ useEffect(() => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.taInputLabel}</label>
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.taInputLabel}
+                    </label>
                     <input
                       type="text"
                       value={newTa}
@@ -3028,7 +3073,9 @@ useEffect(() => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.plateInputLabel}</label>
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.plateInputLabel}
+                    </label>
                     <input
                       type="text"
                       value={newPlate}
@@ -3038,7 +3085,9 @@ useEffect(() => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.vinInputLabel}</label>
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.vinInputLabel}
+                    </label>
                     <input
                       type="text"
                       value={newVin}
@@ -3054,7 +3103,9 @@ useEffect(() => {
             {step === 4 && (
               <div className="mt-4 space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">{t.addPhotosLabel}</label>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    {t.addPhotosLabel}
+                  </label>
 
                   <label className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-400/60 bg-amber-400/5 px-4 py-4 text-center transition hover:border-amber-400 hover:bg-amber-400/10 cursor-pointer">
                     <div className="flex items-center gap-2 text-xs font-extrabold text-amber-300">
