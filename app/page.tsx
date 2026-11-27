@@ -3107,64 +3107,68 @@ export default function HomePage() {
         </div>
         <div className="mx-auto max-w-7xl px-4 py-10">
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
+            {/* 1. Kurumsal */}
             <div className="space-y-2">
               <div className="text-xs font-extrabold uppercase tracking-wider text-white">
                 {lang === "lv" ? "Par uzņēmumu" : lang === "ru" ? "О компании" : "Corporate"}
               </div>
               <ul className="space-y-1.5 text-xs text-slate-400">
-                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Par mums" : lang === "ru" ? "О нас" : "About Us"}</a></li>
-                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Ilgtspēja" : lang === "ru" ? "Устойчивое развитие" : "Sustainability"}</a></li>
-                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Karjera" : lang === "ru" ? "Карьера" : "Careers"}</a></li>
-                <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Jaunumi" : lang === "ru" ? "Новости" : "News"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("about")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Par mums" : lang === "ru" ? "О нас" : "About Us"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("sustainability")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Ilgtspēja" : lang === "ru" ? "Устойчивое развитие" : "Sustainability"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("careers")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Karjera" : lang === "ru" ? "Карьера" : "Careers"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("news")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Jaunumi" : lang === "ru" ? "Новости" : "News"}</button></li>
                 <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); resetAllFilters(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Lapas karte" : lang === "ru" ? "Карта сайта" : "Sitemap"}</button></li>
-                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{t.contactBtn}</a></li>
+                <li><button type="button" onClick={() => setInfoPageKey("contact")} className="hover:text-amber-400 cursor-pointer">{t.contactBtn}</button></li>
               </ul>
             </div>
 
+            {/* 2. Hizmetlerimiz */}
             <div className="space-y-2">
               <div className="text-xs font-extrabold uppercase tracking-wider text-white">
                 {lang === "lv" ? "Mūsu pakalpojumi" : lang === "ru" ? "Наши услуги" : "Our Services"}
               </div>
               <ul className="space-y-1.5 text-xs text-slate-400">
-                <li><button type="button" onClick={handlePostClick} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Bezmaksas sludinājumi" : lang === "ru" ? "Бесплатные объявления" : "Free Listings"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("free_listings")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Bezmaksas sludinājumi" : lang === "ru" ? "Бесплатные объявления" : "Free Listings"}</button></li>
                 <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); setCategoryFilter("car"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{t.carsCategory}</button></li>
                 <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); setCategoryFilter("moto"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{t.motosCategory}</button></li>
-                <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); setOnlySaved(true); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{t.savedBtn}</button></li>
-                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Reklāma" : lang === "ru" ? "Реклама" : "Advertising"}</a></li>
+                <li><button type="button" onClick={() => setInfoPageKey("csdd_guide")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "TA un CSDD pārbaude" : lang === "ru" ? "Проверка ТО и CSDD" : "TA & Inspection Guide"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("advertising")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Reklāma" : lang === "ru" ? "Реклама" : "Advertising"}</button></li>
               </ul>
             </div>
 
+            {/* 3. Auto saloni */}
             <div className="space-y-2">
               <div className="text-xs font-extrabold uppercase tracking-wider text-white">
                 {lang === "lv" ? "Auto saloni" : lang === "ru" ? "Автосалоны" : "Dealers & Stores"}
               </div>
               <ul className="space-y-1.5 text-xs text-slate-400">
-                <li><button type="button" onClick={handlePostClick} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Kāpēc AutoLatvija?" : lang === "ru" ? "Почему AutoLatvija?" : "Why AutoLatvija?"}</button></li>
-                <li><button type="button" onClick={handlePostClick} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Atvērt auto salonu" : lang === "ru" ? "Открыть автосалон" : "Open a Dealer Store"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("why_autolatvija")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Kāpēc AutoLatvija?" : lang === "ru" ? "Почему AutoLatvija?" : "Why AutoLatvija?"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("dealer_store")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Atvērt auto salonu" : lang === "ru" ? "Открыть автосалон" : "Open a Dealer Store"}</button></li>
               </ul>
             </div>
 
+            {/* 4. Gizlilik ve Kullanım */}
             <div className="space-y-2">
               <div className="text-xs font-extrabold uppercase tracking-wider text-white">
                 {lang === "lv" ? "Privātums un lietošana" : lang === "ru" ? "Конфиденциальность" : "Privacy & Terms"}
               </div>
               <ul className="space-y-1.5 text-xs text-slate-400">
-                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Drošības padomi" : lang === "ru" ? "Советы безопасности" : "Safe Trading Tips"}</a></li>
-                <li><a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Līgumi un noteikumi" : lang === "ru" ? "Договоры и правила" : "Agreements & Rules"}</a></li>
-                <li><a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Konta līgums" : lang === "ru" ? "Соглашение аккаунта" : "Account Agreement"}</a></li>
-                <li><a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{t.termsBtn}</a></li>
-                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{t.privacyBtn}</a></li>
-                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Sīkdatņu pārvaldība" : lang === "ru" ? "Управление cookie" : "Cookie Settings"}</a></li>
-                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Palīdzība un ceļvedis" : lang === "ru" ? "Помощь и руководство" : "Help & Guide"}</a></li>
+                <li><button type="button" onClick={() => setInfoPageKey("safety_tips")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Drošības padomi" : lang === "ru" ? "Советы безопасности" : "Safe Trading Tips"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("terms")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Līgumi un noteikumi" : lang === "ru" ? "Договоры и правила" : "Agreements & Rules"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("account_agreement")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Konta līgums" : lang === "ru" ? "Соглашение аккаунта" : "Account Agreement"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("privacy")} className="hover:text-amber-400 cursor-pointer">{t.privacyBtn}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("cookies")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Sīkdatņu pārvaldība" : lang === "ru" ? "Управление cookie" : "Cookie Settings"}</button></li>
+                <li><button type="button" onClick={() => setInfoPageKey("help")} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Palīdzība un ceļvedis" : lang === "ru" ? "Помощь и руководство" : "Help & Guide"}</button></li>
               </ul>
             </div>
 
+            {/* 5. Bizi Takip Edin */}
             <div className="space-y-2">
               <div className="text-xs font-extrabold uppercase tracking-wider text-white">
                 {lang === "lv" ? "Seko mums" : lang === "ru" ? "Мы в соцсетях" : "Follow Us"}
               </div>
               <ul className="space-y-1.5 text-xs text-slate-400">
-                <li><a href="https://auto-latvia.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">AutoBlog</a></li>
+                <li><button type="button" onClick={() => setInfoPageKey("news")} className="hover:text-amber-400 cursor-pointer">AutoBlog</button></li>
                 <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">Facebook</a></li>
                 <li><a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">X</a></li>
                 <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">LinkedIn</a></li>
