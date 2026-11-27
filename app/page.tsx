@@ -2760,182 +2760,82 @@ export default function HomePage() {
               : `All responsibility for the accuracy, completeness, and legal compliance of content, opinions, and details posted by users on ${t.brand} belongs to the listing author. ${t.brand} accepts no liability for inaccuracies or violations. For questions, contact the seller.`}
           </div>
         </div>
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-8 sm:flex-row">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-white">
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-amber-400 text-[11px] font-black text-slate-950">
-                LV
-              </span>
-              <span className="font-extrabold">{t.brand}</span>
+        <div className="mx-auto max-w-7xl px-4 py-10">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="space-y-2">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-white">
+                {lang === "lv" ? "Par uzņēmumu" : lang === "ru" ? "О компании" : "Corporate"}
+              </div>
+              <ul className="space-y-1.5 text-xs text-slate-400">
+                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Par mums" : lang === "ru" ? "О нас" : "About Us"}</a></li>
+                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Ilgtspēja" : lang === "ru" ? "Устойчивое развитие" : "Sustainability"}</a></li>
+                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Karjera" : lang === "ru" ? "Карьера" : "Careers"}</a></li>
+                <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Jaunumi" : lang === "ru" ? "Новости" : "News"}</button></li>
+                <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); resetAllFilters(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Lapas karte" : lang === "ru" ? "Карта сайта" : "Sitemap"}</button></li>
+                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{t.contactBtn}</a></li>
+              </ul>
             </div>
-            <p className="text-[11px] text-slate-500">{t.copyrightText}</p>
+
+            <div className="space-y-2">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-white">
+                {lang === "lv" ? "Mūsu pakalpojumi" : lang === "ru" ? "Наши услуги" : "Our Services"}
+              </div>
+              <ul className="space-y-1.5 text-xs text-slate-400">
+                <li><button type="button" onClick={handlePostClick} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Bezmaksas sludinājumi" : lang === "ru" ? "Бесплатные объявления" : "Free Listings"}</button></li>
+                <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); setCategoryFilter("car"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{t.carsCategory}</button></li>
+                <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); setCategoryFilter("moto"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{t.motosCategory}</button></li>
+                <li><button type="button" onClick={() => { closeListingDetail(); setIsAccountOpen(false); setOnlySaved(true); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-amber-400 cursor-pointer">{t.savedBtn}</button></li>
+                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Reklāma" : lang === "ru" ? "Реклама" : "Advertising"}</a></li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-white">
+                {lang === "lv" ? "Auto saloni" : lang === "ru" ? "Автосалоны" : "Dealers & Stores"}
+              </div>
+              <ul className="space-y-1.5 text-xs text-slate-400">
+                <li><button type="button" onClick={handlePostClick} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Kāpēc AutoLatvija?" : lang === "ru" ? "Почему AutoLatvija?" : "Why AutoLatvija?"}</button></li>
+                <li><button type="button" onClick={handlePostClick} className="hover:text-amber-400 cursor-pointer">{lang === "lv" ? "Atvērt auto salonu" : lang === "ru" ? "Открыть автосалон" : "Open a Dealer Store"}</button></li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-white">
+                {lang === "lv" ? "Privātums un lietošana" : lang === "ru" ? "Конфиденциальность" : "Privacy & Terms"}
+              </div>
+              <ul className="space-y-1.5 text-xs text-slate-400">
+                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Drošības padomi" : lang === "ru" ? "Советы безопасности" : "Safe Trading Tips"}</a></li>
+                <li><a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Līgumi un noteikumi" : lang === "ru" ? "Договоры и правила" : "Agreements & Rules"}</a></li>
+                <li><a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Konta līgums" : lang === "ru" ? "Соглашение аккаунта" : "Account Agreement"}</a></li>
+                <li><a href="/agreement" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{t.termsBtn}</a></li>
+                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{t.privacyBtn}</a></li>
+                <li><a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Sīkdatņu pārvaldība" : lang === "ru" ? "Управление cookie" : "Cookie Settings"}</a></li>
+                <li><a href="/contact" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">{lang === "lv" ? "Palīdzība un ceļvedis" : lang === "ru" ? "Помощь и руководство" : "Help & Guide"}</a></li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-white">
+                {lang === "lv" ? "Seko mums" : lang === "ru" ? "Мы в соцсетях" : "Follow Us"}
+              </div>
+              <ul className="space-y-1.5 text-xs text-slate-400">
+                <li><a href="https://auto-latvia.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">AutoBlog</a></li>
+                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">Facebook</a></li>
+                <li><a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">X</a></li>
+                <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">LinkedIn</a></li>
+                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">Instagram</a></li>
+                <li><a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400">YouTube</a></li>
+              </ul>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <div className="font-bold text-slate-200">{t.col1Title}</div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeListingDetail();
-                    setIsAccountOpen(false);
-                    setOnlySaved(false);
-                    setCategoryFilter("car");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col1Link1}
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeListingDetail();
-                    setIsAccountOpen(false);
-                    setOnlySaved(false);
-                    setCategoryFilter("moto");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col1Link2}
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeListingDetail();
-                    setIsAccountOpen(false);
-                    setOnlySaved(true);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col1Link3}
-                </button>
-              </div>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
+            <div className="flex items-center gap-2 text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-amber-400 text-[11px] font-black text-slate-950">LV</span>
+              <span className="font-extrabold">{t.brand}</span>
+              <span className="text-xs text-slate-500">• {t.copyrightText}</span>
             </div>
-
-            <div className="space-y-1.5">
-              <div className="font-bold text-slate-200">{t.col2Title}</div>
-              <div>
-                <button
-                  type="button"
-                  onClick={handlePostClick}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col2Link1}
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => (userId ? setIsMyListingsOpen(true) : setIsAuthOpen(true))}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col2Link2}
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (userId) {
-                      closeListingDetail();
-                      setAccountTab("overview");
-                      setIsAccountOpen(true);
-                    } else {
-                      setIsAuthOpen(true);
-                    }
-                  }}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col2Link3}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="font-bold text-slate-200">{t.col3Title}</div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeListingDetail();
-                    setIsAccountOpen(false);
-                    setSelectedCity("Rīga");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col3Link1}
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeListingDetail();
-                    setIsAccountOpen(false);
-                    setSelectedCity("Liepāja");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col3Link2}
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeListingDetail();
-                    setIsAccountOpen(false);
-                    setSelectedCity("Daugavpils");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="hover:text-amber-400 cursor-pointer"
-                >
-                  {t.col3Link3}
-                </button>
-              </div>
-              <div className="pt-1.5 border-t border-white/10 space-y-1">
-                <div>
-                  <a
-                    href="/privacy-policy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-amber-400 cursor-pointer"
-                  >
-                    {t.privacyBtn}
-                  </a>
-                </div>
-                <div>
-                  <a
-                    href="/agreement"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-amber-400 cursor-pointer"
-                  >
-                    {t.termsBtn}
-                  </a>
-                </div>
-                <div>
-                  <a
-                    href="/contact"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-amber-400 cursor-pointer"
-                  >
-                    {t.contactBtn}
-                  </a>
-                </div>
-              </div>
-            </div>
+            <div className="text-[11px] text-slate-500">autolatvia.lv@gmail.com</div>
           </div>
         </div>
 
