@@ -78,30 +78,38 @@ const CITIES = ["All", "Rīga", "Daugavpils", "Liepāja", "Jelgava", "Ventspils"
 
 const MODELS_BY_BRAND: Record<Category, Record<string, string[]>> = {
   car: {
-    Volkswagen: ["Golf", "Passat", "Tiguan", "Polo", "Touran", "Sharan", "Arteon", "T-Roc"],
+    Volkswagen: ["Golf", "Passat", "Tiguan", "Touran", "Polo", "Sharan", "Arteon", "T-Roc", "Touareg", "Caddy", "Transporter"],
     BMW: ["1 Series", "3 Series", "5 Series", "7 Series", "X1", "X3", "X5", "X6"],
-    Audi: ["A3", "A4", "A5", "A6", "A8", "Q2", "Q3", "Q5", "Q7"],
-    Toyota: ["Corolla", "Auris", "RAV4", "Yaris", "Avensis", "C-HR", "Camry", "Land Cruiser"],
-    "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "S-Class", "CLA", "GLA", "GLC", "GLE", "Vito"],
-    Volvo: ["S60", "S90", "V40", "V60", "V70", "V90", "XC40", "XC60", "XC90"],
-    "Škoda": ["Fabia", "Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq", "Rapid"],
-    Opel: ["Astra", "Corsa", "Insignia", "Mokka", "Zafira", "Grandland"],
-    Nissan: ["Qashqai", "Juke", "X-Trail", "Micra", "Leaf", "Navara"],
+    Audi: ["A3", "A4", "A5", "A6", "A8", "Q2", "Q3", "Q5", "Q7", "e-tron"],
+    Volvo: ["S60", "S80", "S90", "V40", "V50", "V60", "V70", "V90", "XC40", "XC60", "XC70", "XC90"],
+    Toyota: ["Corolla", "Auris", "Avensis", "RAV4", "Yaris", "C-HR", "Camry", "Land Cruiser", "Prius", "Hilux"],
+    "Mercedes-Benz": ["A-Class", "B-Class", "C-Class", "E-Class", "S-Class", "CLA", "GLA", "GLC", "GLE", "Vito", "Sprinter"],
+    "Škoda": ["Fabia", "Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq", "Rapid", "Yeti"],
+    Opel: ["Astra", "Insignia", "Corsa", "Zafira", "Mokka", "Vectra", "Vivaro"],
+    Nissan: ["Qashqai", "X-Trail", "Juke", "Leaf", "Navara", "Micra"],
+    Ford: ["Focus", "Mondeo", "Fiesta", "Kuga", "S-Max", "Galaxy", "Transit"],
     Mazda: ["Mazda3", "Mazda6", "CX-3", "CX-5", "CX-30"],
-    Ford: ["Fiesta", "Focus", "Mondeo", "Kuga", "Puma", "Transit"],
-    Peugeot: ["208", "308", "508", "2008", "3008", "5008"],
+    Hyundai: ["i20", "i30", "Tucson", "Santa Fe", "Kona", "Ioniq"],
+    Kia: ["Ceed", "Sportage", "Sorento", "Rio", "Niro"],
+    Renault: ["Megane", "Clio", "Laguna", "Kadjar", "Captur", "Trafic", "Master"],
+    Peugeot: ["208", "308", "508", "2008", "3008", "5008", "Partner"],
     Honda: ["Civic", "Accord", "CR-V", "HR-V", "Jazz"],
+    Subaru: ["Outback", "Forester", "Legacy", "Impreza", "XV"],
     Lexus: ["IS", "ES", "GS", "NX", "RX", "UX"],
+    Mitsubishi: ["Outlander", "ASX", "Pajero", "L200"],
+    Dacia: ["Duster", "Sandero", "Logan", "Jogger"],
+    Tesla: ["Model 3", "Model Y", "Model S", "Model X"],
   },
   moto: {
-    Keeway: ["RKF 125", "V302C", "X-Light 125", "K-Light 125", "TX 125"],
-    Yamaha: ["MT-03", "MT-07", "MT-09", "Tracer 7", "Tracer 9", "XSR700", "Tenere 700", "NMAX 125", "XMAX 300"],
+    Yamaha: ["MT-03", "MT-07", "MT-09", "Tracer 7", "Tracer 9", "Tenere 700", "XSR700", "NMAX 125", "XMAX 300"],
     Honda: ["CB125F", "CB500F", "CBR500R", "Hornet 750", "Transalp 750", "Africa Twin", "PCX 125", "Forza 350"],
     Kawasaki: ["Z125", "Z400", "Z650", "Z900", "Ninja 400", "Ninja 650", "Versys 650"],
-    Suzuki: ["SV650", "GSX-S750", "V-Strom 650", "V-Strom 800", "Address 110"],
-    Ducati: ["Scrambler", "Monster", "Multistrada V2", "Hypermotard"],
+    Suzuki: ["SV650", "GSX-S750", "V-Strom 650", "V-Strom 800", "Burgman 400"],
     "BMW Motorrad": ["G 310 R", "G 310 GS", "F 750 GS", "F 850 GS", "R 1250 GS", "S 1000 RR"],
+    KTM: ["125 Duke", "390 Duke", "790 Duke", "390 Adventure", "890 Adventure"],
     Aprilia: ["RS 125", "SX 125", "Tuono 660", "RS 660"],
+    Keeway: ["RKF 125", "V302C", "X-Light 125", "K-Light 125"],
+    Ducati: ["Scrambler", "Monster", "Multistrada V2", "Hypermotard"],
   },
 };
 
@@ -702,6 +710,8 @@ export default function HomePage() {
   const [onlySaved, setOnlySaved] = useState(false);
 
   const [categoryFilter, setCategoryFilter] = useState<"all" | Category>("all");
+  const [vehicleTreeSubcat, setVehicleTreeSubcat] = useState<string>("all");
+  const [showAllVehicleSubcats, setShowAllVehicleSubcats] = useState<boolean>(false);
   const [filterBrand, setFilterBrand] = useState("All");
   const [filterModel, setFilterModel] = useState("All");
   const [selectedCity, setSelectedCity] = useState("All");
@@ -2092,41 +2102,200 @@ export default function HomePage() {
             <>
               <section className="border-b border-white/10 bg-[#0e1420]">
                 <div className="mx-auto max-w-7xl px-4 py-5">
-                  <div className="flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                      <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
-                        {t.heroTitle}
-                      </h1>
-                      <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {(
-                        [
-                          { key: "all", label: t.allCategories },
-                          { key: "car", label: t.carsCategory },
-                          { key: "moto", label: t.motosCategory },
-                        ] as const
-                      ).map((cat) => (
+                  <div className="text-center">
+                    <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                      {t.heroTitle}
+                    </h1>
+                    <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
+                  </div>
+                  <div className="mx-auto mt-4 max-w-4xl rounded-2xl border border-white/10 bg-[#121826] p-4 shadow-lg">
+                    {/* Üst Başlık ve Adım Yolu (Kategori > Marka > Model) */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-[11px] font-black text-white">
+                          ◎
+                        </span>
                         <button
-                          key={cat.key}
                           type="button"
                           onClick={() => {
-                            setCategoryFilter(cat.key);
+                            setCategoryFilter("all");
+                            setVehicleTreeSubcat("all");
                             setFilterBrand("All");
                             setFilterModel("All");
                           }}
-                          className={`rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer ${
-                            categoryFilter === cat.key
-                              ? "bg-amber-400 text-slate-950"
-                              : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                          }`}
+                          className="font-extrabold text-sky-400 hover:underline cursor-pointer"
                         >
-                          {cat.label}
+                          {lang === "lv" ? "Transports" : lang === "ru" ? "Транспорт" : "Vehicles"}
                         </button>
-                      ))}
+
+                        {vehicleTreeSubcat !== "all" && (
+                          <>
+                            <span className="text-slate-500">›</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFilterBrand("All");
+                                setFilterModel("All");
+                              }}
+                              className="font-bold text-sky-400 hover:underline cursor-pointer"
+                            >
+                              {vehicleTreeSubcat}
+                            </button>
+                          </>
+                        )}
+
+                        {filterBrand !== "All" && (
+                          <>
+                            <span className="text-slate-500">›</span>
+                            <button
+                              type="button"
+                              onClick={() => setFilterModel("All")}
+                              className="font-bold text-sky-400 hover:underline cursor-pointer"
+                            >
+                              {filterBrand}
+                            </button>
+                          </>
+                        )}
+
+                        {filterModel !== "All" && (
+                          <>
+                            <span className="text-slate-500">›</span>
+                            <span className="font-extrabold text-amber-400">{filterModel}</span>
+                          </>
+                        )}
+                      </div>
+
+                      {(vehicleTreeSubcat !== "all" || filterBrand !== "All" || filterModel !== "All") && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (filterModel !== "All") {
+                              setFilterModel("All");
+                            } else if (filterBrand !== "All") {
+                              setFilterBrand("All");
+                            } else {
+                              setCategoryFilter("all");
+                              setVehicleTreeSubcat("all");
+                            }
+                          }}
+                          className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
+                        >
+                          {t.backBtn}
+                        </button>
+                      )}
                     </div>
+
+                    {/* ADIM 1: Baltık & Letonya Taşıt Kategorileri (sayısız) */}
+                    {vehicleTreeSubcat === "all" && filterBrand === "All" && (
+                      <div className="mt-3">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3 md:grid-cols-4">
+                          {(
+                            [
+                              { key: "car", cat: "car" as const, label: { lv: "Vieglie auto", ru: "Легковые авто", en: "Cars" } },
+                              { key: "suv", cat: "car" as const, label: { lv: "Apvidus, SUV & Pickup", ru: "Внедорожники, SUV & Пикапы", en: "Off-road, SUV & Pickup" } },
+                              { key: "electric", cat: "car" as const, leaf: true, label: { lv: "Elektroauto", ru: "Электромобили", en: "Electric Vehicles" } },
+                              { key: "moto", cat: "moto" as const, label: { lv: "Motocikli", ru: "Мотоциклы", en: "Motorcycles" } },
+                              { key: "minivan", cat: "car" as const, label: { lv: "Miniveni & Furgoni", ru: "Минивэны и фургоны", en: "Minivan & Panel Van" } },
+                              { key: "commercial", cat: "car" as const, label: { lv: "Komerctransports", ru: "Коммерческий транспорт", en: "Commercial Vehicles" } },
+                              { key: "rent", cat: "all" as const, label: { lv: "Nomas auto", ru: "Аренда авто", en: "Rental Vehicles" } },
+                              { key: "marine", cat: "all" as const, label: { lv: "Ūdens transports", ru: "Водный транспорт", en: "Marine Vehicles" } },
+                              { key: "damaged", cat: "all" as const, label: { lv: "Bojāti auto", ru: "Битые авто", en: "Damaged Vehicles" } },
+                              { key: "caravan", cat: "all" as const, label: { lv: "Kemperi", ru: "Кемперы", en: "Caravans & Campers" } },
+                              { key: "classic", cat: "all" as const, label: { lv: "Klasiskie auto", ru: "Ретро авто", en: "Classic Cars" } },
+                              { key: "atv", cat: "moto" as const, label: { lv: "ATV & UTV", ru: "ATV & UTV", en: "ATV & UTV" } },
+                            ] as const
+                          )
+                            .slice(0, showAllVehicleSubcats ? 12 : 8)
+                            .map((node) => (
+                              <button
+                                key={node.key}
+                                type="button"
+                                onClick={() => {
+                                  setCategoryFilter(node.cat);
+                                  setVehicleTreeSubcat(node.label[lang]);
+                                  setFilterBrand("All");
+                                  setFilterModel("All");
+                                }}
+                                className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-left font-semibold text-sky-400 hover:bg-white/5 hover:text-amber-300 cursor-pointer"
+                              >
+                                <span>{node.label[lang]}</span>
+                                {"leaf" in node && node.leaf && <span>🌿</span>}
+                              </button>
+                            ))}
+                        </div>
+
+                        <div className="mt-2.5 flex justify-center border-t border-white/10 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowAllVehicleSubcats((prev) => !prev)}
+                            className="text-xs font-bold text-slate-300 hover:text-white cursor-pointer"
+                          >
+                            {showAllVehicleSubcats
+                              ? lang === "lv"
+                                ? "Aizvērt ▲"
+                                : lang === "ru"
+                                ? "Свернуть ▲"
+                                : "Close ▲"
+                              : lang === "lv"
+                              ? "Visi ▼"
+                              : lang === "ru"
+                              ? "Все ▼"
+                              : "Show all ▼"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ADIM 2: Marka Seçimi (Baltık pazarı) */}
+                    {vehicleTreeSubcat !== "all" && filterBrand === "All" && (
+                      <div className="mt-3">
+                        <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          {t.allBrands}
+                        </div>
+                        <div className="grid max-h-48 grid-cols-2 gap-1.5 overflow-y-auto text-xs sm:grid-cols-4 md:grid-cols-5">
+                          {filterBrandOptions.map((brandName) => (
+                            <button
+                              key={brandName}
+                              type="button"
+                              onClick={() => {
+                                setFilterBrand(brandName);
+                                setFilterModel("All");
+                              }}
+                              className="rounded-lg px-2 py-1.5 text-left font-semibold text-sky-400 hover:bg-white/5 hover:text-amber-300 cursor-pointer"
+                            >
+                              {brandName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ADIM 3: Model Seçimi (Modele kadar yeterli) */}
+                    {filterBrand !== "All" && (
+                      <div className="mt-3">
+                        <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          {filterBrand} — {t.allModels}
+                        </div>
+                        <div className="grid max-h-48 grid-cols-2 gap-1.5 overflow-y-auto text-xs sm:grid-cols-4 md:grid-cols-5">
+                          {filterModelOptions.map((modelName) => (
+                            <button
+                              key={modelName}
+                              type="button"
+                              onClick={() => setFilterModel(modelName)}
+                              className={`rounded-lg px-2 py-1.5 text-left font-semibold cursor-pointer ${
+                                filterModel === modelName
+                                  ? "bg-amber-400 font-extrabold text-slate-950"
+                                  : "text-sky-400 hover:bg-white/5 hover:text-amber-300"
+                              }`}
+                            >
+                              {modelName}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
+                  
 
                   <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
                     <select
