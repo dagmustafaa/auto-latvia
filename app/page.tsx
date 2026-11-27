@@ -790,6 +790,10 @@ export default function HomePage() {
   const [profilePhoneInput, setProfilePhoneInput] = useState("");
   const [profileSaveStatus, setProfileSaveStatus] = useState("");
   const [infoPageKey, setInfoPageKey] = useState<string | null>(null);
+  const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
+  const [offerAmountInput, setOfferAmountInput] = useState("");
+  const [offerMessageInput, setOfferMessageInput] = useState("");
+  const [offerSentStatus, setOfferSentStatus] = useState("");
   const [settingsSection, setSettingsSection] = useState<"personal" | "notifications" | "security">("personal");
   const [displayNameMode, setDisplayNameMode] = useState<"short" | "full">("short");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
