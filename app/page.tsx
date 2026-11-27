@@ -2709,6 +2709,16 @@ export default function HomePage() {
       </div>
 
       <footer className="relative mt-10 border-t border-white/10 bg-[#090d14] text-xs text-slate-400">
+        {/* FOOTER_LEGAL_DISCLAIMER */}
+        <div className="mx-auto max-w-7xl px-4 pt-6">
+          <div className="rounded-xl border border-dashed border-white/20 bg-[#0e1420] px-4 py-3 text-[11px] leading-relaxed text-slate-400">
+            {lang === "lv"
+              ? `Visas ${t.brand} vietnē lietotāju ievietotās informācijas, viedokļu un datu pareizība, pilnīgums un atbilstība normatīvajiem aktiem ir paša lietotāja atbildība. ${t.brand} neuzņemas atbildību par satura neprecizitātēm vai pārkāpumiem. Jautājumu gadījumā sazinieties ar sludinājuma autoru.`
+              : lang === "ru"
+              ? `Вся ответственность за достоверность, полноту и законность информации, мнений и сведений, размещённых пользователями на ${t.brand}, лежит на авторе объявления. ${t.brand} не несёт ответственности за неточности или нарушения. По всем вопросам обращайтесь к продавцу.`
+              : `All responsibility for the accuracy, completeness, and legal compliance of content, opinions, and details posted by users on ${t.brand} belongs to the listing author. ${t.brand} accepts no liability for inaccuracies or violations. For questions, contact the seller.`}
+          </div>
+        </div>
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-4 py-8 sm:flex-row">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-white">
