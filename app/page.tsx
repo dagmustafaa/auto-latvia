@@ -736,6 +736,27 @@ export default function HomePage() {
   const [profileNameInput, setProfileNameInput] = useState("");
   const [profilePhoneInput, setProfilePhoneInput] = useState("");
   const [profileSaveStatus, setProfileSaveStatus] = useState("");
+  const [settingsSection, setSettingsSection] = useState<"personal" | "notifications" | "security">("personal");
+  const [displayNameMode, setDisplayNameMode] = useState<"short" | "full">("short");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [recoveryEmailInput, setRecoveryEmailInput] = useState("");
+  const [accountVerified, setAccountVerified] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, { email: boolean; push: boolean }>>({
+    pendingApproval: { email: false, push: false },
+    dateUpdated: { email: true, push: true },
+    published: { email: true, push: true },
+    rejected: { email: true, push: true },
+    expiring3Days: { email: true, push: true },
+    expired: { email: true, push: true },
+    unpublished: { email: false, push: true },
+    dopingApplied: { email: true, push: true },
+    dopingExpired: { email: true, push: true },
+    after7DaysExpired: { email: true, push: true },
+    newMessage: { email: true, push: true },
+    draftReminder: { email: true, push: false },
+  });
 
   const t = UI_TEXT[lang];
 
@@ -826,6 +847,10 @@ export default function HomePage() {
     }
     setProfileNameInput((user.user_metadata?.name as string) || "");
     setProfilePhoneInput((user.user_metadata?.phone as string) || "");
+    setAvatarUrl((user.user_metadata?.avatar_url as string) || "");
+    setRecoveryEmailInput((user.user_metadata?.recovery_email as string) || "");
+    setAccountVerified(Boolean(user.user_metadata?.verified));
+    if (user.user_metadata?.display_name_mode === "full") setDisplayNameMode("full");
     loadAccountData(user.id);
   }, [user]);
 
