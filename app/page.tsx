@@ -1834,7 +1834,7 @@ export default function HomePage() {
                           <div className="flex items-center justify-between text-[11px] text-slate-400">
                             <span className="font-bold text-amber-400">{m.listing_title}</span>
                             <span>
-                              {m.sender_name} • {new Date(m.created_at).toLocaleDateString()}
+                              {m.sender_name || "You"}{m.created_at && !Number.isNaN(Date.parse(String(m.created_at))) ? ` • ${new Date(String(m.created_at)).toLocaleDateString()}` : ""}
                             </span>
                           </div>
                           <p className="mt-1.5 text-xs text-white">{m.body}</p>
@@ -2528,7 +2528,7 @@ export default function HomePage() {
                       } else if (typeof setMessagesList === "function") {
                         setMessagesList((prev) => [
                           {
-                            id: Date.now().toString(),
+                            id: `offer-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                             listing_id: String(activeListing.id),
                             listing_title: String((activeListing as unknown as Record<string, unknown>).title ?? (activeListing as unknown as Record<string, unknown>).model ?? "Listing"),
                             sender_name: userName || "You",
