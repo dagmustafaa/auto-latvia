@@ -2382,6 +2382,7 @@ export default function HomePage() {
                       </span>
                       <strong className="rounded bg-amber-400/15 px-2 py-0.5 font-mono font-extrabold text-amber-300">
                         {getListingNumber(activeListing.id)}
+                  
                       </strong>
                     </div>
                     {activeListing.plate_number && (
@@ -2828,7 +2829,6 @@ export default function HomePage() {
                       </div>
                     )}
                   </div>
-                  
 
                   <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-7">
                     <select
