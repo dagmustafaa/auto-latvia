@@ -666,6 +666,16 @@ function WhatsAppIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+function getListingNumber(id: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    hash ^= id.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const positive = Math.abs(hash);
+  return 10000000 + (positive % 80000000);
+}
+
 function getAdHref(item: Listing) {
   const slug = (item.brand + "-" + item.model + "-" + item.year)
     .toLowerCase()
@@ -2084,6 +2094,61 @@ export default function HomePage() {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {/* Görsel 1 tarzı Güvenlik İpuçları kutusu */}
+                <div className="rounded-xl border border-white/15 bg-[#121826] p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-extrabold text-white">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/20 text-xs text-sky-400">
+                      🛡️
+                    </span>
+                    <span>
+                      {lang === "lv"
+                        ? "Drošības padomi"
+                        : lang === "ru"
+                        ? "Советы по безопасности"
+                        : "Security Tips"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                    {lang === "lv"
+                      ? "Nepārskaitiet avansu vai naudu, pirms neesat klātienē apskatījis transportlīdzekli."
+                      : lang === "ru"
+                      ? "Не переводите предоплату или деньги, не осмотрев транспортное средство лично."
+                      : "Do not pay a deposit or send money before inspecting the vehicle in person."}
+                  </p>
+                  <div className="mt-1.5 text-xs text-slate-400">
+                    <span>
+                      {lang === "lv"
+                        ? "Plašākai informācijai "
+                        : lang === "ru"
+                        ? "Подробнее "
+                        : "For more details "}
+                    </span>
+                    <a
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-sky-400 hover:underline"
+                    >
+                      {lang === "lv"
+                        ? "spiediet šeit."
+                        : lang === "ru"
+                        ? "нажмите здесь."
+                        : "click here."}
+                    </a>
+                  </div>
+                </div>
+
+                {/* Görsel 2 tarzı kullanıcı içeriği sorumluluk ve yasal uyarı kutusu */}
+                <div className="rounded-xl border border-dashed border-white/20 bg-[#0e1420] px-4 py-3 text-[11px] leading-relaxed text-slate-400">
+                  {lang === "lv"
+                    ? `Visas ${t.brand} vietnē lietotāju ievietotās informācijas, viedokļu un datu pareizība, pilnīgums un atbilstība normatīvajiem aktiem ir paša lietotāja atbildība. ${t.brand} neuzņemas atbildību par satura neprecizitātēm vai pārkāpumiem. Jautājumu gadījumā sazinieties ar sludinājuma autoru.`
+                    : lang === "ru"
+                    ? `Вся ответственность за достоверность, полноту и законность информации, мнений и сведений, размещённых пользователями на ${t.brand}, лежит на авторе объявления. ${t.brand} не несёт ответственности за неточности или нарушения. По всем вопросам обращайтесь к продавцу.`
+                    : `All responsibility for the accuracy, completeness, and legal compliance of content, opinions, and details posted by users on ${t.brand} belongs to the listing author. ${t.brand} accepts no liability for inaccuracies or violations. For questions, contact the seller.`}
                 </div>
               </div>
 
