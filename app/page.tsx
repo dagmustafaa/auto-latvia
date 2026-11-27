@@ -786,6 +786,7 @@ export default function HomePage() {
   const [profileNameInput, setProfileNameInput] = useState("");
   const [profilePhoneInput, setProfilePhoneInput] = useState("");
   const [profileSaveStatus, setProfileSaveStatus] = useState("");
+  const [accountEmailInput, setAccountEmailInput] = useState("");
   const [settingsSection, setSettingsSection] = useState<"personal" | "notifications" | "security">("personal");
   const [displayNameMode, setDisplayNameMode] = useState<"short" | "full">("short");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -897,6 +898,7 @@ export default function HomePage() {
     }
     setProfileNameInput((user.user_metadata?.name as string) || "");
     setProfilePhoneInput((user.user_metadata?.phone as string) || "");
+    setAccountEmailInput(user.email || "");
     setAvatarUrl((user.user_metadata?.avatar_url as string) || "");
     setRecoveryEmailInput((user.user_metadata?.recovery_email as string) || "");
     setAccountVerified(Boolean(user.user_metadata?.verified));
