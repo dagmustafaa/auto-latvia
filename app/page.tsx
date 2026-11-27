@@ -714,7 +714,8 @@ export default function HomePage() {
   const [authMessage, setAuthMessage] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authMode, setAuthMode] = useState<"signin" | "signup" | "verify_otp" | "forgot">("signin");
+  const [otpCodeInput, setOtpCodeInput] = useState("");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const [isMyListingsOpen, setIsMyListingsOpen] = useState(false);
@@ -2944,13 +2945,75 @@ export default function HomePage() {
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
           <form
-            onSubmit={handleAuthSubmit}
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setAuthError("");
+              setAuthMessage("");
+              setAuthLoading(true);
+              try {
+                if (authMode === "verify_otp") {
+                  const cleanCode = otpCodeInput.trim();
+                  if (cleanCode.length < 6) {
+                    setAuthError("Ievadiet 6 ciparu kodu / Enter the 6-digit code.");
+                    return;
+                  }
+                  const { error } = await supabase.auth.verifyOtp({
+                    email: authEmail.trim(),
+                    token: cleanCode,
+                    type: "signup",
+                  });
+                  if (error) {
+                    setAuthError(error.message);
+                    return;
+                  }
+                  setIsAuthOpen(false);
+                  setAuthMode("signin");
+                  return;
+                }
+
+                if (authMode === "forgot") {
+                  const { error } = await supabase.auth.resetPasswordForEmail(authEmail.trim(), {
+                    redirectTo: "https://auto-latvia.vercel.app",
+                  });
+                  if (error) {
+                    setAuthError(error.message);
+                    return;
+                  }
+                  setAuthMessage(
+                    lang === "lv"
+                      ? "Paroles atjaunošanas saite nosūtīta uz e-pastu!"
+                      : lang === "ru"
+                      ? "Ссылка для сброса пароля отправлена на e-mail!"
+                      : "Password reset link sent to your email!"
+                  );
+                  return;
+                }
+
+                await handleAuthSubmit(e);
+              } finally {
+                setAuthLoading(false);
+              }
+            }}
             className="w-full max-w-md rounded-2xl border border-white/15 bg-[#121826] p-6"
           >
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-base font-extrabold text-white">{t.authTitle}</h3>
-                <p className="mt-1 text-xs text-slate-400">{t.authDesc}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {authMode === "verify_otp"
+                    ? lang === "lv"
+                      ? "Ievadiet 6 ciparu kodu, kas nosūtīts uz jūsu e-pastu."
+                      : lang === "ru"
+                      ? "Введите 6-значный код, отправленный на ваш e-mail."
+                      : "Enter the 6-digit code sent to your email."
+                    : authMode === "forgot"
+                    ? lang === "lv"
+                      ? "Ievadiet savu e-pastu paroles atjaunošanai."
+                      : lang === "ru"
+                      ? "Введите ваш e-mail для сброса пароля."
+                      : "Enter your email to reset your password."
+                    : t.authDesc}
+                </p>
               </div>
               <button
                 type="button"
@@ -2961,26 +3024,36 @@ export default function HomePage() {
               </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl bg-[#0b0f17] p-1 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setAuthMode("signin")}
-                className={`rounded-lg py-1.5 cursor-pointer ${
-                  authMode === "signin" ? "bg-amber-400 text-slate-950" : "text-slate-300"
-                }`}
-              >
-                {t.authSignInTab}
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuthMode("signup")}
-                className={`rounded-lg py-1.5 cursor-pointer ${
-                  authMode === "signup" ? "bg-amber-400 text-slate-950" : "text-slate-300"
-                }`}
-              >
-                {t.authSignUpTab}
-              </button>
-            </div>
+            {(authMode === "signin" || authMode === "signup") && (
+              <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl bg-[#0b0f17] p-1 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthError("");
+                    setAuthMessage("");
+                    setAuthMode("signin");
+                  }}
+                  className={`rounded-lg py-1.5 cursor-pointer ${
+                    authMode === "signin" ? "bg-amber-400 text-slate-950" : "text-slate-300"
+                  }`}
+                >
+                  {t.authSignInTab}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthError("");
+                    setAuthMessage("");
+                    setAuthMode("signup");
+                  }}
+                  className={`rounded-lg py-1.5 cursor-pointer ${
+                    authMode === "signup" ? "bg-amber-400 text-slate-950" : "text-slate-300"
+                  }`}
+                >
+                  {t.authSignUpTab}
+                </button>
+              </div>
+            )}
 
             {authMessage && (
               <div className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-300">
@@ -3019,6 +3092,50 @@ export default function HomePage() {
                 />
               </div>
 
+              {authMode === "verify_otp" && (
+                <div>
+                  <label className="block text-xs font-bold text-amber-300">
+                    {lang === "lv"
+                      ? "6 ciparu kods (OTP)"
+                      : lang === "ru"
+                      ? "6-значный код (OTP)"
+                      : "6-digit verification code"}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={otpCodeInput}
+                    onChange={(e) => setOtpCodeInput(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="123456"
+                    className="mt-1 w-full rounded-xl border border-amber-400/50 bg-[#0b0f17] px-3.5 py-2.5 text-center font-mono text-lg font-black tracking-[0.4em] text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await supabase.auth.resend({
+                        type: "signup",
+                        email: authEmail.trim(),
+                      });
+                      setAuthMessage(
+                        lang === "lv"
+                          ? "Jauns kods nosūtīts!"
+                          : lang === "ru"
+                          ? "Новый код отправлен!"
+                          : "New code sent!"
+                      );
+                    }}
+                    className="mt-2 text-[11px] font-bold text-sky-400 hover:underline cursor-pointer"
+                  >
+                    {lang === "lv"
+                      ? "Nosūtīt kodu vēlreiz"
+                      : lang === "ru"
+                      ? "Отправить код повторно"
+                      : "Resend code"}
+                  </button>
+                </div>
+              )}
+
               {authMode === "signup" && (
                 <div>
                   <label className="block text-xs font-bold text-slate-300">
@@ -3034,17 +3151,41 @@ export default function HomePage() {
                   />
                 </div>
               )}
-              <div>
-                <label className="block text-xs font-bold text-slate-300">{t.passwordLabel}</label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
-                />
-              </div>
+
+              {(authMode === "signin" || authMode === "signup") && (
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-300">
+                      {t.passwordLabel}
+                    </label>
+                    {authMode === "signin" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthError("");
+                          setAuthMessage("");
+                          setAuthMode("forgot");
+                        }}
+                        className="text-[11px] font-bold text-sky-400 hover:underline cursor-pointer"
+                      >
+                        {lang === "lv"
+                          ? "Aizmirsi paroli?"
+                          : lang === "ru"
+                          ? "Забыли пароль?"
+                          : "Forgot password?"}
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-sm text-white"
+                  />
+                </div>
+              )}
             </div>
 
             <button
@@ -3052,8 +3193,36 @@ export default function HomePage() {
               disabled={authLoading}
               className="mt-5 w-full rounded-xl bg-amber-400 px-4 py-2.5 text-xs font-extrabold text-slate-950 hover:bg-amber-300 disabled:opacity-60 cursor-pointer"
             >
-              {authMode === "signup" ? t.signUpSubmit : t.signInSubmit}
+              {authMode === "verify_otp"
+                ? lang === "lv"
+                  ? "Apstiprināt kodu"
+                  : lang === "ru"
+                  ? "Подтвердить код"
+                  : "Verify Code"
+                : authMode === "forgot"
+                ? lang === "lv"
+                  ? "Nosūtīt atjaunošanas saiti"
+                  : lang === "ru"
+                  ? "Отправить ссылку"
+                  : "Send Reset Link"
+                : authMode === "signup"
+                ? t.signUpSubmit
+                : t.signInSubmit}
             </button>
+
+            {(authMode === "verify_otp" || authMode === "forgot") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthError("");
+                  setAuthMessage("");
+                  setAuthMode("signin");
+                }}
+                className="mt-2.5 w-full text-center text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
+              >
+                ← {t.authSignInTab}
+              </button>
+            )}
           </form>
         </div>
       )}
