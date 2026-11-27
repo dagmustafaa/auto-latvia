@@ -761,6 +761,7 @@ export default function HomePage() {
   const [maxYear, setMaxYear] = useState("");
   const [maxKm, setMaxKm] = useState("");
   const [query, setQuery] = useState("");
+  const [adNumberQuery, setAdNumberQuery] = useState("");
   const [sortBy, setSortBy] = useState<"priceAsc" | "priceDesc" | "yearDesc" | "kmAsc">("yearDesc");
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -947,6 +948,7 @@ export default function HomePage() {
     setMaxYear("");
     setMaxKm("");
     setQuery("");
+    setAdNumberQuery("");
     setOnlySaved(false);
   }
 
@@ -1135,6 +1137,11 @@ export default function HomePage() {
         item.plate_number ?? ""
       }`.toLowerCase();
       if (query.trim() !== "" && !searchBlob.includes(query.trim().toLowerCase())) return false;
+      if (adNumberQuery.trim() !== "") {
+        const cleanAdQuery = adNumberQuery.replace(/^#/, "").trim();
+        const adNoStr = String(getListingNumber(item.id));
+        if (!adNoStr.includes(cleanAdQuery)) return false;
+      }
       return true;
     });
 
@@ -2020,7 +2027,7 @@ export default function HomePage() {
                           : "Ad No.: "}
                       </span>
                       <strong className="rounded bg-amber-400/15 px-2 py-0.5 font-mono font-extrabold text-amber-300">
-                        #{getListingNumber(activeListing.id)}
+                        {getListingNumber(activeListing.id)}
                       </strong>
                     </div>
                     {activeListing.plate_number && (
