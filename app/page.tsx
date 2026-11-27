@@ -2158,10 +2158,10 @@ export default function HomePage() {
 
                         <h2 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
                           {lang === "lv"
-                            ? "Atšķirībā no citām vietnēm — sludinājumu ievietošana šeit ir PILNĪBĀ BEZ MAKSAS!"
+                            ? "Ievieto savu auto vai moto sludinājumu PILNĪBĀ BEZ MAKSAS visā Latvijā!"
                             : lang === "ru"
-                            ? "В отличие от других сайтов — подача объявлений здесь ПОЛНОСТЬЮ БЕСПЛАТНА!"
-                            : "Unlike other sites — posting your car or moto ad here is COMPLETELY FREE!"}
+                            ? "Разместите объявление об авто или мото ПОЛНОСТЬЮ БЕСПЛАТНО по всей Латвии!"
+                            : "Post your car or moto ad COMPLETELY FREE across Latvia!"}
                         </h2>
 
                         <p className="max-w-2xl text-xs leading-relaxed text-slate-300 sm:text-sm">
