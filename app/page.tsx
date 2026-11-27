@@ -2011,7 +2011,19 @@ export default function HomePage() {
 
                   {(activeListing.plate_number || activeListing.vin) && (
                     <div className="mt-3 flex flex-wrap gap-5 rounded-xl border border-white/10 bg-[#0b0f17] px-4 py-3 text-xs">
-                      {activeListing.plate_number && (
+                      <div>
+                      <span className="text-slate-400">
+                        {lang === "lv"
+                          ? "Sludinājuma Nr.: "
+                          : lang === "ru"
+                          ? "№ объявления: "
+                          : "Ad No.: "}
+                      </span>
+                      <strong className="rounded bg-amber-400/15 px-2 py-0.5 font-mono font-extrabold text-amber-300">
+                        #{getListingNumber(activeListing.id)}
+                      </strong>
+                    </div>
+                    {activeListing.plate_number && (
                         <div>
                           <span className="text-slate-400">{t.plateLabel}: </span>
                           <strong className="rounded bg-white/10 px-2 py-0.5 font-mono text-white">
