@@ -2476,7 +2476,7 @@ export default function HomePage() {
                   </div>
                   
 
-                  <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-6">
+                  <div className="mt-4 grid gap-2 rounded-t-xl border border-b-0 border-white/10 bg-[#121826] p-2.5 sm:grid-cols-2 lg:grid-cols-7">
                     <select
                       value={filterBrand}
                       onChange={(e) => {
@@ -2551,6 +2551,19 @@ export default function HomePage() {
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder={t.searchPlaceholder}
                       className="rounded-lg border border-white/10 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-500"
+                    />
+                    <input
+                      type="text"
+                      value={adNumberQuery}
+                      onChange={(e) => setAdNumberQuery(e.target.value)}
+                      placeholder={
+                        lang === "lv"
+                          ? "Sludinājuma Nr..."
+                          : lang === "ru"
+                          ? "№ объявления..."
+                          : "Ad No. (e.g. 48291034)"
+                      }
+                      className="rounded-lg border border-amber-400/40 bg-[#0b0f17] px-3 py-2 text-xs text-white placeholder-slate-400"
                     />
                   </div>
 
