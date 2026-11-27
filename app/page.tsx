@@ -2331,7 +2331,7 @@ export default function HomePage() {
                       </h1>
                     </div>
                     <div className="text-2xl font-black text-amber-400">
-                      €{activeListing.price_eur.toLocaleString("en-US")}
+                      €{Number(activeListing.price_eur ?? 0).toLocaleString("en-US")}
                     </div>
                   </div>
 
@@ -2465,6 +2465,108 @@ export default function HomePage() {
                         Demo listing — use Phone or WhatsApp above to contact the seller directly.
                       </div>
                     )}
+
+              <div className="mt-4 space-y-2.5 rounded-xl border border-amber-400/25 bg-[#0b0f17] p-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">
+                    {lang === "lv"
+                      ? "Cenas piedāvājums (€)"
+                      : lang === "ru"
+                      ? "Предложение цены (€)"
+                      : "Price Offer (€)"}
+                  </span>
+                  {Number((activeListing as unknown as Record<string, unknown>).price ?? (activeListing as unknown as Record<string, unknown>).priceEur ?? 0) ? (
+                    <span className="text-[11px] text-slate-400">
+                      {lang === "lv" ? "Cena:" : lang === "ru" ? "Цена:" : "Asking:"} €{Number(Number((activeListing as unknown as Record<string, unknown>).price ?? (activeListing as unknown as Record<string, unknown>).priceEur ?? 0)).toLocaleString()}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <input
+                    type="number"
+                    min={1}
+                    value={offerAmountInput}
+                    onChange={(e) => setOfferAmountInput(e.target.value)}
+                    placeholder={lang === "lv" ? "Summa (€)" : lang === "ru" ? "Сумма (€)" : "Amount (€)"}
+                    className="rounded-xl border border-white/15 bg-[#121826] px-3 py-2 text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={offerMessageInput}
+                    onChange={(e) => setOfferMessageInput(e.target.value)}
+                    placeholder={
+                      lang === "lv"
+                        ? "Komentārs piedāvājumam..."
+                        : lang === "ru"
+                        ? "Комментарий к предложению..."
+                        : "Note with your offer..."
+                    }
+                    className="sm:col-span-2 rounded-xl border border-white/15 bg-[#121826] px-3 py-2 text-xs text-white"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const amt = offerAmountInput.trim();
+                      const note = offerMessageInput.trim();
+                      if (!amt && !note) return;
+
+                      const formatted = amt
+                        ? lang === "lv"
+                          ? `Piedāvājums €${amt} (${String((activeListing as unknown as Record<string, unknown>).title ?? (activeListing as unknown as Record<string, unknown>).model ?? "Listing")})${note ? " — " + note : ""}`
+                          : lang === "ru"
+                          ? `Предложение €${amt} (${String((activeListing as unknown as Record<string, unknown>).title ?? (activeListing as unknown as Record<string, unknown>).model ?? "Listing")})${note ? " — " + note : ""}`
+                          : `Offer €${amt} (${String((activeListing as unknown as Record<string, unknown>).title ?? (activeListing as unknown as Record<string, unknown>).model ?? "Listing")})${note ? " — " + note : ""}`
+                        : note;
+
+                      if (activeListing.user_id) {
+                        setChatDraft(formatted);
+                        void handleSendMessageToSeller(activeListing);
+                      } else if (typeof setMessagesList === "function") {
+                        setMessagesList((prev) => [
+                          {
+                            id: Date.now().toString(),
+                            listing_id: String(activeListing.id),
+                            listing_title: String((activeListing as unknown as Record<string, unknown>).title ?? (activeListing as unknown as Record<string, unknown>).model ?? "Listing"),
+                            sender_name: userName || "You",
+                            text: formatted,
+                            created_at: new Date().toISOString(),
+                            sender_id: user?.id || "guest",
+                            receiver_id: String((activeListing as unknown as Record<string, unknown>).user_id || "seller"),
+                            body: formatted,
+                            is_read: false,
+                          } as unknown as ChatMessage,
+                          ...(Array.isArray(prev) ? prev : []),
+                        ]);
+                      }
+
+                      setOfferAmountInput("");
+                      setOfferMessageInput("");
+                      setOfferSentStatus(
+                        lang === "lv"
+                          ? "✓ Piedāvājums nosūtīts!"
+                          : lang === "ru"
+                          ? "✓ Предложение отправлено!"
+                          : "✓ Offer sent!"
+                      );
+                    }}
+                    className="rounded-xl bg-amber-400 px-4 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                  >
+                    {lang === "lv"
+                      ? "Nosūtīt piedāvājumu"
+                      : lang === "ru"
+                      ? "Отправить предложение"
+                      : "Send Price Offer"}
+                  </button>
+
+                  {offerSentStatus && (
+                    <span className="text-xs font-bold text-emerald-400">{offerSentStatus}</span>
+                  )}
+                </div>
+              </div>
 
                     {chatSentFeedback && (
                       <div className="mt-2 text-xs font-bold text-emerald-400">
