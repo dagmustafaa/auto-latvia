@@ -2136,6 +2136,73 @@ export default function HomePage() {
                     </h1>
                     <p className="mt-1 text-xs text-slate-400 sm:text-sm">{t.heroSubtitle}</p>
                   </div>
+                  {/* AUTOLATVIJA_HERO_BANNER */}
+                  <div className="mx-auto mb-5 max-w-5xl overflow-hidden rounded-2xl border border-amber-400/30 bg-gradient-to-r from-[#0f172a] via-[#172554] to-[#0f172a] p-5 shadow-2xl sm:p-7">
+                    <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+                      <div className="space-y-3">
+                        <div className="inline-flex items-center gap-2.5 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-1.5">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-xs font-black text-slate-950">
+                            LV
+                          </span>
+                          <span className="text-sm font-black tracking-tight text-white">
+                            AutoLatvija
+                          </span>
+                          <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
+                            {lang === "lv"
+                              ? "100% BEZ MAKSAS"
+                              : lang === "ru"
+                              ? "100% БЕСПЛАТНО"
+                              : "100% FREE"}
+                          </span>
+                        </div>
+
+                        <h2 className="text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
+                          {lang === "lv"
+                            ? "Atšķirībā no citām vietnēm — sludinājumu ievietošana šeit ir PILNĪBĀ BEZ MAKSAS!"
+                            : lang === "ru"
+                            ? "В отличие от других сайтов — подача объявлений здесь ПОЛНОСТЬЮ БЕСПЛАТНА!"
+                            : "Unlike other sites — posting your car or moto ad here is COMPLETELY FREE!"}
+                        </h2>
+
+                        <p className="max-w-2xl text-xs leading-relaxed text-slate-300 sm:text-sm">
+                          {lang === "lv"
+                            ? "Pārdod savu automašīnu vai motociklu visā Latvijā bez maksas par sludinājuma ievietošanu, bez slēptām komisijām un ar tiešu saziņu WhatsApp vai ziņojumos."
+                            : lang === "ru"
+                            ? "Продавайте авто или мотоцикл по всей Латвии без платы за публикацию, без скрытых комиссий и с прямой связью в WhatsApp или чате."
+                            : "Sell your car or motorcycle across Latvia with zero listing fees, no hidden commissions, and instant buyer contact via WhatsApp or in-app chat."}
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-bold">
+                          <span className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-amber-300">
+                            ✓ {lang === "lv" ? "0.00 € par sludinājumu" : lang === "ru" ? "0.00 € за объявление" : "€0.00 listing fee"}
+                          </span>
+                          <span className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-emerald-300">
+                            ✓ {lang === "lv" ? "Bezmaksas rediģēšana" : lang === "ru" ? "Бесплатное редактирование" : "Free editing anytime"}
+                          </span>
+                          <span className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-sky-300">
+                            ✓ {lang === "lv" ? "Tiešs kontakts ar pircēju" : lang === "ru" ? "Прямой контакт с покупателем" : "Direct buyer contact"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                        <button
+                          type="button"
+                          onClick={handlePostClick}
+                          className="rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-black text-slate-950 shadow-lg shadow-amber-400/20 transition hover:bg-amber-300 cursor-pointer"
+                        >
+                          {t.postBtn} →
+                        </button>
+                        <span className="text-center text-[11px] font-semibold text-slate-400">
+                          {lang === "lv"
+                            ? "Publicē 1 minūtē • Bez kartes"
+                            : lang === "ru"
+                            ? "Публикация за 1 мин • Без карты"
+                            : "Publish in 1 min • No card needed"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                   <div className="mx-auto mt-4 max-w-4xl rounded-2xl border border-white/10 bg-[#121826] p-4 shadow-lg">
                     {/* Üst Başlık ve Adım Yolu (Kategori > Marka > Model) */}
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
