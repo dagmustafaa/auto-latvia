@@ -786,9 +786,10 @@ export default function HomePage() {
   const [profileNameInput, setProfileNameInput] = useState("");
   const [profileFirstNameInput, setProfileFirstNameInput] = useState("");
   const [profileLastNameInput, setProfileLastNameInput] = useState("");
+  const [accountEmailInput, setAccountEmailInput] = useState("");
   const [profilePhoneInput, setProfilePhoneInput] = useState("");
   const [profileSaveStatus, setProfileSaveStatus] = useState("");
-  const [accountEmailInput, setAccountEmailInput] = useState("");
+  const [infoPageKey, setInfoPageKey] = useState<string | null>(null);
   const [settingsSection, setSettingsSection] = useState<"personal" | "notifications" | "security">("personal");
   const [displayNameMode, setDisplayNameMode] = useState<"short" | "full">("short");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -810,7 +811,6 @@ export default function HomePage() {
     newMessage: { email: true, push: true },
     draftReminder: { email: true, push: false },
   });
-
   const t = UI_TEXT[lang];
 
   const unreadNotificationsCount = useMemo(
@@ -1885,37 +1885,382 @@ export default function HomePage() {
               )}
 
               {accountTab === "settings" && (
-                <form onSubmit={handleUpdateProfile} className="max-w-md space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300">{t.nameLabel}</label>
-                    <input
-                      type="text"
-                      value={profileNameInput}
-                      onChange={(e) => setProfileNameInput(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-xs text-white"
-                    />
+                <div className="space-y-5">
+                  <div className="flex flex-wrap gap-2 border-b border-white/10 pb-3">
+                    <button
+                      type="button"
+                      onClick={() => setSettingsSection("personal")}
+                      className={`rounded-xl px-3.5 py-2 text-xs font-bold cursor-pointer ${
+                        settingsSection === "personal"
+                          ? "bg-amber-400 text-slate-950"
+                          : "border border-white/15 bg-white/5 text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      {lang === "lv" ? "Personas dati" : lang === "ru" ? "Личные данные" : "Personal Information"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSettingsSection("notifications")}
+                      className={`rounded-xl px-3.5 py-2 text-xs font-bold cursor-pointer ${
+                        settingsSection === "notifications"
+                          ? "bg-amber-400 text-slate-950"
+                          : "border border-white/15 bg-white/5 text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      {lang === "lv" ? "Paziņojumu iestatījumi" : lang === "ru" ? "Настройки уведомлений" : "Notification Preferences"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSettingsSection("security")}
+                      className={`rounded-xl px-3.5 py-2 text-xs font-bold cursor-pointer ${
+                        settingsSection === "security"
+                          ? "bg-amber-400 text-slate-950"
+                          : "border border-white/15 bg-white/5 text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      {lang === "lv" ? "Parole un drošība" : lang === "ru" ? "Пароль и безопасность" : "Password & Security"}
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300">
-                      {t.phoneAuthLabel}
-                    </label>
-                    <input
-                      type="tel"
-                      value={profilePhoneInput}
-                      onChange={(e) => setProfilePhoneInput(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3.5 py-2 text-xs text-white"
-                    />
-                  </div>
-                  {profileSaveStatus && (
-                    <div className="text-xs font-bold text-emerald-400">{profileSaveStatus}</div>
+
+                  {settingsSection === "personal" && (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!user) return;
+                        setProfileSaveStatus("");
+                        const nextEmail = accountEmailInput.trim();
+                        const combinedName = `${profileFirstNameInput.trim()} ${profileLastNameInput.trim()}`.trim() || profileNameInput.trim();
+                        const payload: {
+                          email?: string;
+                          data: {
+                            first_name: string;
+                            last_name: string;
+                            name: string;
+                            phone: string;
+                            avatar_url: string;
+                            display_name_mode: "short" | "full";
+                          };
+                        } = {
+                          data: {
+                            first_name: profileFirstNameInput.trim(),
+                            last_name: profileLastNameInput.trim(),
+                            name: combinedName,
+                            phone: profilePhoneInput.trim(),
+                            avatar_url: avatarUrl.trim(),
+                            display_name_mode: displayNameMode,
+                          },
+                        };
+                        if (nextEmail && nextEmail !== (user.email || "")) {
+                          payload.email = nextEmail;
+                        }
+                        const { error } = await supabase.auth.updateUser(payload);
+                        if (error) {
+                          setProfileSaveStatus(error.message);
+                        } else if (payload.email) {
+                          setProfileSaveStatus(
+                            lang === "lv"
+                              ? "✓ Saglabāts! Apstipriniet jauno e-pastu savā pastkastē."
+                              : lang === "ru"
+                              ? "✓ Сохранено! Подтвердите новый e-mail в почте."
+                              : "✓ Saved! Confirm your new email address in your inbox."
+                          );
+                        } else {
+                          setProfileSaveStatus("✓ Saved / Saglabāts");
+                        }
+                      }}
+                      className="space-y-4 rounded-2xl border border-white/10 bg-[#121826] p-5"
+                    >
+                      <div className="flex flex-col items-center justify-center border-b border-white/10 pb-5">
+                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-[#0b0f17] text-2xl text-slate-400">
+                          {avatarUrl ? (
+                            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <span>👤</span>
+                          )}
+                        </div>
+                        <label className="mt-2.5 text-xs font-bold text-sky-400 hover:underline cursor-pointer">
+                          {lang === "lv" ? "Pievienot profila foto" : lang === "ru" ? "Добавить фото профиля" : "Add profile photo"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) setAvatarUrl(URL.createObjectURL(f));
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="divide-y divide-white/10 text-xs">
+                        <div className="py-3">
+                          <div className="text-slate-400">{lang === "lv" ? "Lietotājvārds" : lang === "ru" ? "Имя пользователя" : "Username"}</div>
+                          <div className="mt-0.5 font-semibold text-white">
+                            {(user.email?.split("@")[0] || "user").replace(/[^a-zA-Z0-9]/g, "")}
+                          </div>
+                        </div>
+
+                        <div className="grid gap-3 py-3 sm:grid-cols-2">
+                          <div>
+                            <label className="block text-slate-400">
+                              {lang === "lv" ? "Vārds" : lang === "ru" ? "Имя" : "First Name"}
+                            </label>
+                            <input
+                              type="text"
+                              value={profileFirstNameInput}
+                              onChange={(e) => setProfileFirstNameInput(e.target.value)}
+                              className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-400">
+                              {lang === "lv" ? "Uzvārds" : lang === "ru" ? "Фамилия" : "Last Name"}
+                            </label>
+                            <input
+                              type="text"
+                              value={profileLastNameInput}
+                              onChange={(e) => setProfileLastNameInput(e.target.value)}
+                              className="mt-1 w-full rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-4 py-3">
+                          <div>
+                            <div className="text-slate-400">
+                              {lang === "lv" ? "Redzamais vārds sludinājumos" : lang === "ru" ? "Отображаемое имя" : "Public Display Name"}
+                            </div>
+                            <div className="mt-0.5 font-semibold text-white">
+                              {displayNameMode === "short"
+                                ? `${profileFirstNameInput || "User"} ${profileLastNameInput ? profileLastNameInput[0].toUpperCase() + "." : ""}`.trim()
+                                : `${profileFirstNameInput} ${profileLastNameInput}`.trim() || userName}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDisplayNameMode((m) => (m === "short" ? "full" : "short"))}
+                            className="font-bold text-sky-400 hover:underline cursor-pointer"
+                          >
+                            {lang === "lv" ? "Mainīt attēlojumu" : lang === "ru" ? "Изменить формат" : "Toggle display format"}
+                          </button>
+                        </div>
+
+                        <div className="py-3">
+                          <label className="block text-slate-400">{t.phoneAuthLabel}</label>
+                          <input
+                            type="tel"
+                            value={profilePhoneInput}
+                            onChange={(e) => setProfilePhoneInput(e.target.value)}
+                            className="mt-1 w-full max-w-sm rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                          />
+                        </div>
+
+                        <div className="py-3">
+                          <label className="block text-slate-400">{t.emailLabel}</label>
+                          <input
+                            type="email"
+                            value={accountEmailInput}
+                            onChange={(e) => setAccountEmailInput(e.target.value)}
+                            className="mt-1 w-full max-w-sm rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-2 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {profileSaveStatus && (
+                        <div className="text-xs font-bold text-emerald-400">{profileSaveStatus}</div>
+                      )}
+
+                      <button
+                        type="submit"
+                        className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                      >
+                        {t.saveChangesBtn}
+                      </button>
+                    </form>
                   )}
-                  <button
-                    type="submit"
-                    className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
-                  >
-                    {t.saveChangesBtn}
-                  </button>
-                </form>
+
+                  {settingsSection === "notifications" && (
+                    <div className="rounded-2xl border border-white/10 bg-[#121826] p-5">
+                      <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                        <span>{lang === "lv" ? "Paziņojuma veids" : lang === "ru" ? "Тип уведомления" : "Notification Event"}</span>
+                        <div className="flex gap-6 pr-1">
+                          <span>E-mail</span>
+                          <span>System</span>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-white/10 text-xs">
+                        {[
+      ["pendingApproval", lang === "lv" ? "Ziņot, kad sludinājums gaida apstiprinājumu." : lang === "ru" ? "Уведомлять, когда объявление ожидает проверки." : "Notify when my listing is pending review."],
+      ["dateUpdated", lang === "lv" ? "Ziņot, kad sludinājuma datums ir atjaunināts." : lang === "ru" ? "Уведомлять при обновлении даты объявления." : "Notify when listing date is updated."],
+      ["published", lang === "lv" ? "Ziņot, kad sludinājums ir publicēts." : lang === "ru" ? "Уведомлять при публикации объявления." : "Notify when my listing goes live."],
+      ["rejected", lang === "lv" ? "Ziņot, ja sludinājums tiek noraidīts." : lang === "ru" ? "Уведомлять при отклонении объявления." : "Notify if my listing is rejected."],
+      ["expiring3Days", lang === "lv" ? "Ziņot 3 dienas pirms sludinājuma termiņa beigām." : lang === "ru" ? "Уведомлять за 3 дня до окончания срока объявления." : "Notify 3 days before my listing expires."],
+      ["expired", lang === "lv" ? "Ziņot, kad sludinājuma termiņš ir beidzies." : lang === "ru" ? "Уведомлять по истечении срока объявления." : "Notify when my listing expires."],
+      ["unpublished", lang === "lv" ? "Ziņot, kad noņemu sludinājumu no publicēšanas." : lang === "ru" ? "Уведомлять при снятии объявления с публикации." : "Notify when I unpublish a listing."],
+      ["newMessage", lang === "lv" ? "Ziņot, kad saņemu jaunu ziņu par sludinājumu." : lang === "ru" ? "Уведомлять о новых сообщениях от покупателей." : "Notify when another user messages me about my listing."],
+      ["draftReminder", lang === "lv" ? "Ziņot, ja man ir nepabeigts sludinājuma melnraksts." : lang === "ru" ? "Уведомлять о незавершённых черновиках." : "Notify if I have an unfinished listing draft."],
+    ].map(([key, label]) => {
+                          const pref = notifPrefs[key] || { email: true, push: true };
+                          return (
+                            <div key={key} className="flex items-center justify-between gap-4 py-3">
+                              <span className="text-slate-200">{label}</span>
+                              <div className="flex shrink-0 items-center gap-8 pr-3">
+                                <input
+                                  type="checkbox"
+                                  checked={pref.email}
+                                  onChange={(e) =>
+                                    setNotifPrefs((prev) => ({
+                                      ...prev,
+                                      [key]: { ...pref, email: e.target.checked },
+                                    }))
+                                  }
+                                  className="h-4 w-4 accent-amber-400 cursor-pointer"
+                                />
+                                <input
+                                  type="checkbox"
+                                  checked={pref.push}
+                                  onChange={(e) =>
+                                    setNotifPrefs((prev) => ({
+                                      ...prev,
+                                      [key]: { ...pref, push: e.target.checked },
+                                    }))
+                                  }
+                                  className="h-4 w-4 accent-amber-400 cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsSection === "security" && (
+                    <div className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-[#121826] p-5 text-xs">
+                      <div className="pb-4">
+                        <div className="text-sm font-bold text-white">
+                          {lang === "lv" ? "Paroles maiņa un atjaunošana" : lang === "ru" ? "Смена и сброс пароля" : "Password Management & Reset"}
+                        </div>
+                        <p className="mt-0.5 text-slate-400">
+                          {lang === "lv"
+                            ? "Iestatiet jaunu paroli vai nosūtiet atjaunošanas saiti uz savu e-pastu."
+                            : lang === "ru"
+                            ? "Установите новый пароль или отправьте ссылку сброса на e-mail."
+                            : "Set a new password directly or send a reset link to your email."}
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <input
+                            type="password"
+                            minLength={6}
+                            value={newPasswordInput}
+                            onChange={(e) => setNewPasswordInput(e.target.value)}
+                            placeholder={lang === "lv" ? "Jaunā parole (min. 6)" : lang === "ru" ? "Новый пароль (мин. 6)" : "New password (min. 6 chars)"}
+                            className="rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-1.5 text-xs text-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (newPasswordInput.length < 6) return;
+                              const { error } = await supabase.auth.updateUser({ password: newPasswordInput });
+                              setNewPasswordInput("");
+                              setProfileSaveStatus(error ? error.message : "✓ Password updated");
+                            }}
+                            className="rounded-xl bg-amber-400 px-3.5 py-1.5 font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                          >
+                            {lang === "lv" ? "Mainīt paroli" : lang === "ru" ? "Изменить пароль" : "Update Password"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const targetMail = (accountEmailInput || user.email || "").trim();
+                              if (!targetMail) return;
+                              const { error } = await supabase.auth.resetPasswordForEmail(targetMail, {
+                                redirectTo: "https://auto-latvia.vercel.app",
+                              });
+                              setProfileSaveStatus(error ? error.message : "✓ Reset link sent to " + targetMail);
+                            }}
+                            className="rounded-xl border border-sky-400/40 bg-sky-500/10 px-3.5 py-1.5 font-bold text-sky-300 hover:bg-sky-500/20 cursor-pointer"
+                          >
+                            {lang === "lv" ? "Aizmirsi paroli? Nosūtīt saiti" : lang === "ru" ? "Забыли пароль? Отправить ссылку" : "Forgot password? Send link"}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4 py-4">
+                        <div>
+                          <div className="text-sm font-bold text-white">
+                            {lang === "lv" ? "Divpakāpju verifikācija (2FA)" : lang === "ru" ? "Двухфакторная защита (2FA)" : "Two-Step Verification (2FA)"}
+                          </div>
+                          <span className={`mt-1.5 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${twoFactorEnabled ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-amber-500/40 bg-amber-500/10 text-amber-300"}`}>
+                            {twoFactorEnabled ? "✓ Active" : "! Disabled"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setTwoFactorEnabled((v) => !v)}
+                          className="font-bold text-sky-400 hover:underline cursor-pointer"
+                        >
+                          {lang === "lv" ? "Mainīt" : lang === "ru" ? "Изменить" : "Toggle"}
+                        </button>
+                      </div>
+
+                      <div className="py-4">
+                        <div className="text-sm font-bold text-white">
+                          {lang === "lv" ? "Rezerves e-pasts" : lang === "ru" ? "Резервный e-mail" : "Recovery Email"}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <input
+                            type="email"
+                            value={recoveryEmailInput}
+                            onChange={(e) => setRecoveryEmailInput(e.target.value)}
+                            placeholder="recovery@example.lv"
+                            className="rounded-xl border border-white/15 bg-[#0b0f17] px-3 py-1.5 text-xs text-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!user) return;
+                              const { error } = await supabase.auth.updateUser({
+                                data: { recovery_email: recoveryEmailInput.trim() },
+                              });
+                              setProfileSaveStatus(error ? error.message : "✓ Recovery email saved");
+                            }}
+                            className="rounded-xl bg-amber-400 px-3.5 py-1.5 font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                          >
+                            {t.saveChangesBtn}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4 pt-4">
+                        <div>
+                          <div className="text-sm font-bold text-white">
+                            {lang === "lv" ? "Konta verifikācija" : lang === "ru" ? "Верификация аккаунта" : "Account Verification"}
+                          </div>
+                          <span className={`mt-1.5 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${accountVerified ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-amber-500/40 bg-amber-500/10 text-amber-300"}`}>
+                            {accountVerified ? "✓ Verified" : "! Not verified yet"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!user) return;
+                            const nextState = !accountVerified;
+                            setAccountVerified(nextState);
+                            await supabase.auth.updateUser({ data: { verified: nextState } });
+                          }}
+                          className="font-bold text-sky-400 hover:underline cursor-pointer"
+                        >
+                          {lang === "lv" ? "Verificēt" : lang === "ru" ? "Подтвердить" : "Verify"}
+                        </button>
+                      </div>
+
+                      {profileSaveStatus && (
+                        <div className="pt-3 text-xs font-bold text-emerald-400">{profileSaveStatus}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </section>
           ) : activeListing ? (
@@ -2849,6 +3194,325 @@ export default function HomePage() {
           <span>{t.topBtn}</span>
         </button>
       </footer>
+
+            {infoPageKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-2xl rounded-2xl border border-white/15 bg-[#121826] p-6 shadow-2xl">
+            {(() => {
+              const pages: Record<string, { title: Record<Lang, string>; body: Record<Lang, string[]> }> = {
+                about: {
+                  title: { lv: "Par AutoLatvija", ru: "О платформе AutoLatvija", en: "About AutoLatvija" },
+                  body: {
+                    lv: [
+                      "AutoLatvija ir mūsdienīga automašīnu un motociklu sludinājumu platforma Latvijā, kas radīta ar mērķi padarīt transportlīdzekļu pirkšanu un pārdošanu ātru, pārskatāmu un pilnībā bez maksas.",
+                      "Mēs apvienojam privātpersonas un auto tirgotājus visā Latvijā — Rīgā, Liepājā, Jelgavā, Daugavpilī, Ventspilī un citās pilsētās — bez slēptām komisijas maksām.",
+                    ],
+                    ru: [
+                      "AutoLatvija — современная платформа объявлений об авто и мото в Латвии, созданная для быстрой, прозрачной и полностью бесплатной покупки и продажи транспорта.",
+                      "Мы объединяем частных продавцов и автодилеров по всей Латвии — в Риге, Лиепае, Елгаве, Даугавпилсе и Вентспилсе — без скрытых комиссий.",
+                    ],
+                    en: [
+                      "AutoLatvija is a modern car and motorcycle classifieds marketplace in Latvia built to make buying and selling vehicles fast, transparent, and 100% free.",
+                      "We connect private owners and dealers across Riga, Liepāja, Jelgava, Daugavpils, Ventspils, and all regions of Latvia with zero listing fees.",
+                    ],
+                  },
+                },
+                sustainability: {
+                  title: { lv: "Ilgtspēja un zaļā mobilitāte", ru: "Устойчивое развитие", en: "Sustainability & Green Mobility" },
+                  body: {
+                    lv: [
+                      "AutoLatvija veicina videi draudzīga transporta — elektroauto un hibrīdauto — pieejamību Latvijā, nodrošinot atsevišķu filtrēšanu un caurspīdīgu tehniskās apskates informāciju.",
+                      "Digitāla sludinājumu pārvaldība un tieša saziņa samazina liekus braucienus un palīdz pircējiem pieņemt pārdomātus lēmumus.",
+                    ],
+                    ru: [
+                      "AutoLatvija поддерживает развитие экологичного транспорта в Латвии, выделяя электромобили и гибриды в удобные категории.",
+                      "Прозрачные данные о техосмотре и прямой чат с продавцом помогают сократить лишние поездки.",
+                    ],
+                    en: [
+                      "AutoLatvija promotes cleaner mobility across Latvia with dedicated filtering for electric and hybrid vehicles alongside transparent inspection details.",
+                      "Digital listing tools and direct buyer-seller messaging reduce unnecessary travel and help buyers make informed choices.",
+                    ],
+                  },
+                },
+                careers: {
+                  title: { lv: "Karjera AutoLatvija", ru: "Карьера в AutoLatvija", en: "Careers at AutoLatvija" },
+                  body: {
+                    lv: [
+                      "Mēs vienmēr meklējam talantīgus izstrādātājus, produktu dizainerus un klientu atbalsta speciālistus Rīgā un attālināti.",
+                      "Sūti savu CV un īsu aprakstu uz e-pastu: autolatvia.lv@gmail.com",
+                    ],
+                    ru: [
+                      "Мы всегда открыты для талантливых разработчиков, дизайнеров и специалистов поддержки в Риге и удалённо.",
+                      "Отправьте резюме на почту: autolatvia.lv@gmail.com",
+                    ],
+                    en: [
+                      "We are always looking for talented software engineers, product designers, and support specialists in Riga and remotely.",
+                      "Send your CV and a brief introduction to: autolatvia.lv@gmail.com",
+                    ],
+                  },
+                },
+                news: {
+                  title: { lv: "Jaunumi un AutoBlog", ru: "Новости и AutoBlog", en: "News & AutoBlog" },
+                  body: {
+                    lv: [
+                      "• 2026: AutoLatvija palaida pilnībā bezmaksas sludinājumu sistēmu visām vieglo auto un motociklu kategorijām Latvijā.",
+                      "• Jaunums: Katram sludinājumam automātiski tiek piešķirts unikāls numurs ātrai meklēšanai, kā arī tiešā saziņa ar pārdevēju.",
+                    ],
+                    ru: [
+                      "• 2026: AutoLatvija запустила полностью бесплатную публикацию объявлений для всех категорий авто и мото в Латвии.",
+                      "• Новинка: Каждому объявлению автоматически присваивается уникальный номер для быстрого поиска и встроенный чат с продавцом.",
+                    ],
+                    en: [
+                      "• 2026: AutoLatvija launched 100% free ad publishing across all car and motorcycle categories in Latvia.",
+                      "• New: Every listing receives an automatic unique Ad Number for instant lookup along with direct in-app seller messaging.",
+                    ],
+                  },
+                },
+                contact: {
+                  title: { lv: "Sazināties ar mums", ru: "Контакты", en: "Contact Us" },
+                  body: {
+                    lv: [
+                      "E-pasts atbalstam un sadarbībai: autolatvia.lv@gmail.com",
+                      "Atrašanās vieta: Rīga, Latvija • Darba laiks: Pirmdiena – Svētdiena, 09:00 – 21:00.",
+                    ],
+                    ru: [
+                      "E-mail поддержки и сотрудничества: autolatvia.lv@gmail.com",
+                      "Локация: Рига, Латвия • Время работы: Пн – Вс, 09:00 – 21:00.",
+                    ],
+                    en: [
+                      "Support & Partnership Email: autolatvia.lv@gmail.com",
+                      "Location: Riga, Latvia • Support Hours: Monday – Sunday, 09:00 – 21:00 EET.",
+                    ],
+                  },
+                },
+                free_listings: {
+                  title: { lv: "Bezmaksas sludinājumi", ru: "Бесплатные объявления", en: "100% Free Listings" },
+                  body: {
+                    lv: [
+                      "AutoLatvija platformā sludinājumu ievietošana, fotoattēlu pievienošana un sludinājuma rediģēšana ir pilnībā bez maksas (0.00 €).",
+                      "Nav nepieciešama bankas karte — reģistrējies ar e-pastu un publicē savu auto vai motociklu vienas minūtes laikā.",
+                    ],
+                    ru: [
+                      "На AutoLatvija подача объявлений, загрузка фото и редактирование полностью бесплатны (0.00 €).",
+                      "Банковская карта не требуется — зарегистрируйтесь по e-mail и опубликуйте объявление за 1 минуту.",
+                    ],
+                    en: [
+                      "On AutoLatvija, posting listings, uploading photos, and editing your ads is completely free (€0.00).",
+                      "No credit card is required — register with your email and publish your car or motorcycle in one minute.",
+                    ],
+                  },
+                },
+                csdd_guide: {
+                  title: { lv: "TA un CSDD pārbaudes ceļvedis", ru: "Руководство по проверке ТО и CSDD", en: "TA & Vehicle Inspection Guide" },
+                  body: {
+                    lv: [
+                      "Pirms auto iegādes vienmēr pārbaudiet valsts numurzīmi un VIN kodu oficiālajā CSDD e-pakalpojumu sistēmā, lai pārliecinātos par nobraukuma vēsturi un tehniskās apskates derīgumu.",
+                      "AutoLatvija sludinājumos pārdevēji var norādīt gan valsts numuru, gan VIN numuru un TA derīguma termiņu.",
+                    ],
+                    ru: [
+                      "Перед покупкой автомобиля всегда проверяйте госномер и VIN-код в системе CSDD, чтобы убедиться в истории пробега и сроке действия техосмотра.",
+                      "В объявлениях AutoLatvija продавцы могут указать госномер, VIN и дату окончания ТО.",
+                    ],
+                    en: [
+                      "Before purchasing a vehicle, always verify its license plate and VIN code in the official CSDD registry to confirm mileage history and technical inspection (TA) validity.",
+                      "AutoLatvija listings display the plate number, VIN code, and TA expiration date directly on the ad page.",
+                    ],
+                  },
+                },
+                advertising: {
+                  title: { lv: "Reklāma AutoLatvija", ru: "Реклама на AutoLatvija", en: "Advertising on AutoLatvija" },
+                  body: {
+                    lv: [
+                      "Vēlaties sasniegt tūkstošiem auto pircēju un īpašnieku visā Latvijā? Sazinieties ar mūsu komandu par reklāmas baneriem un sadarbību.",
+                      "Kontakti: autolatvia.lv@gmail.com",
+                    ],
+                    ru: [
+                      "Хотите привлечь тысячи автолюбителей и покупателей по всей Латвии? Напишите нам для размещения рекламы.",
+                      "Контакты: autolatvia.lv@gmail.com",
+                    ],
+                    en: [
+                      "Want to reach car and motorcycle buyers across Latvia? Contact our team for banner placements and partnerships.",
+                      "Contact: autolatvia.lv@gmail.com",
+                    ],
+                  },
+                },
+                why_autolatvija: {
+                  title: { lv: "Kāpēc izvēlēties AutoLatvija?", ru: "Почему выбирают AutoLatvija?", en: "Why Choose AutoLatvija?" },
+                  body: {
+                    lv: [
+                      "1. Pilnībā bezmaksas sludinājumu ievietošana un rediģēšana.",
+                      "2. Baltijas tirgum pielāgots marku un modeļu katalogs ar ātru filtrēšanu.",
+                      "3. Tieša saziņa ar pārdevēju pa tālruni, WhatsApp vai iebūvētajā čatā.",
+                    ],
+                    ru: [
+                      "1. Полностью бесплатная публикация и редактирование объявлений.",
+                      "2. Каталог марок и моделей, адаптированный под рынок Латвии и Балтии.",
+                      "3. Прямая связь с продавцом по телефону, WhatsApp или во встроенном чате.",
+                    ],
+                    en: [
+                      "1. Completely free ad publishing and editing with zero hidden fees.",
+                      "2. Baltic-tailored brand and model catalog with fast step-by-step filtering.",
+                      "3. Direct contact with sellers via phone, WhatsApp, or in-app messaging.",
+                    ],
+                  },
+                },
+                dealer_store: {
+                  title: { lv: "Auto saloniem un tirgotājiem", ru: "Для автосалонов и дилеров", en: "For Car & Moto Dealers" },
+                  body: {
+                    lv: [
+                      "AutoLatvija piedāvā auto saloniem un profesionāliem tirgotājiem neierobežotu sludinājumu skaitu bez maksas.",
+                      "Reģistrējiet uzņēmuma kontu, pievienojiet savu autoparku un saņemiet pircēju pieprasījumus tieši savā panelī.",
+                    ],
+                    ru: [
+                      "AutoLatvija предлагает автосалонам и дилерам бесплатное размещение неограниченного числа объявлений.",
+                      "Зарегистрируйте аккаунт и управляйте всем автопарком из единого личного кабинета.",
+                    ],
+                    en: [
+                      "AutoLatvija offers car and motorcycle dealerships unlimited free listings across Latvia.",
+                      "Create an account to manage your entire inventory and receive buyer inquiries in one dashboard.",
+                    ],
+                  },
+                },
+                safety_tips: {
+                  title: { lv: "Drošības padomi pircējiem", ru: "Советы по безопасности", en: "Safe Trading Tips" },
+                  body: {
+                    lv: [
+                      "• Nekad nepārskaitiet avansu vai drošības naudu, pirms neesat klātienē apskatījis automašīnu un dokumentus.",
+                      "• Vienmēr pārbaudiet VIN kodu, TA statusu un pārdevēja personu apliecinošus dokumentus.",
+                      "• Tikšanās vietu izvēlieties gaišā diennakts laikā publiskā vietā vai servisā.",
+                    ],
+                    ru: [
+                      "• Никогда не переводите предоплату до личного осмотра автомобиля и документов.",
+                      "• Всегда проверяйте VIN-код, статус техосмотра и документы продавца.",
+                      "• Встречайтесь в светлое время суток в людных местах или на СТО.",
+                    ],
+                    en: [
+                      "• Never pay a deposit or wire money before inspecting the vehicle and its documents in person.",
+                      "• Always verify the VIN code, TA inspection status, and seller ownership documents.",
+                      "• Meet in daylight at a public location or trusted inspection center.",
+                    ],
+                  },
+                },
+                terms: {
+                  title: { lv: "Lietošanas noteikumi", ru: "Условия использования", en: "Terms of Use" },
+                  body: {
+                    lv: [
+                      "Lietotājs apņemas ievietot tikai patiesu informāciju un reālas transportlīdzekļa fotogrāfijas.",
+                      "Aizliegts publicēt krāpnieciskus, dublētus vai likumam neatbilstošus sludinājumus. Platformas administrācija patur tiesības dzēst noteikumiem neatbilstošus ierakstus.",
+                    ],
+                    ru: [
+                      "Пользователь обязуется публиковать только достоверную информацию и реальные фотографии транспорта.",
+                      "Запрещено размещать мошеннические или дублирующиеся объявления. Администрация вправе удалять контент, нарушающий правила.",
+                    ],
+                    en: [
+                      "Users agree to publish only accurate vehicle information and genuine photos.",
+                      "Fraudulent, duplicate, or unlawful listings are strictly prohibited. Platform moderation reserves the right to remove non-compliant ads.",
+                    ],
+                  },
+                },
+                account_agreement: {
+                  title: { lv: "Konta līgums", ru: "Соглашение аккаунта", en: "Account Agreement" },
+                  body: {
+                    lv: [
+                      "Reģistrējoties AutoLatvija, jūs esat atbildīgs par sava konta drošību un paroles konfidencialitāti.",
+                      "Jūs jebkurā brīdī varat atjaunināt savu vārdu, tālruņa numuru, e-pastu vai dzēst savus sludinājumus sadaļā 'Mans konts'.",
+                    ],
+                    ru: [
+                      "Регистрируясь на AutoLatvija, вы несёте ответственность за безопасность своего аккаунта и пароля.",
+                      "Вы можете в любой момент изменить свои данные или удалить объявления в разделе 'Мой кабинет'.",
+                    ],
+                    en: [
+                      "By registering on AutoLatvija, you are responsible for maintaining the security of your account credentials.",
+                      "You can update your profile details or remove your listings at any time from your account dashboard.",
+                    ],
+                  },
+                },
+                privacy: {
+                  title: { lv: "Privātuma politika (GDPR)", ru: "Политика конфиденциальности", en: "Privacy Policy (GDPR)" },
+                  body: {
+                    lv: [
+                      "AutoLatvija apstrādā lietotāju personas datus (vārds, e-pasts, tālruņa numurs) tikai sludinājumu publicēšanas un pircēju-pārdevēju saziņas nodrošināšanai saskaņā ar ES VDAR (GDPR).",
+                      "Mēs nepārdodam jūsu personas datus trešajām personām.",
+                    ],
+                    ru: [
+                      "AutoLatvija обрабатывает персональные данные (имя, e-mail, телефон) исключительно для работы сервиса объявлений и связи между покупателем и продавцом согласно GDPR.",
+                      "Мы не передаём и не продаём ваши данные третьим лицам.",
+                    ],
+                    en: [
+                      "AutoLatvija processes personal data (name, email, phone number) solely to operate the marketplace and enable buyer-seller communication in compliance with EU GDPR.",
+                      "We never sell your personal information to third parties.",
+                    ],
+                  },
+                },
+                cookies: {
+                  title: { lv: "Sīkdatņu pārvaldība", ru: "Управление cookie", en: "Cookie Settings" },
+                  body: {
+                    lv: [
+                      "AutoLatvija izmanto tikai tehniski nepieciešamās sīkdatnes un lokālo krātuvi, lai saglabātu jūsu izvēlēto valodu, autorizācijas sesiju un saglabātos sludinājumus.",
+                    ],
+                    ru: [
+                      "AutoLatvija использует только технически необходимые cookie и локальное хранилище для сохранения выбранного языка, сессии входа и избранных объявлений.",
+                    ],
+                    en: [
+                      "AutoLatvija uses strictly necessary cookies and local storage to keep your language preference, login session, and saved listings active.",
+                    ],
+                  },
+                },
+                help: {
+                  title: { lv: "Palīdzība un lietošanas ceļvedis", ru: "Помощь и руководство", en: "Help & User Guide" },
+                  body: {
+                    lv: [
+                      "1. Lai pievienotu sludinājumu: spiediet '+ Ielikt sludinājumu', izvēlieties kategoriju, marku, modeli, pievienojiet bildes un publicējiet.",
+                      "2. Lai rediģētu vai dzēstu sludinājumu: atveriet 'Mani sludinājumi' vai 'Mans konts'.",
+                      "3. Papildu jautājumiem rakstiet uz autolatvia.lv@gmail.com.",
+                    ],
+                    ru: [
+                      "1. Чтобы подать объявление: нажмите '+ Подать объявление', выберите категорию, марку, модель, загрузите фото и опубликуйте.",
+                      "2. Для редактирования или удаления откройте 'Мои объявления' или 'Мой кабинет'.",
+                      "3. По любым вопросам пишите на autolatvia.lv@gmail.com.",
+                    ],
+                    en: [
+                      "1. To post an ad: click '+ Post listing', select category, brand, model, upload photos, and publish.",
+                      "2. To edit or delete your ad: open 'My listings' or 'My Account'.",
+                      "3. For assistance, email us at autolatvia.lv@gmail.com.",
+                    ],
+                  },
+                },
+              };
+
+              const current = pages[infoPageKey] || pages.about;
+              return (
+                <div>
+                  <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3.5">
+                    <h3 className="text-base font-extrabold text-white">{current.title[lang]}</h3>
+                    <button
+                      type="button"
+                      onClick={() => setInfoPageKey(null)}
+                      className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="mt-4 space-y-3 text-xs leading-relaxed text-slate-300">
+                    {current.body[lang].map((paragraph, i) => (
+                      <p key={i}>{paragraph}</p>
+                    ))}
+                  </div>
+                  <div className="mt-6 flex justify-end border-t border-white/10 pt-3.5">
+                    <button
+                      type="button"
+                      onClick={() => setInfoPageKey(null)}
+                      className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-extrabold text-slate-950 hover:bg-amber-300 cursor-pointer"
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
