@@ -784,6 +784,8 @@ export default function HomePage() {
   const [chatSentFeedback, setChatSentFeedback] = useState("");
   const [chatReplyText, setChatReplyText] = useState<Record<string, string>>({});
   const [profileNameInput, setProfileNameInput] = useState("");
+  const [profileFirstNameInput, setProfileFirstNameInput] = useState("");
+  const [profileLastNameInput, setProfileLastNameInput] = useState("");
   const [profilePhoneInput, setProfilePhoneInput] = useState("");
   const [profileSaveStatus, setProfileSaveStatus] = useState("");
   const [accountEmailInput, setAccountEmailInput] = useState("");
@@ -896,7 +898,11 @@ export default function HomePage() {
       setNotificationsList([]);
       return;
     }
-    setProfileNameInput((user.user_metadata?.name as string) || "");
+    const fullMetaName = (user.user_metadata?.name as string) || "";
+    const metaParts = fullMetaName.trim().split(/\s+/);
+    setProfileNameInput(fullMetaName);
+    setProfileFirstNameInput((user.user_metadata?.first_name as string) || metaParts[0] || "");
+    setProfileLastNameInput((user.user_metadata?.last_name as string) || metaParts.slice(1).join(" ") || "");
     setProfilePhoneInput((user.user_metadata?.phone as string) || "");
     setAccountEmailInput(user.email || "");
     setAvatarUrl((user.user_metadata?.avatar_url as string) || "");
